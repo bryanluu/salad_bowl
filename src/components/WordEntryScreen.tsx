@@ -48,7 +48,16 @@ function WordEntryScreen() {
         <label className="sr-only" htmlFor="word-input">
           Word
         </label>
-        <input className="input" id="word-input" type="text" placeholder="Enter a word" onChange={handleWordEdit} value={candidateWord} />
+        <input
+          className="input"
+          id="word-input"
+          type="text"
+          placeholder="Enter a word"
+          onChange={handleWordEdit}
+          aria-describedby={!validation.ok ? "word-input-error" : undefined}
+          aria-invalid={!validation.ok}
+          value={candidateWord}
+        />
         <button
           className="btn btn--secondary btn--icon"
           type="submit"
@@ -59,6 +68,12 @@ function WordEntryScreen() {
           +
         </button>
       </form>
+
+      {!validation.ok && candidateWord !== "" && (
+        <p className="input-add__error" id="word-input-error" role="status">
+          {validation.message}
+        </p>
+      )}
 
       <ul className="word-list">
         {words.map((word, idx) => <WordEntry key={idx} word={word} onClick={handleRemoveWord(word)} />)}
