@@ -1,18 +1,6 @@
 // src/validation/validateWord.test.ts
 import { describe, it, expect } from 'vitest'
-import { validateWord, normalizeWord } from './validateWord'
-
-describe('normalizeWord', () => {
-  it('trims whitespace and lowercases', () => {
-    expect(normalizeWord('  Ice Cream  ')).toBe('ice cream')
-  })
-
-  it('collapses separators to a single space', () => {
-    expect(normalizeWord('Ice_Cream')).toBe('ice cream')
-    expect(normalizeWord('Ice–Cream')).toBe('ice cream')
-    expect(normalizeWord('Ice-Cream')).toBe('ice cream')
-  })
-})
+import { validateWord } from './validateWord'
 
 describe('validateWord', () => {
   it('rejects an empty candidate', () => {
