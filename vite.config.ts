@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
@@ -8,4 +9,8 @@ export default defineConfig({
     allowedHosts: ["main-framework.shire-tegu.ts.net"]
   },
   plugins: [react()],
+  test: {
+    globals: true,
+    environment: 'jsdom',
+  },
 })
