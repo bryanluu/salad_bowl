@@ -5,7 +5,7 @@ import type { Word } from "../types.ts"
 export function normalizeWord(raw: string): string {
   return raw
     .trim()
-    // .replace(/[\s_-–—]+/g, ' ')
+    .replace(/[\s_\-–—]+/g, ' ')
     .toLowerCase()
 }
 
