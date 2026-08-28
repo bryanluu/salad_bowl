@@ -3,11 +3,11 @@ import { useLocalWordSource } from "../hooks/useLocalWordSource"
 import type { Word } from "../types.ts"
 import { validateWord } from "../validation/validateWord.ts"
 
-function WordEntry({ word }: { word: Word }) {
+function WordEntry({ word, onClick }: { word: Word, onClick: () => void }) {
   return (
     <li className="word-list__item">
       <span>{word}</span>
-      <button className="word-list__remove" type="button" aria-label="Remove word">
+      <button className="word-list__remove" type="button" aria-label="Remove word" onClick={onClick}>
         &times;
       </button>
     </li>
@@ -30,6 +30,10 @@ function WordEntryScreen() {
     if (success) {
       setCandidateWord("")
     }
+  }
+
+  function handleRemoveWord(word: Word) {
+    return () => removeWord(word)
   }
 
   return (
@@ -57,7 +61,7 @@ function WordEntryScreen() {
       </form>
 
       <ul className="word-list">
-        {words.map((word, idx) => <WordEntry key={idx} word={word} />)}
+        {words.map((word, idx) => <WordEntry key={idx} word={word} onClick={handleRemoveWord(word)} />)}
       </ul>
 
       <p className="counter">{count} / 20 words</p>
