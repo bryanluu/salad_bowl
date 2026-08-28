@@ -1,29 +1,7 @@
 import { useState } from "react"
 import { useLocalWordSource } from "../hooks/useLocalWordSource"
 import type { Word } from "../types.ts"
-
-/** Trim, collapse runs of separators (space/dash/underscore) to a single
- *  space, lowercase. So "Ice_Cream" ≡ "ice cream" ≡ "ice–cream". */
-function normalizeWord(raw: string): string {
-  return raw
-    .trim()
-    // .replace(/[\s_-–—]+/g, ' ')
-    .toLowerCase()
-}
-
-type Rejection =
-  | { reason: 'empty'; message: 'That\'s not a word yet — type a few letters first.' }
-  | { reason: 'duplicate'; message: 'Already in the bowl.' }
-
-function validateWord(candidate: Word, existing: readonly Word[]): { ok: true } | Rejection {
-  const normalized = normalizeWord(candidate)
-  console.log(normalized)
-  if (normalized === '') return { reason: 'empty', message: 'That\'s not a word yet — type a few letters first.' }
-  if (existing.some((word) => normalizeWord(word) === normalized)) {
-    return { reason: 'duplicate', message: 'Already in the bowl.' }
-  }
-  return { ok: true }
-}
+import { validateWord } from "../validation/validateWord.ts"
 
 function WordEntry({ word }: { word: Word }) {
   return (
