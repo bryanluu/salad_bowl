@@ -26,8 +26,10 @@ function WordEntryScreen() {
   }
 
   function handleAddWord() {
-    addWord(candidateWord)
-    setCandidateWord("")
+    const success = addWord(candidateWord)
+    if (success) {
+      setCandidateWord("")
+    }
   }
 
   return (
