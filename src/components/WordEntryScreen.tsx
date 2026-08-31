@@ -2,12 +2,13 @@ import { useState } from "react"
 import { useLocalWordSource } from "../hooks/useLocalWordSource"
 import { maxWordLength, type Word, minWordLength } from "../types.ts"
 import { validateWord } from "../validation/validateWord.ts"
+import { copy } from "../copy/en.ts"
 
 function WordEntry({ word, onClick }: { word: Word, onClick: () => void }) {
   return (
     <li className="word-list__item">
       <span>{word}</span>
-      <button className="word-list__remove" type="button" aria-label="Remove word" onClick={onClick}>
+      <button className="word-list__remove" type="button" aria-label={copy.wordEntry.removeLabel} onClick={onClick}>
         &times;
       </button>
     </li>
@@ -40,7 +41,7 @@ function WordEntryScreen() {
     <section className="screen" aria-labelledby="word-entry-title">
       <header className="screen__header">
         <h1 className="screen__title" id="word-entry-title">
-          Add your words
+          {copy.wordEntry.title}
         </h1>
       </header>
 
@@ -52,7 +53,7 @@ function WordEntryScreen() {
           className="input"
           id="word-input"
           type="text"
-          placeholder="Enter a word"
+          placeholder={copy.wordEntry.placeholder}
           onChange={handleWordEdit}
           aria-describedby={!validation.ok ? "word-input-error" : undefined}
           aria-invalid={!validation.ok}
@@ -64,7 +65,7 @@ function WordEntryScreen() {
         <button
           className="btn btn--secondary btn--icon"
           type="submit"
-          aria-label="Add word"
+          aria-label={copy.wordEntry.addButton}
           onClick={handleAddWord}
           disabled={!validation.ok}
         >
@@ -74,7 +75,7 @@ function WordEntryScreen() {
 
       {!validation.ok && candidateWord !== "" && (
         <p className="input-add__error" id="word-input-error" role="status">
-          {validation.message}
+          {copy.wordEntry.errors[validation.reason]}
         </p>
       )}
 
@@ -82,10 +83,10 @@ function WordEntryScreen() {
         {words.map((word, idx) => <WordEntry key={idx} word={word} onClick={handleRemoveWord(word)} />)}
       </ul>
 
-      <p className="counter">{count} / 20 words</p>
+      <p className="counter">{copy.wordEntry.counter(count)}</p>
 
       <button className="btn btn--primary" type="button">
-        Done adding words
+        {copy.wordEntry.doneButton}
       </button>
     </section >
   )
