@@ -1,5 +1,5 @@
 // src/wordSources/LocalWordSource.ts
-import type { Word, WordSource } from '../types'
+import { type Word, type WordSource, minWordLength, maxWordLength } from '../types'
 import { normalizeWord } from '../words/normalizeWord'
 
 export class LocalWordSource implements WordSource {
@@ -10,9 +10,9 @@ export class LocalWordSource implements WordSource {
     if (normalized === '') return false
     const isDuplicate = this.words.some((w) => normalizeWord(w) === normalized)
     if (isDuplicate) return false
-    const isShort = (normalized.length < 3)
+    const isShort = (normalized.length < minWordLength)
     if (isShort) return false
-    const isLong = (normalized.length > 50)
+    const isLong = (normalized.length > maxWordLength)
     if (isLong) return false
     this.words.push(word)
     return true
