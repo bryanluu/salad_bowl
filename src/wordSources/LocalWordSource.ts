@@ -10,6 +10,10 @@ export class LocalWordSource implements WordSource {
     if (normalized === '') return false
     const isDuplicate = this.words.some((w) => normalizeWord(w) === normalized)
     if (isDuplicate) return false
+    const isShort = (normalized.length < 3)
+    if (isShort) return false
+    const isLong = (normalized.length > 50)
+    if (isLong) return false
     this.words.push(word)
     return true
   }

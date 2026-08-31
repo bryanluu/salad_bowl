@@ -7,6 +7,9 @@ export interface ScreenNavItem {
 
 export type Word = string
 
+export const minWordLength = 3
+export const maxWordLength = 50
+
 export interface WordSource {
   // Adds a word to the bowl. Returns false if rejected (e.g. duplicate, empty).
   addWord(word: Word): boolean

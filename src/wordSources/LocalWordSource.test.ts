@@ -26,6 +26,16 @@ describe('LocalWordSource', () => {
       expect(source.addWord('   ')).toBe(false)
       expect(source.count()).toBe(0)
     })
+
+    it('rejects a short word', () => {
+      expect(source.addWord('hi')).toBe(false)
+      expect(source.count()).toBe(0)
+    })
+
+    it('rejects a long word', () => {
+      expect(source.addWord('anunreachablepointattheendofaneverendinglinethatrepresentsanunreachablepoint...')).toBe(false)
+      expect(source.count()).toBe(0)
+    })
   })
 
   describe('removeWord', () => {

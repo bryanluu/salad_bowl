@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useLocalWordSource } from "../hooks/useLocalWordSource"
-import type { Word } from "../types.ts"
+import { maxWordLength, type Word, minWordLength } from "../types.ts"
 import { validateWord } from "../validation/validateWord.ts"
 
 function WordEntry({ word, onClick }: { word: Word, onClick: () => void }) {
@@ -57,6 +57,9 @@ function WordEntryScreen() {
           aria-describedby={!validation.ok ? "word-input-error" : undefined}
           aria-invalid={!validation.ok}
           value={candidateWord}
+          minLength={minWordLength}
+          maxLength={maxWordLength}
+          required
         />
         <button
           className="btn btn--secondary btn--icon"
