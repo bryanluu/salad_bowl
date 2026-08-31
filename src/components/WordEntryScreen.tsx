@@ -16,6 +16,7 @@ function WordEntry({ word, onClick }: { word: Word, onClick: () => void }) {
 }
 
 function WordEntryScreen() {
+  const config = { totalWords: 20 } // TODO: incorporate custom config from Game Setup
   const { words, addWord, removeWord, count } = useLocalWordSource()
   const [candidateWord, setCandidateWord] = useState("")
 
@@ -83,7 +84,7 @@ function WordEntryScreen() {
         {words.map((word, idx) => <WordEntry key={idx} word={word} onClick={handleRemoveWord(word)} />)}
       </ul>
 
-      <p className="counter">{copy.wordEntry.counter(count)}</p>
+      <p className="counter">{copy.wordEntry.counter(count, config.totalWords)}</p>
 
       <button className="btn btn--primary" type="button">
         {copy.wordEntry.doneButton}

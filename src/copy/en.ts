@@ -21,7 +21,7 @@ export const copy = {
   },
   wordEntry: {
     addButton: 'Add prompt',
-    counter: (count: number) => `${count} / 20 prompts`,
+    counter: (count: number, total: number) => `${count} / ${total} prompts`,
     doneButton: 'Done',
     errors: {
       duplicate: 'Already in the bowl.',
