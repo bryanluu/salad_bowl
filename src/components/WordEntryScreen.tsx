@@ -81,7 +81,7 @@ function WordEntryScreen() {
       )}
 
       <ul className="word-list">
-        {words.map((word, idx) => <WordEntry key={idx} word={word} onClick={handleRemoveWord(word)} />)}
+        {words.map((word) => <WordEntry key={word} word={word} onClick={handleRemoveWord(word)} />)}
       </ul>
 
       <p className="counter">{copy.wordEntry.counter(count, config.totalWords)}</p>
@@ -89,7 +89,7 @@ function WordEntryScreen() {
       <button className="btn btn--primary" type="button">
         {copy.wordEntry.doneButton}
       </button>
-    </section >
+    </section>
   )
 }
 
