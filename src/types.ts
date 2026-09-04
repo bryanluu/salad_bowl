@@ -23,8 +23,15 @@ export interface WordSource {
   count(): number
 }
 
+export interface Team {
+  id: string
+  name: string
+  players: number
+}
+
 export interface GameConfig {
-  totalWords: number
   totalPlayers: number
-  minPlayers: number
+  teams: Team[]
+  timerSeconds: number
+  wordsPerPlayer: number
 }

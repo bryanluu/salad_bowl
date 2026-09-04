@@ -20,6 +20,7 @@ function WordEntryScreen({ config }: { config: GameConfig }) {
   const [candidateWord, setCandidateWord] = useState("")
 
   const validation = validateWord(candidateWord, words)
+  const totalWords = config.totalPlayers * config.wordsPerPlayer
 
   function handleWordEdit(event: React.ChangeEvent<HTMLInputElement>) {
     const candidate: Word = event.currentTarget.value
@@ -83,7 +84,7 @@ function WordEntryScreen({ config }: { config: GameConfig }) {
         {words.map((word) => <WordEntry key={word} word={word} onClick={handleRemoveWord(word)} />)}
       </ul>
 
-      <p className="counter">{copy.wordEntry.counter(count, config.totalWords)}</p>
+      <p className="counter">{copy.wordEntry.counter(count, totalWords)}</p>
 
       <button className="btn btn--primary" type="button">
         {copy.wordEntry.doneButton}
