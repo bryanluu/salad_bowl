@@ -1,5 +1,6 @@
 import Stepper from './Stepper'
 import { copy } from '../copy/en.ts'
+import type { GameConfig } from '../types.ts'
 
 // Static skeleton only — total players, team roster, timer, and
 // words-per-player aren't wired to real state yet. Handlers are no-ops
@@ -16,7 +17,7 @@ const stubTeams: StubTeam[] = [
   { id: 'team-2', players: 2 },
 ]
 
-function GameSetupScreen() {
+function GameSetupScreen({ config, updateConfig }: { config: GameConfig, updateConfig: (GameConfig) => void }) {
   return (
     <section className="screen" aria-labelledby="game-setup-title">
       <header className="screen__header">

@@ -22,3 +22,7 @@ export interface WordSource {
   // Count words in the bowl
   count(): number
 }
+
+export interface GameConfig {
+  totalWords: number
+}

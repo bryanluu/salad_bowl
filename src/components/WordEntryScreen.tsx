@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useLocalWordSource } from "../hooks/useLocalWordSource"
-import { maxWordLength, type Word, minWordLength } from "../types.ts"
+import { maxWordLength, type Word, minWordLength, type GameConfig } from "../types.ts"
 import { validateWord } from "../validation/validateWord.ts"
 import { copy } from "../copy/en.ts"
 
@@ -15,8 +15,7 @@ function WordEntry({ word, onClick }: { word: Word, onClick: () => void }) {
   )
 }
 
-function WordEntryScreen() {
-  const config = { totalWords: 20 } // TODO: incorporate custom config from Game Setup
+function WordEntryScreen({ config }: { config: GameConfig }) {
   const { words, addWord, removeWord, count } = useLocalWordSource()
   const [candidateWord, setCandidateWord] = useState("")
 
