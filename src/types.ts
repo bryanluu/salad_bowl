@@ -25,4 +25,6 @@ export interface WordSource {
 
 export interface GameConfig {
   totalWords: number
+  totalPlayers: number
+  minPlayers: number
 }

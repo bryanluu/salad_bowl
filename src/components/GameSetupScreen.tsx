@@ -1,6 +1,7 @@
 import Stepper from './Stepper'
 import { copy } from '../copy/en.ts'
 import type { GameConfig } from '../types.ts'
+import { useState } from 'react'
 
 // Static skeleton only — total players, team roster, timer, and
 // words-per-player aren't wired to real state yet. Handlers are no-ops
@@ -18,6 +19,19 @@ const stubTeams: StubTeam[] = [
 ]
 
 function GameSetupScreen({ config, updateConfig }: { config: GameConfig, updateConfig: (GameConfig) => void }) {
+  const [totalPlayers, setTotalPlayers] = useState(config.totalPlayers)
+
+  const maxTeams = Math.floor(totalPlayers / 2);
+
+  function incrementTotalPlayers() {
+    setTotalPlayers(totalPlayers + 1)
+  }
+
+  function decrementTotalPlayers() {
+    if (totalPlayers > config.minPlayers)
+      setTotalPlayers(totalPlayers - 1)
+  }
+
   return (
     <section className="screen" aria-labelledby="game-setup-title">
       <header className="screen__header">
@@ -29,9 +43,13 @@ function GameSetupScreen({ config, updateConfig }: { config: GameConfig, updateC
       <div>
         <div className="field-row">
           <span className="field-row__label">{copy.gameSetup.totalPlayersLabel}</span>
-          <Stepper label="total players" value={8} onDecrement={noop} onIncrement={noop} />
+          <Stepper
+            label="total players"
+            value={totalPlayers}
+            onDecrement={decrementTotalPlayers}
+            onIncrement={incrementTotalPlayers} />
         </div>
-        <p className="field-row__help">{copy.gameSetup.totalPlayersHelp(4, 2)}</p>
+        <p className="field-row__help">{copy.gameSetup.totalPlayersHelp(maxTeams, 2)}</p>
       </div>
 
       <p className="setup-status">{copy.gameSetup.setupStatus(4, 8)}</p>

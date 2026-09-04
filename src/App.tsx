@@ -26,7 +26,9 @@ function renderScreen(screenId: ScreenId, config: GameConfig, updateConfig: (new
 }
 
 const defaultGameConfig: GameConfig = {
-  totalWords: 20
+  totalWords: 20,
+  totalPlayers: 4,
+  minPlayers: 4
 }
 
 function App() {
