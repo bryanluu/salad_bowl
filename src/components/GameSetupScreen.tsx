@@ -18,7 +18,7 @@ const stubTeams: StubTeam[] = [
   { id: 'team-2', players: 2 },
 ]
 
-function GameSetupScreen({ config, updateConfig }: { config: GameConfig, updateConfig: (GameConfig) => void }) {
+function GameSetupScreen({ config, updateConfig }: { config: GameConfig, updateConfig: (gc: GameConfig) => void }) {
   const [totalPlayers, setTotalPlayers] = useState(config.totalPlayers)
 
   const maxTeams = Math.floor(totalPlayers / 2);
