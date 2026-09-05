@@ -214,6 +214,12 @@ body {
   border-color: var(--color-text-faint);
 }
 
+.stepper__btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
 .stepper__value {
   min-width: 2ch;
   text-align: center;
