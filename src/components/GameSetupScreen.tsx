@@ -53,7 +53,19 @@ function GameSetupScreen({ config, updateConfig }: { config: GameConfig, updateC
     }))
   }
 
-  // TODO: use form element for better structure
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    updateConfig(newConfig)
+  }
+
+  // Enter in a team name input would implicitly submit the form, but
+  // Start is the only submit path, so swallow Enter in the inputs.
+  function suppressEnter(event: React.KeyboardEvent<HTMLInputElement>) {
+    if (event.key === 'Enter') {
+      event.preventDefault()
+    }
+  }
+
   return (
     <section className="screen" aria-labelledby="game-setup-title">
       <header className="screen__header">
@@ -62,92 +74,95 @@ function GameSetupScreen({ config, updateConfig }: { config: GameConfig, updateC
         </h1>
       </header>
 
-      <div>
-        <div className="field-row">
-          <span className="field-row__label">{copy.gameSetup.totalPlayersLabel}</span>
-          <Stepper
-            label="total players"
-            value={newConfig.totalPlayers}
-            min={minPlayers}
-            max={maxPlayers}
-            onChange={(v) => editConfig('totalPlayers', v)}
-          />
-        </div>
-        <p className="field-row__help">{copy.gameSetup.totalPlayersHelp(maxTeams, minPlayersPerTeam)}</p>
-      </div>
-
-      <div className="field-row">
-        <span className="field-row__label">Number of teams</span>
-        <Stepper
-          label="number of teams"
-          value={newConfig.teams.length}
-          min={minTeams}
-          max={maxTeams}
-          onChange={setTeamCount}
-        />
-      </div>
-
-      <p className="setup-status">{copy.gameSetup.setupStatus(assignedPlayers, newConfig.totalPlayers)}</p>
-
-      <div className="teams">
-        {newConfig.teams.map((team, index) => (
-          <div className="team-row" key={team.id}>
-            <input
-              className="input"
-              type="text"
-              placeholder={copy.gameSetup.teamNamePlaceholder(index + 1)}
-              value={team.name}
-              onChange={(e) => editTeam(team.id, 'name', e.target.value)}
-              required
-            />
+      <form className="screen__form" aria-label={copy.gameSetup.title} onSubmit={handleSubmit}>
+        <div>
+          <div className="field-row">
+            <span className="field-row__label">{copy.gameSetup.totalPlayersLabel}</span>
             <Stepper
-              label={`team ${index + 1} players`}
-              value={team.players}
-              min={minPlayersPerTeam}
-              // TODO: implement a dynamic max for players on each team
-              onChange={(v) => editTeam(team.id, 'players', v)}
+              label="total players"
+              value={newConfig.totalPlayers}
+              min={minPlayers}
+              max={maxPlayers}
+              onChange={(v) => editConfig('totalPlayers', v)}
             />
           </div>
-        ))
-          // TODO: implement way to remove team
-        }
-      </div>
+          <p className="field-row__help">{copy.gameSetup.totalPlayersHelp(maxTeams, minPlayersPerTeam)}</p>
+        </div>
 
-      <button
-        className="btn btn--secondary"
-        type="button"
-        onClick={() => setTeamCount(newConfig.teams.length + 1)}
-      >
-        + {copy.gameSetup.addTeamButton}
-      </button>
+        <div className="field-row">
+          <span className="field-row__label">Number of teams</span>
+          <Stepper
+            label="number of teams"
+            value={newConfig.teams.length}
+            min={minTeams}
+            max={maxTeams}
+            onChange={setTeamCount}
+          />
+        </div>
 
-      <div className="field-row">
-        <span className="field-row__label">{copy.gameSetup.timerLabel}</span>
-        <Stepper
-          label="timer"
-          value={newConfig.timerSeconds}
-          min={minTimerSeconds}
-          max={maxTimerSeconds}
-          step={timerStepSeconds}
-          formatValue={(s) => `${s}s`}
-          onChange={(v) => editConfig('timerSeconds', v)}
-        />
-      </div>
+        <p className="setup-status">{copy.gameSetup.setupStatus(assignedPlayers, newConfig.totalPlayers)}</p>
 
-      <div className="field-row">
-        <span className="field-row__label">{copy.gameSetup.wordsPerPlayerLabel}</span>
-        <Stepper
-          label="words per player"
-          value={newConfig.wordsPerPlayer}
-          min={minWordsPerPlayer}
-          max={maxWordsPerPlayer}
-          onChange={(v) => editConfig('wordsPerPlayer', v)}
-        />
-      </div>
+        <div className="teams">
+          {newConfig.teams.map((team, index) => (
+            <div className="team-row" key={team.id}>
+              <input
+                className="input"
+                type="text"
+                placeholder={copy.gameSetup.teamNamePlaceholder(index + 1)}
+                value={team.name}
+                onChange={(e) => editTeam(team.id, 'name', e.target.value)}
+                onKeyDown={suppressEnter}
+                required
+              />
+              <Stepper
+                label={`team ${index + 1} players`}
+                value={team.players}
+                min={minPlayersPerTeam}
+                // TODO: implement a dynamic max for players on each team
+                onChange={(v) => editTeam(team.id, 'players', v)}
+              />
+            </div>
+          ))
+            // TODO: implement way to remove team
+          }
+        </div>
 
-      <button className="btn btn--primary" type="button" onClick={() => updateConfig(newConfig)}>
-        {copy.gameSetup.startButton}
-      </button>
+        <button
+          className="btn btn--secondary"
+          type="button"
+          onClick={() => setTeamCount(newConfig.teams.length + 1)}
+        >
+          + {copy.gameSetup.addTeamButton}
+        </button>
+
+        <div className="field-row">
+          <span className="field-row__label">{copy.gameSetup.timerLabel}</span>
+          <Stepper
+            label="timer"
+            value={newConfig.timerSeconds}
+            min={minTimerSeconds}
+            max={maxTimerSeconds}
+            step={timerStepSeconds}
+            formatValue={(s) => `${s}s`}
+            onChange={(v) => editConfig('timerSeconds', v)}
+          />
+        </div>
+
+        <div className="field-row">
+          <span className="field-row__label">{copy.gameSetup.wordsPerPlayerLabel}</span>
+          <Stepper
+            label="words per player"
+            value={newConfig.wordsPerPlayer}
+            min={minWordsPerPlayer}
+            max={maxWordsPerPlayer}
+            onChange={(v) => editConfig('wordsPerPlayer', v)}
+          />
+        </div>
+
+        <button className="btn btn--primary" type="submit">
+          {copy.gameSetup.startButton}
+        </button>
+      </form>
     </section>
   )
 }
