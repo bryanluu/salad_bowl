@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Stepper from './Stepper'
 import { splitPlayersEvenly } from '../teams/splitPlayersEvenly'
+import { maxPlayersForTeam } from '../teams/maxPlayersForTeam'
 import { copy } from '../copy/en.ts'
 import type { GameConfig, Team } from '../types.ts'
 
@@ -108,7 +109,7 @@ function GameSetupScreen({ config, updateConfig }: { config: GameConfig, updateC
                 label={`team ${index + 1} players`}
                 value={team.players}
                 min={minPlayersPerTeam}
-                // TODO: implement a dynamic max for players on each team
+                max={maxPlayersForTeam(newConfig.totalPlayers, assignedPlayers, team.players)}
                 onChange={(v) => editTeam(team.id, 'players', v)}
               />
             </div>
