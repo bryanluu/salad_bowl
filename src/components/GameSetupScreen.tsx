@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import Stepper from './Stepper'
-import { splitPlayersEvenly } from '../teams/splitPlayersEvenly'
-import { maxPlayersForTeam } from '../teams/maxPlayersForTeam'
+import { maxPlayersForTeam, splitPlayersEvenly } from '../teams/roster'
 import { copy } from '../copy/en.ts'
 import type { GameConfig, Team } from '../types.ts'
 
