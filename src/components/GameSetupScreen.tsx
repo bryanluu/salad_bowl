@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Stepper from './Stepper'
+import { splitPlayersEvenly } from '../teams/splitPlayersEvenly'
 import { copy } from '../copy/en.ts'
 import type { GameConfig, Team } from '../types.ts'
 
@@ -12,17 +13,6 @@ const maxTimerSeconds = 300
 const timerStepSeconds = 15
 const minWordsPerPlayer = 1
 const maxWordsPerPlayer = 15
-
-// TODO: should also be called every time totalPlayers changes below assignedPlayers
-function splitPlayersEvenly(totalPlayers: number, teamCount: number, existingNames: string[]): Team[] {
-  const base = Math.floor(totalPlayers / teamCount)
-  const remainder = totalPlayers % teamCount
-  return Array.from({ length: teamCount }, (_, i) => ({
-    id: `team-${i + 1}`,
-    name: existingNames[i] ?? `Team ${i + 1}`,
-    players: base + (i < remainder ? 1 : 0),
-  }))
-}
 
 function GameSetupScreen({ config, updateConfig }: { config: GameConfig, updateConfig: (gc: GameConfig) => void }) {
   const [newConfig, setNewConfig] = useState<GameConfig>({ ...config })
