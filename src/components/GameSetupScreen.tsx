@@ -14,6 +14,38 @@ const timerStepSeconds = 15
 const minWordsPerPlayer = 1
 const maxWordsPerPlayer = 15
 
+type TeamRowProps = {
+  team: Team
+  index: number
+  totalPlayers: number
+  assignedPlayers: number
+  onEditTeam: <K extends keyof Team>(field: K, value: Team[K]) => void
+  onSuppressEnter: (event: React.KeyboardEvent<HTMLInputElement>) => void
+}
+
+function TeamRow({ team, index, totalPlayers, assignedPlayers, onEditTeam, onSuppressEnter }: TeamRowProps) {
+  return (
+    <div className="team-row">
+      <input
+        className="input"
+        type="text"
+        placeholder={copy.gameSetup.teamNamePlaceholder(index + 1)}
+        value={team.name}
+        onChange={(e) => onEditTeam('name', e.target.value)}
+        onKeyDown={onSuppressEnter}
+        required
+      />
+      <Stepper
+        label={`team ${index + 1} players`}
+        value={team.players}
+        min={minPlayersPerTeam}
+        max={maxPlayersForTeam(totalPlayers, assignedPlayers, team.players)}
+        onChange={(v) => onEditTeam('players', v)}
+      />
+    </div>
+  )
+}
+
 function GameSetupScreen({ config, updateConfig }: { config: GameConfig, updateConfig: (gc: GameConfig) => void }) {
   const [newConfig, setNewConfig] = useState<GameConfig>({ ...config })
 
@@ -97,26 +129,16 @@ function GameSetupScreen({ config, updateConfig }: { config: GameConfig, updateC
 
         <div className="teams">
           {newConfig.teams.map((team, index) => (
-            <div className="team-row" key={team.id}>
-              <input
-                className="input"
-                type="text"
-                placeholder={copy.gameSetup.teamNamePlaceholder(index + 1)}
-                value={team.name}
-                onChange={(e) => editTeam(team.id, 'name', e.target.value)}
-                onKeyDown={suppressEnter}
-                required
-              />
-              <Stepper
-                label={`team ${index + 1} players`}
-                value={team.players}
-                min={minPlayersPerTeam}
-                max={maxPlayersForTeam(newConfig.totalPlayers, assignedPlayers, team.players)}
-                onChange={(v) => editTeam(team.id, 'players', v)}
-              />
-            </div>
-          ))
-          }
+            <TeamRow
+              key={team.id}
+              team={team}
+              index={index}
+              totalPlayers={newConfig.totalPlayers}
+              assignedPlayers={assignedPlayers}
+              onEditTeam={(field, value) => editTeam(team.id, field, value)}
+              onSuppressEnter={suppressEnter}
+            />
+          ))}
         </div>
 
         <div className="field-row">
