@@ -8,7 +8,7 @@ import { validateRoster } from '../validation/validateRoster.ts'
 const minTeams = 2
 const minPlayers = 4
 const maxPlayers = 30
-const minTimerSeconds = 30
+const minTimerSeconds = 15
 const maxTimerSeconds = 300
 const timerStepSeconds = 15
 const minWordsPerPlayer = 1
@@ -75,8 +75,7 @@ function GameSetupScreen({ config, updateConfig }: { config: GameConfig, updateC
               max={maxPlayers}
               onChange={(v) => {
                 editConfig('totalPlayers', v)
-                if (v < assignedPlayers)
-                  setTeamCount(newConfig.teams.length)
+                setTeamCount(newConfig.teams.length)
               }}
             />
           </div>
@@ -117,18 +116,8 @@ function GameSetupScreen({ config, updateConfig }: { config: GameConfig, updateC
               />
             </div>
           ))
-            // TODO: implement way to remove team
           }
         </div>
-
-        <button
-          className="btn btn--secondary"
-          type="button"
-          onClick={() => setTeamCount(newConfig.teams.length + 1)}
-          disabled={newConfig.teams.length >= maxTeams}
-        >
-          + {copy.gameSetup.addTeamButton}
-        </button>
 
         <div className="field-row">
           <span className="field-row__label">{copy.gameSetup.timerLabel}</span>

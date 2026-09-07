@@ -1,7 +1,6 @@
 // src/copy/en.ts
 export const copy = {
   gameSetup: {
-    addTeamButton: 'Add team',
     setupStatus: (assigned: number, total: number) => `${assigned} out of ${total} players assigned`,
     startButton: 'Start game',
     teamNamePlaceholder: (teamNumber: number) => `Team ${teamNumber}'s name`,
