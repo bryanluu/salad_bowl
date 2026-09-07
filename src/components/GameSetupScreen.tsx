@@ -125,7 +125,7 @@ function GameSetupScreen({ config, updateConfig }: { config: GameConfig, updateC
           className="btn btn--secondary"
           type="button"
           onClick={() => setTeamCount(newConfig.teams.length + 1)}
-          disabled={config.teams.length >= maxTeams}
+          disabled={newConfig.teams.length >= maxTeams}
         >
           + {copy.gameSetup.addTeamButton}
         </button>
