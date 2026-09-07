@@ -73,7 +73,11 @@ function GameSetupScreen({ config, updateConfig }: { config: GameConfig, updateC
               value={newConfig.totalPlayers}
               min={minPlayers}
               max={maxPlayers}
-              onChange={(v) => editConfig('totalPlayers', v)}
+              onChange={(v) => {
+                editConfig('totalPlayers', v)
+                if (v < assignedPlayers)
+                  setTeamCount(newConfig.teams.length)
+              }}
             />
           </div>
           <p className="field-row__help">{copy.gameSetup.totalPlayersHelp(maxTeams, minPlayersPerTeam)}</p>
