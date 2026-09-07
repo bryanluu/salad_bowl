@@ -3,6 +3,7 @@ import Stepper from './Stepper'
 import { maxPlayersForTeam, splitPlayersEvenly } from '../teams/roster'
 import { copy } from '../copy/en.ts'
 import type { GameConfig, Team } from '../types.ts'
+import { validateRoster } from '../validation/validateRoster.ts'
 
 const minTeams = 2
 const minPlayers = 4
@@ -19,6 +20,7 @@ function GameSetupScreen({ config, updateConfig }: { config: GameConfig, updateC
 
   const maxTeams = Math.floor(newConfig.totalPlayers / minPlayersPerTeam)
   const assignedPlayers = newConfig.teams.reduce((sum, t) => sum + t.players, 0)
+  const validation = validateRoster(newConfig.teams, newConfig.totalPlayers)
 
   // Generic setter for any top-level GameConfig field.
   function editConfig<K extends keyof GameConfig>(field: K, value: GameConfig[K]) {
@@ -36,14 +38,13 @@ function GameSetupScreen({ config, updateConfig }: { config: GameConfig, updateC
   // Changing team count re-splits the roster, so it's not a plain field
   // set — it gets its own handler instead of going through editConfig.
   function setTeamCount(teamCount: number) {
-    // TODO: implement split only when autosplit enabled (or when form is fresh)
     setNewConfig(prev => ({
       ...prev,
       teams: splitPlayersEvenly(prev.totalPlayers, teamCount, prev.teams.map(t => t.name)),
     }))
   }
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     updateConfig(newConfig)
   }
@@ -121,6 +122,7 @@ function GameSetupScreen({ config, updateConfig }: { config: GameConfig, updateC
           className="btn btn--secondary"
           type="button"
           onClick={() => setTeamCount(newConfig.teams.length + 1)}
+          disabled={config.teams.length >= maxTeams}
         >
           + {copy.gameSetup.addTeamButton}
         </button>
@@ -149,7 +151,10 @@ function GameSetupScreen({ config, updateConfig }: { config: GameConfig, updateC
           />
         </div>
 
-        <button className="btn btn--primary" type="submit">
+        <button
+          className="btn btn--primary"
+          type="submit"
+          disabled={!validation.ok}>
           {copy.gameSetup.startButton}
         </button>
       </form>
