@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import Stepper from './Stepper'
-import { maxPlayersForTeam, splitPlayersEvenly } from '../teams/roster'
+import { minPlayersPerTeam, maxPlayersForTeam, splitPlayersEvenly } from '../teams/roster'
 import { copy } from '../copy/en.ts'
 import type { GameConfig, Team } from '../types.ts'
 import { validateRoster } from '../validation/validateRoster.ts'
@@ -8,7 +8,6 @@ import { validateRoster } from '../validation/validateRoster.ts'
 const minTeams = 2
 const minPlayers = 4
 const maxPlayers = 30
-const minPlayersPerTeam = 2 // also caps max teams at ⌊totalPlayers / 2⌋, per ticket
 const minTimerSeconds = 30
 const maxTimerSeconds = 300
 const timerStepSeconds = 15

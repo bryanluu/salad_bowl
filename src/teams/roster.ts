@@ -1,5 +1,7 @@
 import type { Team } from '../types.ts'
 
+export const minPlayersPerTeam = 2 // need 1 player to prompt, at least 1 player to guess
+
 // TODO: should also be called every time totalPlayers changes below assignedPlayers
 /** Split players evenly across teams; leftover players go to the first teams.
  *  Existing names are kept, with defaults filling any gaps. */
