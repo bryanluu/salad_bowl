@@ -1,10 +1,8 @@
 // src/hooks/useLocalWordSource.ts
 import { useState } from 'react'
-import { LocalWordSource } from '../wordSources/LocalWordSource'
-import type { Word } from '../types'
+import type { Word, WordSource } from '../types'
 
-export function useLocalWordSource(maxWords: number) {
-  const [source] = useState(() => new LocalWordSource(maxWords))
+export function useWordSource(source: WordSource) {
   const [words, setWords] = useState(source.getWords())
 
   const addWord = (word: Word): boolean => {
