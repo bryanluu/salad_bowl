@@ -75,26 +75,6 @@ describe('LocalWordSource', () => {
     })
   })
 
-  describe('pickWord', () => {
-    it('returns and removes a word from the bag', () => {
-      source.addWord('banana')
-      const picked = source.pickWord()
-      expect(picked).toBe('banana')
-      expect(source.count()).toBe(0)
-    })
-
-    it('only returns words that were in the bag', () => {
-      source.addWord('banana')
-      source.addWord('apple')
-      source.addWord('cherry')
-      expect(['banana', 'apple', 'cherry']).toContain(source.pickWord())
-    })
-
-    it('returns null when the bag is empty', () => {
-      expect(source.pickWord()).toBeNull()
-    })
-  })
-
   describe('getWords', () => {
     it('returns an empty array for a new source', () => {
       expect(source.getWords()).toEqual([])

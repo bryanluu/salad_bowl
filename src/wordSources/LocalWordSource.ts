@@ -33,13 +33,6 @@ export class LocalWordSource implements WordSource {
     return true
   }
 
-  pickWord(): Word | null {
-    if (this.words.length === 0) return null
-    const index = Math.floor(Math.random() * this.words.length)
-    const [word] = this.words.splice(index, 1)
-    return word
-  }
-
   getWords(): readonly Word[] {
     // ensures state refresh on every call since this is always a new array
     return [...this.words]
