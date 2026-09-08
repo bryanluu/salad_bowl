@@ -19,8 +19,8 @@ export class LocalWordSource implements WordSource {
     if (isShort) return false
     const isLong = (normalized.length > maxWordLength)
     if (isLong) return false
-
-    // TODO: guard against adding to a full bowl (read from config, to be wired later)
+    const isFull = (this.words.length >= this.maxWords)
+    if (isFull) return false
 
     this.words.push(word)
     return true
