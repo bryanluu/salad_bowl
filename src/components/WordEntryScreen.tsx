@@ -1,7 +1,6 @@
 import { useState } from "react"
-import { LocalWordSource } from '../wordSources/LocalWordSource'
 import { useWordSource } from "../hooks/useWordSource.ts"
-import { maxWordLength, type Word, minWordLength, type GameConfig } from "../types.ts"
+import { maxWordLength, type Word, minWordLength, type GameConfig, type WordSource } from "../types.ts"
 import { validateWord } from "../validation/validateWord.ts"
 import { validateBowl } from "../validation/validateBowl.ts"
 import { copy } from "../copy/en.ts"
@@ -17,13 +16,11 @@ function WordEntry({ word, onClick }: { word: Word, onClick: () => void }) {
   )
 }
 
-function WordEntryScreen({ config }: { config: GameConfig }) {
-  const maxWords = config.totalPlayers * config.wordsPerPlayer
-
-  const [source] = useState(() => new LocalWordSource(maxWords))
+function WordEntryScreen({ config, source }: { config: GameConfig, source: WordSource }) {
   const { words, addWord, removeWord, count } = useWordSource(source)
   const [candidateWord, setCandidateWord] = useState("")
 
+  const maxWords = config.totalPlayers * config.wordsPerPlayer
   const wordValidation = validateWord(candidateWord, words)
   const bowlValidation = validateBowl(words, maxWords)
 

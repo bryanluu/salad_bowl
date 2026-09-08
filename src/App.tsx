@@ -3,7 +3,8 @@ import WordEntryScreen from './components/WordEntryScreen'
 import GameSetupScreen from './components/GameSetupScreen'
 import GameplayScreen from './components/GameplayScreen'
 import ScoreboardScreen from './components/ScoreboardScreen'
-import type { ScreenId, ScreenNavItem, GameConfig } from './types'
+import { LocalWordSource } from './wordSources/LocalWordSource'
+import type { ScreenId, ScreenNavItem, GameConfig, WordSource } from './types'
 
 const screens: ScreenNavItem[] = [
   { id: 'game-setup', label: 'Game setup' },
@@ -12,12 +13,18 @@ const screens: ScreenNavItem[] = [
   { id: 'scoreboard', label: 'Scoreboard' },
 ]
 
-function renderScreen(screenId: ScreenId, config: GameConfig, updateConfig: (newConfig: GameConfig) => void) {
+type ScreenProps = {
+  source: WordSource
+  config: GameConfig
+  updateConfig: (newConfig: GameConfig) => void
+}
+
+function renderScreen(screenId: ScreenId, { source, config, updateConfig }: ScreenProps) {
   switch (screenId) {
     case 'game-setup':
       return <GameSetupScreen config={config} updateConfig={updateConfig} />
     case 'word-entry':
-      return <WordEntryScreen config={config} />
+      return <WordEntryScreen config={config} source={source} />
     case 'gameplay':
       return <GameplayScreen />
     case 'scoreboard':
@@ -38,6 +45,7 @@ const defaultGameConfig: GameConfig = {
 function App() {
   const [activeScreen, setActiveScreen] = useState<ScreenId>('game-setup')
   const [gameConfig, setGameConfig] = useState<GameConfig>(defaultGameConfig)
+  const [source] = useState(() => new LocalWordSource(gameConfig.totalPlayers * gameConfig.wordsPerPlayer))
 
   function handleUpdateConfig(newConfig: GameConfig) {
     setGameConfig(newConfig)
@@ -63,7 +71,7 @@ function App() {
           ))}
         </nav>
 
-        {renderScreen(activeScreen, gameConfig, handleUpdateConfig)}
+        {renderScreen(activeScreen, { source, config: gameConfig, updateConfig: handleUpdateConfig })}
       </div>
     </main>
   )
