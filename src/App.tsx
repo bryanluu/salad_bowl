@@ -3,7 +3,7 @@ import WordEntryScreen from './components/WordEntryScreen'
 import GameSetupScreen from './components/GameSetupScreen'
 import GameplayScreen from './components/GameplayScreen'
 import ScoreboardScreen from './components/ScoreboardScreen'
-import type { ScreenId, ScreenNavItem } from './types'
+import type { ScreenId, ScreenNavItem, GameConfig } from './types'
 
 const screens: ScreenNavItem[] = [
   { id: 'word-entry', label: 'Word entry' },
@@ -12,12 +12,12 @@ const screens: ScreenNavItem[] = [
   { id: 'scoreboard', label: 'Scoreboard' },
 ]
 
-function renderScreen(screenId: ScreenId) {
+function renderScreen(screenId: ScreenId, config: GameConfig, updateConfig: (newConfig: GameConfig) => void) {
   switch (screenId) {
     case 'word-entry':
-      return <WordEntryScreen />
+      return <WordEntryScreen config={config} />
     case 'game-setup':
-      return <GameSetupScreen />
+      return <GameSetupScreen config={config} updateConfig={updateConfig} />
     case 'gameplay':
       return <GameplayScreen />
     case 'scoreboard':
@@ -25,8 +25,23 @@ function renderScreen(screenId: ScreenId) {
   }
 }
 
+const defaultGameConfig: GameConfig = {
+  totalPlayers: 4,
+  teams: [
+    { id: 'team-1', name: 'Team 1', players: 2 },
+    { id: 'team-2', name: 'Team 2', players: 2 },
+  ],
+  timerSeconds: 60,
+  wordsPerPlayer: 5,
+}
+
 function App() {
   const [activeScreen, setActiveScreen] = useState<ScreenId>('word-entry')
+  const [gameConfig, setGameConfig] = useState<GameConfig>(defaultGameConfig)
+
+  function handleUpdateConfig(newConfig: GameConfig) {
+    setGameConfig(newConfig)
+  }
 
   return (
     <main className="app">
@@ -48,7 +63,7 @@ function App() {
           ))}
         </nav>
 
-        {renderScreen(activeScreen)}
+        {renderScreen(activeScreen, gameConfig, handleUpdateConfig)}
       </div>
     </main>
   )

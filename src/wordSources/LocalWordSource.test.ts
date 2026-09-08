@@ -6,7 +6,7 @@ describe('LocalWordSource', () => {
   let source: LocalWordSource
 
   beforeEach(() => {
-    source = new LocalWordSource()
+    source = new LocalWordSource(10)
   })
 
   describe('addWord', () => {
@@ -35,6 +35,22 @@ describe('LocalWordSource', () => {
     it('rejects a long word', () => {
       expect(source.addWord('anunreachablepointattheendofaneverendinglinethatrepresentsanunreachablepoint...')).toBe(false)
       expect(source.count()).toBe(0)
+    })
+
+    it('rejects a word once the bowl is full (at maxWords)', () => {
+      const bounded = new LocalWordSource(2)
+      expect(bounded.addWord('banana')).toBe(true)
+      expect(bounded.addWord('apple')).toBe(true)
+      expect(bounded.addWord('cherry')).toBe(false) // bowl full at 2
+      expect(bounded.count()).toBe(2)
+      expect(bounded.getWords()).toEqual(['banana', 'apple'])
+    })
+
+    it('accepts words up to the capacity limit', () => {
+      const bounded = new LocalWordSource(1)
+      expect(bounded.addWord('banana')).toBe(true)
+      expect(bounded.addWord('apple')).toBe(false)
+      expect(bounded.count()).toBe(1)
     })
   })
 

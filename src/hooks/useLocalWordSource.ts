@@ -3,8 +3,8 @@ import { useState } from 'react'
 import { LocalWordSource } from '../wordSources/LocalWordSource'
 import type { Word } from '../types'
 
-export function useLocalWordSource() {
-  const [source] = useState(() => new LocalWordSource())
+export function useLocalWordSource(maxWords: number) {
+  const [source] = useState(() => new LocalWordSource(maxWords))
   const [words, setWords] = useState(source.getWords())
 
   const addWord = (word: Word): boolean => {
