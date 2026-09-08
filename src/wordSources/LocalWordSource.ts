@@ -4,6 +4,11 @@ import { normalizeWord } from '../words/normalizeWord'
 
 export class LocalWordSource implements WordSource {
   private words: Word[] = []
+  maxWords: number
+
+  constructor(maxWords: number) {
+    this.maxWords = maxWords
+  }
 
   addWord(word: Word): boolean {
     const normalized = normalizeWord(word)

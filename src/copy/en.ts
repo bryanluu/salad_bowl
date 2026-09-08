@@ -33,6 +33,8 @@ export const copy = {
     errors: {
       duplicate: 'Already in the bowl.',
       empty: 'Type something first — even a quip counts.',
+      'too-many-words': 'Too many prompts, please remove some.',
+      'not-enough-words': 'Please add more prompts.'
     },
     placeholder: 'Enter something for your team to guess',
     removeLabel: 'Remove prompt',

@@ -11,6 +11,8 @@ export const minWordLength = 3
 export const maxWordLength = 50
 
 export interface WordSource {
+  // The maximum number of words this bowl can hold
+  maxWords: number
   // Adds a word to the bowl. Returns false if rejected (e.g. duplicate, empty).
   addWord(word: Word): boolean
   // Removes a word from the bowl. Returns false if the word wasn't found.

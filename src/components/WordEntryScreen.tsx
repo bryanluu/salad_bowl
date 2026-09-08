@@ -2,6 +2,7 @@ import { useState } from "react"
 import { useLocalWordSource } from "../hooks/useLocalWordSource"
 import { maxWordLength, type Word, minWordLength, type GameConfig } from "../types.ts"
 import { validateWord } from "../validation/validateWord.ts"
+import { validateWords } from "../validation/validateWords.ts"
 import { copy } from "../copy/en.ts"
 
 function WordEntry({ word, onClick }: { word: Word, onClick: () => void }) {
@@ -16,11 +17,13 @@ function WordEntry({ word, onClick }: { word: Word, onClick: () => void }) {
 }
 
 function WordEntryScreen({ config }: { config: GameConfig }) {
-  const { words, addWord, removeWord, count } = useLocalWordSource()
+  const maxWords = config.totalPlayers * config.wordsPerPlayer
+
+  const { words, addWord, removeWord, count } = useLocalWordSource(maxWords)
   const [candidateWord, setCandidateWord] = useState("")
 
-  const validation = validateWord(candidateWord, words)
-  const totalWords = config.totalPlayers * config.wordsPerPlayer
+  const wordValidation = validateWord(candidateWord, words)
+  const bowlValidation = validateWords(words, maxWords)
 
   function handleWordEdit(event: React.ChangeEvent<HTMLInputElement>) {
     const candidate: Word = event.currentTarget.value
@@ -56,8 +59,8 @@ function WordEntryScreen({ config }: { config: GameConfig }) {
           type="text"
           placeholder={copy.wordEntry.placeholder}
           onChange={handleWordEdit}
-          aria-describedby={!validation.ok ? "word-input-error" : undefined}
-          aria-invalid={!validation.ok}
+          aria-describedby={!wordValidation.ok ? "word-input-error" : undefined}
+          aria-invalid={!wordValidation.ok}
           value={candidateWord}
           minLength={minWordLength}
           maxLength={maxWordLength}
@@ -68,15 +71,15 @@ function WordEntryScreen({ config }: { config: GameConfig }) {
           type="submit"
           aria-label={copy.wordEntry.addButton}
           onClick={handleAddWord}
-          disabled={!validation.ok}
+          disabled={!wordValidation.ok}
         >
           +
         </button>
       </form>
 
-      {!validation.ok && candidateWord !== "" && (
+      {!wordValidation.ok && wordValidation.reason !== 'empty' && (
         <p className="input-add__error" id="word-input-error" role="status">
-          {copy.wordEntry.errors[validation.reason]}
+          {copy.wordEntry.errors[wordValidation.reason]}
         </p>
       )}
 
@@ -84,9 +87,19 @@ function WordEntryScreen({ config }: { config: GameConfig }) {
         {words.map((word) => <WordEntry key={word} word={word} onClick={handleRemoveWord(word)} />)}
       </ul>
 
-      <p className="counter">{copy.wordEntry.counter(count, totalWords)}</p>
+      <p className="counter">{copy.wordEntry.counter(count, maxWords)}</p>
 
-      <button className="btn btn--primary" type="button">
+      {!bowlValidation.ok && (
+        <p className="done__error" id="done-error" role="status">
+          {copy.wordEntry.errors[bowlValidation.reason]}
+        </p>
+      )}
+
+      <button
+        className="btn btn--primary"
+        type="button"
+        disabled={!bowlValidation.ok}
+        aria-describedby={!wordValidation.ok ? 'done-error' : undefined}>
         {copy.wordEntry.doneButton}
       </button>
     </section>
