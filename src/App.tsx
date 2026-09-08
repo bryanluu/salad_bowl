@@ -6,18 +6,18 @@ import ScoreboardScreen from './components/ScoreboardScreen'
 import type { ScreenId, ScreenNavItem, GameConfig } from './types'
 
 const screens: ScreenNavItem[] = [
-  { id: 'word-entry', label: 'Word entry' },
   { id: 'game-setup', label: 'Game setup' },
+  { id: 'word-entry', label: 'Word entry' },
   { id: 'gameplay', label: 'Turn / gameplay' },
   { id: 'scoreboard', label: 'Scoreboard' },
 ]
 
 function renderScreen(screenId: ScreenId, config: GameConfig, updateConfig: (newConfig: GameConfig) => void) {
   switch (screenId) {
-    case 'word-entry':
-      return <WordEntryScreen config={config} />
     case 'game-setup':
       return <GameSetupScreen config={config} updateConfig={updateConfig} />
+    case 'word-entry':
+      return <WordEntryScreen config={config} />
     case 'gameplay':
       return <GameplayScreen />
     case 'scoreboard':
@@ -36,7 +36,7 @@ const defaultGameConfig: GameConfig = {
 }
 
 function App() {
-  const [activeScreen, setActiveScreen] = useState<ScreenId>('word-entry')
+  const [activeScreen, setActiveScreen] = useState<ScreenId>('game-setup')
   const [gameConfig, setGameConfig] = useState<GameConfig>(defaultGameConfig)
 
   function handleUpdateConfig(newConfig: GameConfig) {
