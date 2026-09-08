@@ -71,7 +71,7 @@ function WordEntryScreen({ config }: { config: GameConfig }) {
           type="submit"
           aria-label={copy.wordEntry.addButton}
           onClick={handleAddWord}
-          disabled={!wordValidation.ok}
+          disabled={!wordValidation.ok || (count >= maxWords)}
         >
           +
         </button>
