@@ -2,7 +2,7 @@ import { useState } from "react"
 import { useLocalWordSource } from "../hooks/useLocalWordSource"
 import { maxWordLength, type Word, minWordLength, type GameConfig } from "../types.ts"
 import { validateWord } from "../validation/validateWord.ts"
-import { validateBowl } from "../validation/validateWords.ts"
+import { validateBowl } from "../validation/validateBowl.ts"
 import { copy } from "../copy/en.ts"
 
 function WordEntry({ word, onClick }: { word: Word, onClick: () => void }) {
