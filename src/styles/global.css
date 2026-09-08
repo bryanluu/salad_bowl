@@ -352,6 +352,11 @@ body {
   color: var(--color-text-muted);
 }
 
+.setup-error {
+  font-size: var(--fs-xs);
+  color: var(--color-danger);
+}
+
 /* -------------------------------------------------------------------------
    Screen: Turn / gameplay
    ------------------------------------------------------------------------- */

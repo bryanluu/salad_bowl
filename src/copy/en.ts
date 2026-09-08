@@ -1,6 +1,14 @@
 // src/copy/en.ts
 export const copy = {
   gameSetup: {
+    errors: {
+      'duplicate-team-name': 'Team names must be unique.',
+      'insufficient-players-per-team': 'Each team needs at least 2 players.',
+      'invalid-configuration': 'Add at least one team and one player.',
+      'invalid-team-name': 'Give every team a name.',
+      'too-many-players': 'You have more players on teams than in total.',
+      'unassigned-players': 'Put every player on a team to start.',
+    },
     setupStatus: (assigned: number, total: number) => `${assigned} out of ${total} players assigned`,
     startButton: 'Start game',
     teamNamePlaceholder: (teamNumber: number) => `Team ${teamNumber}'s name`,

@@ -165,10 +165,17 @@ function GameSetupScreen({ config, updateConfig }: { config: GameConfig, updateC
           />
         </div>
 
+        {!validation.ok && (
+          <p className="setup-error" id="game-setup-error" role="status">
+            {copy.gameSetup.errors[validation.reason]}
+          </p>
+        )}
+
         <button
           className="btn btn--primary"
           type="submit"
-          disabled={!validation.ok}>
+          disabled={!validation.ok}
+          aria-describedby={!validation.ok ? 'game-setup-error' : undefined}>
           {copy.gameSetup.startButton}
         </button>
       </form>
