@@ -8,7 +8,7 @@ export type Rejection =
 
 export type ValidationResult = Confirmation | Rejection
 
-export function validateWords(words: readonly Word[], maxWords: number): ValidationResult {
+export function validateBowl(words: readonly Word[], maxWords: number): ValidationResult {
   if (words.length < maxWords) {
     return { ok: false, reason: 'not-enough-words' }
   }

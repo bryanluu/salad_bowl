@@ -2,7 +2,7 @@ import { useState } from "react"
 import { useLocalWordSource } from "../hooks/useLocalWordSource"
 import { maxWordLength, type Word, minWordLength, type GameConfig } from "../types.ts"
 import { validateWord } from "../validation/validateWord.ts"
-import { validateWords } from "../validation/validateWords.ts"
+import { validateBowl } from "../validation/validateWords.ts"
 import { copy } from "../copy/en.ts"
 
 function WordEntry({ word, onClick }: { word: Word, onClick: () => void }) {
@@ -23,7 +23,7 @@ function WordEntryScreen({ config }: { config: GameConfig }) {
   const [candidateWord, setCandidateWord] = useState("")
 
   const wordValidation = validateWord(candidateWord, words)
-  const bowlValidation = validateWords(words, maxWords)
+  const bowlValidation = validateBowl(words, maxWords)
 
   function handleWordEdit(event: React.ChangeEvent<HTMLInputElement>) {
     const candidate: Word = event.currentTarget.value
