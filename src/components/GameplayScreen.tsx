@@ -6,13 +6,17 @@ import { copy } from "../copy/en"
 type Bowl = Word[]
 type Round = 1 | 2 | 3
 type TimeInSeconds = number
-type Turn = { teamIdx: number, playerId: number }
+type Turn = { teamIdx: number }
 type BowlState = { bowl: Bowl; currentWord: Word | undefined }
 
 function GameplayScreen({ config, source }: { config: GameConfig, source: WordSource }) {
   const [round, setRound] = useState<Round>(1)
   const [timeLeft, setTimeLeft] = useState<TimeInSeconds>(config.timerSeconds)
-  const [turn, setTurn] = useState<Turn>({ teamIdx: 0, playerId: 0 })
+  const [turn, setTurn] = useState<Turn>(() => {
+    // TODO: shuffle the order of the teams so every game is different
+    const idx = Math.floor(Math.random() * config.teams.length)
+    return { teamIdx: idx }
+  })
   const [wonWords, setWonWords] = useState<Record<string, Word[]>>({})
 
   function initBowlState(words: Word[]): BowlState {
@@ -31,18 +35,18 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   }
 
+  // TODO: switch players when timer is done
   function moveToNextPlayer() {
     const nextTeamIdx = (turn.teamIdx + 1) % config.teams.length
-    const nextPlayerId = (turn.playerId + 1) % config.totalPlayers
-    setTurn({ teamIdx: nextTeamIdx, playerId: nextPlayerId })
+    setTurn({ teamIdx: nextTeamIdx })
   }
 
   function skipWord() {
     if (!currentWord) return
 
+    // TODO: pick word so that it never picks the same as current word
     const { word, remaining } = pickWord([...bowl, currentWord])
     setBowlState({ bowl: remaining, currentWord: word })
-    moveToNextPlayer()
   }
 
   function winWord(team: Team) {
@@ -52,8 +56,9 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
     setWonWords({ ...wonWords, [team.id]: [...teamWords, currentWord] })
     const { word, remaining } = pickWord(bowl)
     setBowlState({ bowl: remaining, currentWord: word })
-    moveToNextPlayer()
   }
+
+  // TODO: when timer is done or bowl is empty, moveToNextPlayer or change round
 
   return (
     <section className="screen" aria-label={copy.gameplay.title}>
