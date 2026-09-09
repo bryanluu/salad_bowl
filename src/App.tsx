@@ -40,6 +40,7 @@ const defaultGameConfig: GameConfig = {
   ],
   timerSeconds: 60,
   wordsPerPlayer: 5,
+  shuffleTeamOrder: true,
 }
 
 function App() {

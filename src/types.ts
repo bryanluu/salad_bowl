@@ -34,4 +34,5 @@ export interface GameConfig {
   teams: Team[]
   timerSeconds: number
   wordsPerPlayer: number
+  shuffleTeamOrder: boolean
 }

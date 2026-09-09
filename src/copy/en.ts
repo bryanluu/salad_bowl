@@ -10,6 +10,7 @@ export const copy = {
       'unassigned-players': 'Put every player on a team to start.',
     },
     setupStatus: (assigned: number, total: number) => `${assigned} out of ${total} players assigned`,
+    shuffleTeamOrderLabel: 'Random order?',
     startButton: 'Start game',
     teamNamePlaceholder: (teamNumber: number) => `Team ${teamNumber}'s name`,
     timerLabel: 'Timer',
