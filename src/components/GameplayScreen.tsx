@@ -13,7 +13,9 @@ type BowlState = { bowl: Bowl; currentWord: Word | undefined }
 function GameplayScreen({ config, source }: { config: GameConfig, source: WordSource }) {
   const [round, setRound] = useState<Round>(1)
   const [timeLeft, setTimeLeft] = useState<TimeInSeconds>(config.timerSeconds)
-  const [teams] = useState<Team[]>(() => shuffle(config.teams))
+  const [teams] = useState<Team[]>(() => {
+    return config.shuffleTeamOrder ? shuffle(config.teams) : [...config.teams]
+  })
   const [turn, setTurn] = useState<Turn>(() => {
     return { idx: 0, team: teams[0] }
   })
