@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { type GameConfig, type Word, type WordSource, type Team } from "../types"
-import { pickWord } from "../words/pickWord"
+import { pickWord, switchWord } from "../words/pickWord"
 import { shuffle } from "../teams/shuffle"
 import { copy } from "../copy/en"
 
@@ -57,10 +57,8 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
   function skipWord() {
     if (!currentWord) return
 
-    // pick a new word from the bowl,
-    // then put the previous word back into the bowl
-    const { word, remaining } = pickWord(bowl)
-    setBowlState({ bowl: [...remaining, currentWord], currentWord: word })
+    const { word, remaining } = switchWord(currentWord, bowl)
+    setBowlState({ bowl: remaining, currentWord: word })
   }
 
   function endRound() {

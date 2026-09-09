@@ -8,3 +8,13 @@ export function pickWord(words: readonly Word[]): { word: Word | undefined; rema
   const remaining = [...words.slice(0, index), ...words.slice(index + 1)]
   return { word: words[index], remaining }
 }
+
+// Pure function that captures switchWord logic
+// Picks a new word from the bowl, that's different from the currentWord, or returning undefined if the bowl is already empty
+// Returns the previous picked word to the bowl
+export function switchWord(currentWord: Word, bowl: readonly Word[]): { word: Word | undefined; remaining: Word[] } {
+  // pick a new word from the bowl,
+  // then put the previous word back into the bowl
+  const { word: newWord, remaining } = pickWord(bowl)
+  return { word: newWord, remaining: [...remaining, currentWord] }
+}
