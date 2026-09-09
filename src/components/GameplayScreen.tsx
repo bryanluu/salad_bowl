@@ -63,6 +63,12 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
 
   return (
     <section className="screen" aria-label={copy.gameplay.title}>
+      <pre>
+        {
+          // TODO: remove debug 
+          JSON.stringify(teams, null, "  ")
+        }
+      </pre>
       <div className="turn-meta">
         <span className="badge">{copy.gameplay.roundLabel(round, copy.gameplay.round[round].label)}</span>
         <span className="timer">{formatTime(timeLeft)}</span>
