@@ -7,15 +7,22 @@ type Bowl = Word[]
 type Round = 1 | 2 | 3
 type TimeInSeconds = number
 type Turn = { teamIdx: number, playerId: number }
+type BowlState = { bowl: Bowl; currentWord: Word | undefined }
 
 function GameplayScreen({ config, source }: { config: GameConfig, source: WordSource }) {
-  const [bowl, setBowl] = useState<Bowl>([...source.getWords()])
   const [round, setRound] = useState<Round>(1)
   const [timeLeft, setTimeLeft] = useState<TimeInSeconds>(config.timerSeconds)
   const [turn, setTurn] = useState<Turn>({ teamIdx: 0, playerId: 0 })
   const [wonWords, setWonWords] = useState<Record<string, Word[]>>({})
 
-  const word = pickWord(bowl)
+  function initBowlState(words: Word[]): BowlState {
+    const { word, remaining } = pickWord(words)
+    return { bowl: remaining, currentWord: word }
+  }
+
+  const [{ bowl, currentWord }, setBowlState] =
+    useState<BowlState>(() => initBowlState([...source.getWords()]))
+
   const team = config.teams[turn.teamIdx]
 
   function formatTime(totalSeconds: number): string {
@@ -24,27 +31,29 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   }
 
-  function skipWord() {
-    if (!word) return
-
-    setBowl([...bowl, word])
-    moveToNextPlayer()
-  }
-
-  function winWord(team: Team) {
-    if (!word) return
-
-    const teamWords: Word[] = wonWords[team.id] ?? []
-    setWonWords({ ...wonWords, [team.id]: [...teamWords, word] })
-    moveToNextPlayer()
-  }
-
   function moveToNextPlayer() {
     const nextTeamIdx = (turn.teamIdx + 1) % config.teams.length
     const nextPlayerId = (turn.playerId + 1) % config.totalPlayers
     setTurn({ teamIdx: nextTeamIdx, playerId: nextPlayerId })
   }
 
+  function skipWord() {
+    if (!currentWord) return
+
+    const { word, remaining } = pickWord([...bowl, currentWord])
+    setBowlState({ bowl: remaining, currentWord: word })
+    moveToNextPlayer()
+  }
+
+  function winWord(team: Team) {
+    if (!currentWord) return
+
+    const teamWords = wonWords[team.id] ?? []
+    setWonWords({ ...wonWords, [team.id]: [...teamWords, currentWord] })
+    const { word, remaining } = pickWord(bowl)
+    setBowlState({ bowl: remaining, currentWord: word })
+    moveToNextPlayer()
+  }
 
   return (
     <section className="screen" aria-label={copy.gameplay.title}>
@@ -56,7 +65,7 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
       <p className="turn-indicator">{copy.gameplay.turnIndicator(team.name)}</p>
 
       <div className="word-card">
-        <p className="word-card__word">{word}</p>
+        <p className="word-card__word">{currentWord}</p>
       </div>
 
       <div className="turn-controls">
@@ -78,7 +87,7 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
       </div>
 
       <p className="words-left">{
-        copy.gameplay.wordsLeft(bowl.length) // TODO: fix bug where wordsLeft is incorrect
+        copy.gameplay.wordsLeft(bowl.length + (currentWord ? 1 : 0))
       }</p>
     </section>
   )
