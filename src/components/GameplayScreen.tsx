@@ -7,7 +7,7 @@ import { copy } from "../copy/en"
 type Bowl = Word[]
 type Round = 1 | 2 | 3
 type TimeInSeconds = number
-type Turn = { idx: number, team: Team }
+type Turn = number
 type BowlState = { bowl: Bowl; currentWord: Word | undefined }
 
 function GameplayScreen({ config, source }: { config: GameConfig, source: WordSource }) {
@@ -16,9 +16,7 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
   const [teams] = useState<Team[]>(() => {
     return config.shuffleTeamOrder ? shuffle(config.teams) : [...config.teams]
   })
-  const [turn, setTurn] = useState<Turn>(() => {
-    return { idx: 0, team: teams[0] }
-  })
+  const [turn, setTurn] = useState<Turn>(0)
   const [wonWords, setWonWords] = useState<Record<string, Word[]>>({})
 
   function initBowlState(words: Word[]): BowlState {
@@ -29,16 +27,29 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
   const [{ bowl, currentWord }, setBowlState] =
     useState<BowlState>(() => initBowlState([...source.getWords()]))
 
+  const team = config.teams[turn]
+
+  let timer: number | null = null
+  if (currentWord) {
+    if (timeLeft > 0) {
+      timer = setTimeout(() => {
+        setTimeLeft(timeLeft - 1)
+      }, 1000)
+    } else {
+      moveToNextPlayer()
+      setTimeLeft(config.timerSeconds)
+    }
+  }
+
   function formatTime(totalSeconds: number): string {
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   }
 
-  // TODO: switch players when timer is done
   function moveToNextPlayer() {
-    const nextTeamIdx = (turn.idx + 1) % teams.length
-    setTurn({ idx: nextTeamIdx, team: teams[nextTeamIdx] })
+    const nextTurn = (turn + 1) % teams.length
+    setTurn(nextTurn)
   }
 
   function skipWord() {
@@ -50,6 +61,12 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
     setBowlState({ bowl: [...remaining, currentWord], currentWord: word })
   }
 
+  function endRound() {
+    if (timer !== null)
+      clearTimeout(timer)
+    // TODO: end round and transition screen
+  }
+
   function winWord(team: Team) {
     if (!currentWord) return
 
@@ -57,16 +74,17 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
     setWonWords({ ...wonWords, [team.id]: [...teamWords, currentWord] })
     const { word, remaining } = pickWord(bowl)
     setBowlState({ bowl: remaining, currentWord: word })
+    if (!word) {
+      endRound()
+    }
   }
-
-  // TODO: when timer is done or bowl is empty, moveToNextPlayer or change round
 
   return (
     <section className="screen" aria-label={copy.gameplay.title}>
       <pre>
         {
           // TODO: remove debug 
-          JSON.stringify(teams, null, "  ")
+          JSON.stringify(turn, null, "  ")
         }
       </pre>
       <div className="turn-meta">
@@ -74,7 +92,7 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
         <span className="timer">{formatTime(timeLeft)}</span>
       </div>
 
-      <p className="turn-indicator">{copy.gameplay.turnIndicator(turn.team.name)}</p>
+      <p className="turn-indicator">{copy.gameplay.turnIndicator(team.name)}</p>
 
       <div className="word-card">
         <p className="word-card__word">{currentWord}</p>
@@ -93,7 +111,7 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
         <button
           className="turn-controls__side turn-controls__side--pass"
           type="button"
-          onClick={() => winWord(turn.team)}>
+          onClick={() => winWord(team)}>
           {copy.gameplay.gotItButton} <span aria-hidden="true">&rarr;</span>
         </button>
       </div>
