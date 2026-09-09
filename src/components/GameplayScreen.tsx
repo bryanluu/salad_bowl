@@ -44,9 +44,10 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
   function skipWord() {
     if (!currentWord) return
 
-    // TODO: pick word so that it never picks the same as current word
-    const { word, remaining } = pickWord([...bowl, currentWord])
-    setBowlState({ bowl: remaining, currentWord: word })
+    // pick a new word from the bowl,
+    // then put the previous word back into the bowl
+    const { word, remaining } = pickWord(bowl)
+    setBowlState({ bowl: [...remaining, currentWord], currentWord: word })
   }
 
   function winWord(team: Team) {
