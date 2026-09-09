@@ -1,21 +1,21 @@
 import { useState } from "react"
 import { type GameConfig, type Word, type WordSource, type Team } from "../types"
 import { pickWord } from "../words/pickWord"
+import { shuffle } from "../teams/shuffle"
 import { copy } from "../copy/en"
 
 type Bowl = Word[]
 type Round = 1 | 2 | 3
 type TimeInSeconds = number
-type Turn = { teamIdx: number }
+type Turn = { idx: number, team: Team }
 type BowlState = { bowl: Bowl; currentWord: Word | undefined }
 
 function GameplayScreen({ config, source }: { config: GameConfig, source: WordSource }) {
   const [round, setRound] = useState<Round>(1)
   const [timeLeft, setTimeLeft] = useState<TimeInSeconds>(config.timerSeconds)
+  const [teams] = useState<Team[]>(() => shuffle(config.teams))
   const [turn, setTurn] = useState<Turn>(() => {
-    // TODO: shuffle the order of the teams so every game is different
-    const idx = Math.floor(Math.random() * config.teams.length)
-    return { teamIdx: idx }
+    return { idx: 0, team: teams[0] }
   })
   const [wonWords, setWonWords] = useState<Record<string, Word[]>>({})
 
@@ -27,8 +27,6 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
   const [{ bowl, currentWord }, setBowlState] =
     useState<BowlState>(() => initBowlState([...source.getWords()]))
 
-  const team = config.teams[turn.teamIdx]
-
   function formatTime(totalSeconds: number): string {
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
@@ -37,8 +35,8 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
 
   // TODO: switch players when timer is done
   function moveToNextPlayer() {
-    const nextTeamIdx = (turn.teamIdx + 1) % config.teams.length
-    setTurn({ teamIdx: nextTeamIdx })
+    const nextTeamIdx = (turn.idx + 1) % teams.length
+    setTurn({ idx: nextTeamIdx, team: teams[nextTeamIdx] })
   }
 
   function skipWord() {
@@ -68,7 +66,7 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
         <span className="timer">{formatTime(timeLeft)}</span>
       </div>
 
-      <p className="turn-indicator">{copy.gameplay.turnIndicator(team.name)}</p>
+      <p className="turn-indicator">{copy.gameplay.turnIndicator(turn.team.name)}</p>
 
       <div className="word-card">
         <p className="word-card__word">{currentWord}</p>
@@ -87,7 +85,7 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
         <button
           className="turn-controls__side turn-controls__side--pass"
           type="button"
-          onClick={() => winWord(team)}>
+          onClick={() => winWord(turn.team)}>
           {copy.gameplay.gotItButton} <span aria-hidden="true">&rarr;</span>
         </button>
       </div>
