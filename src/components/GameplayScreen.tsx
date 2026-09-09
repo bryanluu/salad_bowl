@@ -11,7 +11,7 @@ type Turn = number
 type BowlState = { bowl: Bowl; currentWord: Word | undefined }
 
 function GameplayScreen({ config, source }: { config: GameConfig, source: WordSource }) {
-  const [round, setRound] = useState<Round>(1)
+  const [round] = useState<Round>(1)
   const [timeLeft, setTimeLeft] = useState<TimeInSeconds>(config.timerSeconds)
   const [teams] = useState<Team[]>(() => {
     return config.shuffleTeamOrder ? shuffle(config.teams) : [...config.teams]
@@ -27,7 +27,9 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
   const [{ bowl, currentWord }, setBowlState] =
     useState<BowlState>(() => initBowlState([...source.getWords()]))
 
-  const team = config.teams[turn]
+  // Display order follows the (possibly shuffled) team order, not the
+  // original config order — the two can differ once shuffleTeamOrder is set.
+  const team = teams[turn]
 
   let timer: number | null = null
   if (currentWord) {

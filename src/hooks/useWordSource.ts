@@ -17,12 +17,6 @@ export function useWordSource(source: WordSource) {
     return success
   }
 
-  const pickWord = (): Word | null => {
-    const picked = source.pickWord()
-    if (picked !== null) setWords(source.getWords())
-    return picked
-  }
-
-  return { words, addWord, removeWord, pickWord, count: words.length }
+  return { words, addWord, removeWord, count: words.length }
 }
 
