@@ -20,6 +20,11 @@ export const copy = {
   },
   gameplay: {
     gotItButton: 'Got it!',
+    round: {
+      1: { label: 'Taboo', instructions: 'Describe the prompt without saying it.' },
+      2: { label: 'Charades', instructions: 'Act out the prompt!' },
+      3: { label: 'Password', instructions: "Say a single-word clue that is not the prompt." }
+    },
     roundLabel: (number: number, type: string) => `Round ${number} · ${type}`,
     skipButton: 'Skip',
     title: 'Current turn',
