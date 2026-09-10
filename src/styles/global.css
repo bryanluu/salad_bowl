@@ -469,9 +469,32 @@ body {
 }
 
 .turn-controls {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: var(--space-3) var(--space-5);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+}
+
+.turn-controls__knob {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: 50%;
+  box-shadow: var(--shadow-card);
 }
 
 .turn-controls__side {
