@@ -79,7 +79,7 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
   // doesn't advance turns pointlessly.
   function handleTimerExpiry() {
     if (currentWord) {
-      moveToNextPlayer()
+      endTurn()
       resetTimer()
       startTimer()
     }
@@ -129,7 +129,7 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
   // Advances turn order by one, wrapping back to the first team. Team order
   // was fixed once at mount (possibly shuffled), so this only ever walks
   // through that same fixed sequence.
-  function moveToNextPlayer() {
+  function endTurn() {
     const nextTurn = (turn + 1) % teams.length
     setTurn(nextTurn)
   }
@@ -141,7 +141,7 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
   // clearing currentWord, since a skip shouldn't be able to end the round;
   // only winWord should.
   // TODO: decide how to handle skipping the last word in the bowl — either
-  // end the turn (moveToNextPlayer) or disable the skip control entirely.
+  // end the turn or disable the skip control entirely.
   function skipWord() {
     if (!currentWord) return
 
