@@ -519,6 +519,14 @@ body {
   color: var(--color-accent-strong);
 }
 
+.turn-controls__side:disabled {
+  color: var(--color-text-muted)
+}
+
+.turn-controls__side--active {
+  transform: scale(1.08);
+}
+
 .words-left {
   text-align: center;
   font-size: var(--fs-xs);

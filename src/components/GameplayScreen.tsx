@@ -199,9 +199,11 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
         onPointerLeave={releaseKnob}
       >
         <button
-          className="turn-controls__side turn-controls__side--skip"
+          className={`turn-controls__side turn-controls__side--skip${inPlay && leftPressed ? ' turn-controls__side--active' : ''}`}
           type="button"
-          onClick={skipWord}>
+          onClick={skipWord}
+          disabled={!inPlay}
+        >
           <span aria-hidden="true">&larr;</span> {copy.gameplay.skipButton}
         </button>
         <div
@@ -217,9 +219,11 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
           &harr;
         </div>
         <button
-          className="turn-controls__side turn-controls__side--pass"
+          className={`turn-controls__side turn-controls__side--pass${inPlay && rightPressed ? ' turn-controls__side--active' : ''}`}
           type="button"
-          onClick={() => winWord(team)}>
+          onClick={() => winWord(team)}
+          disabled={!inPlay}
+        >
           {copy.gameplay.gotItButton} <span aria-hidden="true">&rarr;</span>
         </button>
       </div>
