@@ -14,7 +14,7 @@ type BowlState = { bowl: Bowl; currentWord: Word | undefined }
 function GameplayScreen({ config, source }: { config: GameConfig, source: WordSource }) {
   const [round] = useState<Round>(1)
   const { timeLeft, resetTimer, startTimer, stopTimer } = useTimer(config.timerSeconds, handleTimerExpiry)
-  const [teams] = useState<Team[]>(() => {
+  const [teams] = useState<Team[]>(function initTeamOrder() {
     return config.shuffleTeamOrder ? shuffle(config.teams) : [...config.teams]
   })
   const [turn, setTurn] = useState<Turn>(0)
@@ -25,27 +25,32 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
   const controlsRef = useRef<HTMLDivElement>(null)
   const skipWordRef = useRef(skipWord)
   const winWordRef = useRef(() => winWord(team))
-
-  function initBowlState(words: Word[]): BowlState {
-    const { word, remaining } = pickWord(words)
-    return { bowl: remaining, currentWord: word }
-  }
-
   const [{ bowl, currentWord }, setBowlState] =
-    useState<BowlState>(() => initBowlState([...source.getWords()]))
+    useState<BowlState>(function initBowlState(): BowlState {
+      const { word, remaining } = pickWord(source.getWords())
+      return { bowl: remaining, currentWord: word }
+    })
 
   // Display order follows the (possibly shuffled) team order, not the
   // original config order — the two can differ once shuffleTeamOrder is set.
   const team = teams[turn]
+  const inPlay = Boolean(currentWord) // only false when bowl is empty
 
-  useEffect(() => {
+  // Keep the ref-stored action handlers pointing at the latest skipWord/winWord
+  // closures. Runs on every render (no deps) since skipWord/winWord capture
+  // currentWord/bowl/team, which change often; the effects below read through
+  // these refs instead of depending on skipWord/winWord directly, so they
+  // don't need to re-run just because a closure was redefined.
+  useEffect(function syncActionRefs() {
     skipWordRef.current = skipWord
     winWordRef.current = () => winWord(team)
   })
 
-  const inPlay = Boolean(currentWord) // only false when bowl is empty
-
-  useEffect(() => {
+  // Start/stop the turn timer based on whether there's a word in play.
+  // Deliberately keyed on the `inPlay` boolean rather than `currentWord` or
+  // `timeLeft`, so swapping words within a turn (skip/win) or ticking down
+  // doesn't restart the timer — only a true has-word/no-word transition does.
+  useEffect(function syncTimerToPlayState() {
     if (inPlay) {
       startTimer()
     } else {
@@ -55,14 +60,23 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
     return () => stopTimer()
   }, [inPlay, startTimer, stopTimer])
 
-  useEffect(() => {
+  // Trigger a skip on the leading edge of an ArrowLeft press (not on repeat
+  // fires while held), since leftPressed only flips false->true once per
+  // physical press.
+  useEffect(function handleSkipKeyPress() {
     if (leftPressed) skipWordRef.current()
   }, [leftPressed])
 
-  useEffect(() => {
+  // Trigger a win on the leading edge of an ArrowRight press, mirroring
+  // handleSkipKeyPress above.
+  useEffect(function handleWinKeyPress() {
     if (rightPressed) winWordRef.current()
   }, [rightPressed])
 
+  // Called by useTimer when the turn clock hits zero. Advances to the next
+  // team and restarts the clock for them. Guarded on currentWord so a
+  // trailing expiry firing after the bowl's already emptied (round end)
+  // doesn't advance turns pointlessly.
   function handleTimerExpiry() {
     if (currentWord) {
       moveToNextPlayer()
@@ -97,24 +111,37 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
     const threshold = 0.3 * rect.width
     const midpoint = rect.width * 0.5
 
-    // Check if swipe was sufficient
+    // Check if swipe was sufficient to count as a deliberate gesture,
+    // rather than firing on any small nudge of the knob.
     if (knobOffsetX >= midpoint + threshold) winWord(team)
     if (knobOffsetX <= midpoint - threshold) skipWord()
 
     setKnobOffsetX(undefined)
   }
 
+  // Renders a raw seconds count as M:SS for the on-screen timer display.
   function formatTime(totalSeconds: number): string {
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   }
 
+  // Advances turn order by one, wrapping back to the first team. Team order
+  // was fixed once at mount (possibly shuffled), so this only ever walks
+  // through that same fixed sequence.
   function moveToNextPlayer() {
     const nextTurn = (turn + 1) % teams.length
     setTurn(nextTurn)
   }
 
+  // Discards the current word back into the bowl (via switchWord, which
+  // re-inserts it at a random later position so it can come up again) and
+  // draws the next one. If switchWord reports no word available — the bowl
+  // is down to just this one word — leave state untouched rather than
+  // clearing currentWord, since a skip shouldn't be able to end the round;
+  // only winWord should.
+  // TODO: decide how to handle skipping the last word in the bowl — either
+  // end the turn (moveToNextPlayer) or disable the skip control entirely.
   function skipWord() {
     if (!currentWord) return
 
@@ -126,12 +153,19 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
     // if it's the last word, do nothing
   }
 
+  // Stops the clock and resets it in preparation for the next round.
+  // Actual round-transition UI/state (advancing `round`, refilling the
+  // bowl, etc.) isn't implemented yet.
   function endRound() {
     stopTimer()
     resetTimer()
     // TODO: end round and transition screen
   }
 
+  // Credits the current word to the given team's tally, then draws the next
+  // word from the bowl. Unlike skipWord, this is the path that can actually
+  // empty the bowl — pickWord returning no word means every word has been
+  // won, so the round ends here.
   function winWord(team: Team) {
     if (!currentWord) return
 
