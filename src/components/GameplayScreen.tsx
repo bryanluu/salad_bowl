@@ -46,12 +46,15 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
   }
 
   function followCursor(event: React.PointerEvent) {
+    // TODO: guard against desktop cursor hovers, only match mobile app
     const container = controlsRef.current
     if (!container) return
 
     const rect = container.getBoundingClientRect()
     const relativeX = event.clientX - rect.left
     const knobRadius = 18 // half of the 36px knob
+
+    // TODO: add thresholds for triggering skip/win
 
     // Clamp so the knob can't be dragged past the pill's edges
     const clamped = Math.min(Math.max(relativeX, knobRadius), rect.width - knobRadius)
