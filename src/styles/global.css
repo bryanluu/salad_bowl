@@ -475,6 +475,7 @@ body {
 
 .turn-controls {
   position: relative;
+  touch-action: pan-y;
   display: flex;
   align-items: center;
   justify-content: space-between;

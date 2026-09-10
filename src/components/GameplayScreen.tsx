@@ -46,7 +46,10 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
   }
 
   function followCursor(event: React.PointerEvent) {
-    // TODO: guard against desktop cursor hovers, only match mobile app
+    // Touch pointers only exist while a finger is in contact, so this
+    // passes only real drags — desktop mouse hover (and pen) is ignored.
+    // isPrimary keeps a second steadying finger from yanking the knob.
+    if (event.pointerType !== "touch" || !event.isPrimary) return
     const container = controlsRef.current
     if (!container) return
 
@@ -124,6 +127,7 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
         className="turn-controls"
         ref={controlsRef}
         onPointerMove={followCursor}
+        onPointerCancel={resetKnob}
         onPointerLeave={resetKnob}
       >
         <button
