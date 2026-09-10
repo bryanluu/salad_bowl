@@ -55,16 +55,26 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
 
     const rect = container.getBoundingClientRect()
     const relativeX = event.clientX - rect.left
-    const knobRadius = 18 // half of the 36px knob
-
-    // TODO: add thresholds for triggering skip/win
+    const horizontalGap = 25 // experimentally determined
 
     // Clamp so the knob can't be dragged past the pill's edges
-    const clamped = Math.min(Math.max(relativeX, knobRadius), rect.width - knobRadius)
+    const clamped = Math.min(Math.max(relativeX, horizontalGap), rect.width - horizontalGap)
     setKnobOffsetX(clamped)
   }
 
-  function resetKnob() {
+  function releaseKnob(event: React.PointerEvent) {
+    if (event.pointerType !== "touch" || !event.isPrimary) return
+    const container = controlsRef.current
+    if (!container || !knobOffsetX) return
+
+    const rect = container.getBoundingClientRect()
+    const threshold = 0.3 * rect.width
+    const midpoint = rect.width * 0.5
+
+    // Check if swipe was sufficient
+    if (knobOffsetX >= midpoint + threshold) winWord(team)
+    if (knobOffsetX <= midpoint - threshold) skipWord()
+
     setKnobOffsetX(undefined)
   }
 
@@ -106,12 +116,6 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
 
   return (
     <section className="screen" aria-label={copy.gameplay.title}>
-      <pre>
-        {
-          // TODO: remove debug 
-          JSON.stringify(turn, null, "  ")
-        }
-      </pre>
       <div className="turn-meta">
         <span className="badge">{copy.gameplay.roundLabel(round, copy.gameplay.round[round].label)}</span>
         <span className="timer">{formatTime(timeLeft)}</span>
@@ -127,8 +131,8 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
         className="turn-controls"
         ref={controlsRef}
         onPointerMove={followCursor}
-        onPointerCancel={resetKnob}
-        onPointerLeave={resetKnob}
+        onPointerCancel={releaseKnob}
+        onPointerLeave={releaseKnob}
       >
         <button
           className="turn-controls__side turn-controls__side--skip"
@@ -159,6 +163,12 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
       <p className="words-left">{
         copy.gameplay.wordsLeft(bowl.length + (currentWord ? 1 : 0))
       }</p>
+      <pre>
+        {
+          // TODO: remove debug 
+          JSON.stringify(knobOffsetX, null, "  ")
+        }
+      </pre>
     </section>
   )
 }
