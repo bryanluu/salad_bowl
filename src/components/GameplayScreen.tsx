@@ -98,7 +98,11 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
     if (!currentWord) return
 
     const { word, remaining } = switchWord(currentWord, bowl)
-    setBowlState({ bowl: remaining, currentWord: word })
+
+    if (word)
+      setBowlState({ bowl: remaining, currentWord: word })
+
+    // if it's the last word, do nothing
   }
 
   function endRound() {
