@@ -1,4 +1,5 @@
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
+import { useTimer } from "../hooks/useTimer"
 import { type GameConfig, type Word, type WordSource, type Team } from "../types"
 import { pickWord, switchWord } from "../words/pickWord"
 import { shuffle } from "../teams/shuffle"
@@ -6,13 +7,12 @@ import { copy } from "../copy/en"
 
 type Bowl = Word[]
 type Round = 1 | 2 | 3
-type TimeInSeconds = number
 type Turn = number
 type BowlState = { bowl: Bowl; currentWord: Word | undefined }
 
 function GameplayScreen({ config, source }: { config: GameConfig, source: WordSource }) {
   const [round] = useState<Round>(1)
-  const [timeLeft, setTimeLeft] = useState<TimeInSeconds>(config.timerSeconds)
+  const { timeLeft, resetTimer, startTimer, stopTimer } = useTimer(config.timerSeconds, handleTimerExpiry)
   const [teams] = useState<Team[]>(() => {
     return config.shuffleTeamOrder ? shuffle(config.teams) : [...config.teams]
   })
@@ -33,15 +33,20 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
   // original config order — the two can differ once shuffleTeamOrder is set.
   const team = teams[turn]
 
-  let timer: number | null = null
-  if (currentWord) {
-    if (timeLeft > 0) {
-      timer = setTimeout(() => {
-        setTimeLeft(timeLeft - 1)
-      }, 1000)
+  useEffect(() => {
+    if (currentWord) {
+      if (timeLeft === config.timerSeconds)
+        startTimer()
     } else {
+      stopTimer()
+    }
+  }, [currentWord, startTimer, stopTimer, config.timerSeconds, timeLeft])
+
+  function handleTimerExpiry() {
+    if (currentWord) {
       moveToNextPlayer()
-      setTimeLeft(config.timerSeconds)
+      resetTimer()
+      startTimer()
     }
   }
 
@@ -97,8 +102,8 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
   }
 
   function endRound() {
-    if (timer !== null)
-      clearTimeout(timer)
+    stopTimer()
+    resetTimer()
     // TODO: end round and transition screen
   }
 
