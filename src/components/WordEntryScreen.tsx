@@ -30,6 +30,8 @@ function WordEntryScreen({ config, source }: { config: GameConfig, source: WordS
   }
 
   function handleAddWord() {
+    // TODO: preventDefault onSubmit behaviour so words can't be
+    // added by Enter when button is disabled
     const success = addWord(candidateWord)
     if (success) {
       setCandidateWord("")
