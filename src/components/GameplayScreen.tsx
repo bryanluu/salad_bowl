@@ -4,6 +4,7 @@ import { type GameConfig, type Word, type WordSource, type Team } from "../types
 import { pickWord, switchWord } from "../words/pickWord"
 import { shuffle } from "../teams/shuffle"
 import { copy } from "../copy/en"
+import { useKeyPress } from "../hooks/useKeyPress"
 
 type Bowl = Word[]
 type Round = 1 | 2 | 3
@@ -19,7 +20,11 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
   const [turn, setTurn] = useState<Turn>(0)
   const [wonWords, setWonWords] = useState<Record<string, Word[]>>({})
   const [knobOffsetX, setKnobOffsetX] = useState<number | undefined>(undefined)
+  const leftPressed = useKeyPress('ArrowLeft')
+  const rightPressed = useKeyPress('ArrowRight')
   const controlsRef = useRef<HTMLDivElement>(null)
+  const skipWordRef = useRef(skipWord)
+  const winWordRef = useRef(() => winWord(team))
 
   function initBowlState(words: Word[]): BowlState {
     const { word, remaining } = pickWord(words)
@@ -34,13 +39,29 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
   const team = teams[turn]
 
   useEffect(() => {
-    if (currentWord) {
-      if (timeLeft === config.timerSeconds)
-        startTimer()
+    skipWordRef.current = skipWord
+    winWordRef.current = () => winWord(team)
+  })
+
+  const inPlay = Boolean(currentWord) // only false when bowl is empty
+
+  useEffect(() => {
+    if (inPlay) {
+      startTimer()
     } else {
       stopTimer()
     }
-  }, [currentWord, startTimer, stopTimer, config.timerSeconds, timeLeft])
+
+    return () => stopTimer()
+  }, [inPlay, startTimer, stopTimer])
+
+  useEffect(() => {
+    if (leftPressed) skipWordRef.current()
+  }, [leftPressed])
+
+  useEffect(() => {
+    if (rightPressed) winWordRef.current()
+  }, [rightPressed])
 
   function handleTimerExpiry() {
     if (currentWord) {
