@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { type GameConfig, type Word, type WordSource, type Team } from "../types"
 import { pickWord, switchWord } from "../words/pickWord"
 import { shuffle } from "../teams/shuffle"
@@ -18,6 +18,8 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
   })
   const [turn, setTurn] = useState<Turn>(0)
   const [wonWords, setWonWords] = useState<Record<string, Word[]>>({})
+  const [knobOffsetX, setKnobOffsetX] = useState<number | undefined>(undefined)
+  const controlsRef = useRef<HTMLDivElement>(null)
 
   function initBowlState(words: Word[]): BowlState {
     const { word, remaining } = pickWord(words)
@@ -41,6 +43,23 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
       moveToNextPlayer()
       setTimeLeft(config.timerSeconds)
     }
+  }
+
+  function followCursor(event: React.PointerEvent) {
+    const container = controlsRef.current
+    if (!container) return
+
+    const rect = container.getBoundingClientRect()
+    const relativeX = event.clientX - rect.left
+    const knobRadius = 18 // half of the 36px knob
+
+    // Clamp so the knob can't be dragged past the pill's edges
+    const clamped = Math.min(Math.max(relativeX, knobRadius), rect.width - knobRadius)
+    setKnobOffsetX(clamped)
+  }
+
+  function resetKnob() {
+    setKnobOffsetX(undefined)
   }
 
   function formatTime(totalSeconds: number): string {
@@ -98,14 +117,28 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
         <p className="word-card__word">{currentWord}</p>
       </div>
 
-      <div className="turn-controls">
+      <div
+        className="turn-controls"
+        ref={controlsRef}
+        onPointerMove={followCursor}
+        onPointerLeave={resetKnob}
+      >
         <button
           className="turn-controls__side turn-controls__side--skip"
           type="button"
           onClick={skipWord}>
           <span aria-hidden="true">&larr;</span> {copy.gameplay.skipButton}
         </button>
-        <div className="turn-controls__knob" aria-hidden="true">
+        <div
+          id="control-knob"
+          className="turn-controls__knob"
+          aria-hidden="true"
+          style={
+            knobOffsetX
+              ? { left: `${knobOffsetX}px` }
+              : undefined
+          }
+        >
           &harr;
         </div>
         <button
