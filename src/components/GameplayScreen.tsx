@@ -139,17 +139,17 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
     const rect = container.getBoundingClientRect()
     const relativeX = event.clientX - rect.left
     const horizontalGap = 25 // experimentally determined
-
     // Clamp so the knob can't be dragged past the pill's edges
     const clamped = Math.min(Math.max(relativeX, horizontalGap), rect.width - horizontalGap)
-    setKnobOffsetX(clamped)
-
     const threshold = 0.3 * rect.width
     const midpoint = rect.width * 0.5
     const knobX = clamped - midpoint
     const progress = Math.min(Math.max(knobX / threshold, -1), 1)
+    const onLastWord = bowl.length === 0
 
-    showSwipeProgress(progress)
+    // if on last word, only enable right swipe
+    setKnobOffsetX(clamped)
+    showSwipeProgress(onLastWord ? Math.max(0, progress) : progress)
   }
 
   function releaseKnob(event: React.PointerEvent) {
