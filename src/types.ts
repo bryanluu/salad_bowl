@@ -38,3 +38,11 @@ export interface GameConfig {
 }
 
 export type Round = 1 | 2 | 3
+
+export interface TeamScore {
+  id: string
+  name: string
+  rounds: number[]
+}
+
+export type Scores = TeamScore[]

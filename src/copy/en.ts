@@ -58,4 +58,16 @@ export const copy = {
     removeLabel: 'Remove prompt',
     title: 'Toss in your prompts!',
   },
+  scoreboard: {
+    tableHeader: {
+      round: (round: number) => `R${round}`,
+      team: 'Team',
+      total: 'Total'
+    },
+    title: (round: number) => (round < 3 ? 'Scores so far' : 'Final scores'),
+    button: {
+      continue: 'Continue',
+      playAgain: 'Play again'
+    },
+  }
 } as const
