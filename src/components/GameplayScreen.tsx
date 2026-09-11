@@ -241,7 +241,7 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
 
       <div
         className={`word-card${inPlay ? (
-          (leftPressed ? ' word-card--skip' : '') +
+          ((leftPressed && bowl.length > 0) ? ' word-card--skip' : '') +
           (rightPressed ? ' word-card--correct' : '')
         ) : ''}`}
         ref={wordCardRef}
@@ -257,10 +257,10 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
         onPointerLeave={releaseKnob}
       >
         <button
-          className={`turn-controls__side turn-controls__side--skip${inPlay && leftPressed ? ' turn-controls__side--active' : ''}`}
+          className={`turn-controls__side turn-controls__side--skip${inPlay && bowl.length > 0 && leftPressed ? ' turn-controls__side--active' : ''}`}
           type="button"
           onClick={skipWord}
-          disabled={!inPlay}
+          disabled={!inPlay || bowl.length === 0}
         >
           <span aria-hidden="true">&larr;</span> {copy.gameplay.skipButton}
         </button>
