@@ -36,7 +36,7 @@ function RoundIntroCurtain({ round, nextTeamName, onBegin }: RoundIntroCurtainPr
         {copy.gameplay.curtain.readyPrompt(nextTeamName)}
       </p>
 
-      <button className="btn btn--primary" type="button" onClick={onBegin}>
+      <button className="btn btn--primary" type="button" onClick={onBegin} autoFocus>
         {copy.gameplay.curtain.beginButton}
       </button>
     </section>
