@@ -124,6 +124,14 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
     if (currentWord) {
       advanceTurn()
       startTurn()
+
+      setBowlState((prev) => {
+        if (!prev.currentWord) return prev
+        // returns the currentWord to bowl then picks a fresh one,
+        // not neccessarily a different word
+        const { word, remaining } = pickWord([...prev.bowl, prev.currentWord])
+        return { bowl: remaining, currentWord: word }
+      })
     }
   }
 
