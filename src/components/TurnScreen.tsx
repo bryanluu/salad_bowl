@@ -129,7 +129,7 @@ function TurnScreen({ round, team, timeLeft, currentWord, bowlLength, onSkip, on
     const onLastWord = bowlLength === 0
 
     // if on last word, only enable right swipe
-    setKnobOffsetX(clamped)
+    setKnobOffsetX(onLastWord ? Math.max(clamped, midpoint) : clamped)
     showSwipeProgress(onLastWord ? Math.max(0, progress) : progress)
   }
 
