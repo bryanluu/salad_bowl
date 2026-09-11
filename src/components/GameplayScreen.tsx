@@ -5,6 +5,7 @@ import { pickWord, switchWord } from "../words/pickWord"
 import { shuffle } from "../teams/shuffle"
 import { copy } from "../copy/en"
 import { useKeyPress } from "../hooks/useKeyPress"
+import { interpolateColor, colorToRgbString, hexToColor, type Color } from "../colors/interpolateColor"
 
 type Bowl = Word[]
 type Round = 1 | 2 | 3
@@ -30,6 +31,20 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
       const { word, remaining } = pickWord(source.getWords())
       return { bowl: remaining, currentWord: word }
     })
+  const wordCardRef = useRef<HTMLDivElement>(null)
+  // Resolved once from the CSS custom properties so the palette can't drift
+  // out of sync with the stylesheet. Lazy initializer avoids re-reading
+  // computed style on every render.
+  const [palette] = useState<{ bg: Color; danger: Color; accent: Color }>(
+    function initPalette() {
+      const styles = getComputedStyle(document.documentElement)
+      return {
+        bg: hexToColor(styles.getPropertyValue('--color-bg')),
+        danger: hexToColor(styles.getPropertyValue('--color-danger')),
+        accent: hexToColor(styles.getPropertyValue('--color-accent')),
+      }
+    }
+  )
 
   // Display order follows the (possibly shuffled) team order, not the
   // original config order — the two can differ once shuffleTeamOrder is set.
@@ -73,6 +88,12 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
     if (rightPressed) winWordRef.current()
   }, [rightPressed])
 
+  // Returns a color string for the word-card to show swipe progress
+  function computeColor(progress: number) {
+    const target = progress > 0 ? palette.accent : palette.danger
+    return colorToRgbString(interpolateColor(palette.bg, target, Math.abs(progress)))
+  }
+
   // Called by useTimer when the turn clock hits zero. Advances to the next
   // team and restarts the clock for them. Guarded on currentWord so a
   // trailing expiry firing after the bowl's already emptied (round end)
@@ -85,7 +106,15 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
     }
   }
 
+  function showSwipeProgress(progress: number) {
+    if (!wordCardRef.current) return
+
+    wordCardRef.current.style.backgroundColor = computeColor(progress)
+  }
+
   function followCursor(event: React.PointerEvent) {
+    if (!inPlay) return // disable swipe
+
     // Touch pointers only exist while a finger is in contact, so this
     // passes only real drags — desktop mouse hover (and pen) is ignored.
     // isPrimary keeps a second steadying finger from yanking the knob.
@@ -100,6 +129,13 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
     // Clamp so the knob can't be dragged past the pill's edges
     const clamped = Math.min(Math.max(relativeX, horizontalGap), rect.width - horizontalGap)
     setKnobOffsetX(clamped)
+
+    const threshold = 0.3 * rect.width
+    const midpoint = rect.width * 0.5
+    const knobX = clamped - midpoint
+    const progress = Math.min(Math.max(knobX / threshold, -1), 1)
+
+    showSwipeProgress(progress)
   }
 
   function releaseKnob(event: React.PointerEvent) {
@@ -117,6 +153,7 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
     if (knobOffsetX <= midpoint - threshold) skipWord()
 
     setKnobOffsetX(undefined)
+    showSwipeProgress(0)
   }
 
   // Renders a raw seconds count as M:SS for the on-screen timer display.
@@ -187,7 +224,10 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
 
       <p className="turn-indicator">{copy.gameplay.turnIndicator(team.name)}</p>
 
-      <div className="word-card">
+      <div
+        className="word-card"
+        ref={wordCardRef}
+      >
         <p className="word-card__word">{currentWord}</p>
       </div>
 
