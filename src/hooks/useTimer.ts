@@ -23,6 +23,12 @@ export function useTimer(timeInSeconds: number, onExpiry: () => void = () => { }
   const startTimer = useCallback(() => setRunning(true), [])
   const stopTimer = useCallback(() => setRunning(false), [])
 
+  // A chained setTimeout, not setInterval: each tick reads timeLeft from
+  // this render's closure rather than a stale one captured when the
+  // interval was created, so there's no separate "why is this off by one
+  // sometimes" class of bug to guard against. The cost is one extra
+  // render+effect cycle per second (the effect re-arms itself via the
+  // timeLeft dependency below), which is negligible at a 1s cadence.
   useEffect(() => {
     if (timeInSeconds <= 0 || !running || timeLeft <= 0) return
 

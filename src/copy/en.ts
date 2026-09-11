@@ -28,6 +28,7 @@ export const copy = {
     },
     roundLabel: (number: number, type: string) => `Round ${number} · ${type}`,
     skipButton: 'Skip',
+    timeRemainingLabel: (formatted: string) => `Time remaining: ${formatted}`,
     title: 'Current turn',
     turnIndicator: (team: string) => `${team}'s turn`,
     wordsLeft: (count: number) => `${count} prompts left`,

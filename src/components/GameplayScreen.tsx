@@ -237,7 +237,12 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
     <section className="screen" aria-label={copy.gameplay.title}>
       <div className="turn-meta">
         <span className="badge">{copy.gameplay.roundLabel(round, copy.gameplay.round[round].label)}</span>
-        <span className="timer">{formatTime(timeLeft)}</span>
+        {/* Deliberately not an aria-live region: this updates every second,
+            and a live region would re-announce the countdown to screen
+            reader users every tick, which is disruptive rather than
+            helpful. aria-label gives it a clear accessible name instead, so
+            it reads sensibly if a user navigates to it directly. */}
+        <span className="timer" aria-label={copy.gameplay.timeRemainingLabel(formatTime(timeLeft))}>{formatTime(timeLeft)}</span>
       </div>
 
       <p className="turn-indicator">{copy.gameplay.turnIndicator(team.name)}</p>
@@ -249,7 +254,11 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
         ) : ''}`}
         ref={wordCardRef}
       >
-        <p className="word-card__word">{currentWord}</p>
+        {/* role="status" (implies aria-live="polite" + aria-atomic) so a
+            screen reader announces the new prompt whenever it changes on
+            skip/win, without announcing anything on the color-only
+            className changes above (those don't touch this text node). */}
+        <p className="word-card__word" role="status">{currentWord}</p>
       </div>
 
       <div
