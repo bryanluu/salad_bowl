@@ -20,6 +20,11 @@ export const copy = {
     wordsPerPlayerLabel: 'Prompts / player',
   },
   gameplay: {
+    curtain: {
+      beginButton: 'Begin',
+      readyPrompt: (team: string) => `${team} ready?`,
+      roundLabel: (roundNumber: number) => `Round ${roundNumber}`,
+    },
     gotItButton: 'Got it!',
     round: {
       1: { label: 'Taboo', instructions: 'Describe the prompt without saying it.' },

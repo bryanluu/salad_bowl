@@ -1,14 +1,14 @@
 import { useState, useRef, useEffect } from "react"
 import { useTimer } from "../hooks/useTimer"
-import { type GameConfig, type Word, type WordSource, type Team } from "../types"
+import type { GameConfig, Word, WordSource, Team, Round } from "../types"
 import { pickWord, switchWord } from "../words/pickWord"
 import { shuffle } from "../teams/shuffle"
 import { copy } from "../copy/en"
 import { useKeyPress } from "../hooks/useKeyPress"
 import { interpolateColor, colorToRgbString, hexToColor, type Color } from "../colors/interpolateColor"
+import RoundIntroCurtain from "./RoundIntroCurtain"
 
 type Bowl = Word[]
-type Round = 1 | 2 | 3
 type Turn = number
 type BowlState = { bowl: Bowl; currentWord: Word | undefined }
 
@@ -232,6 +232,11 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
       endRound()
     }
   }
+
+  // TODO: remove preview line and wire up logic for curtain
+  return (
+    <RoundIntroCurtain round={round} nextTeamName={team.name} onBegin={() => { }} />
+  )
 
   return (
     <section className="screen" aria-label={copy.gameplay.title}>
