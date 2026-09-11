@@ -13,7 +13,7 @@ type Turn = number
 type BowlState = { bowl: Bowl; currentWord: Word | undefined }
 
 function GameplayScreen({ config, source }: { config: GameConfig, source: WordSource }) {
-  const [round] = useState<Round>(1)
+  const [round, setRound] = useState<Round>(1)
   const { timeLeft, resetTimer, startTimer, stopTimer } = useTimer(config.timerSeconds, handleTimerExpiry)
   const [teams] = useState<Team[]>(function initTeamOrder() {
     return config.shuffleTeamOrder ? shuffle(config.teams) : [...config.teams]
@@ -31,8 +31,7 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
   const winWordRef = useRef(() => { })
   const [{ bowl, currentWord }, setBowlState] =
     useState<BowlState>(function initBowlState(): BowlState {
-      const { word, remaining } = pickWord(source.getWords())
-      return { bowl: remaining, currentWord: word }
+      return { bowl: [...source.getWords()], currentWord: undefined }
     })
   const wordCardRef = useRef<HTMLDivElement>(null)
   const prevLeftPressed = useRef(false)
@@ -54,6 +53,7 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
   // Display order follows the (possibly shuffled) team order, not the
   // original config order — the two can differ once shuffleTeamOrder is set.
   const team = teams[turn]
+  const roundReadyToStart = bowl.length > 0 && currentWord === undefined
   const inPlay = Boolean(currentWord) // only false when bowl is empty
 
   // Keep the ref-stored action handlers pointing at the latest skipWord/winWord
@@ -98,6 +98,18 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
     prevRightPressed.current = rightPressed
   }, [rightPressed])
 
+  function startTurn() {
+    resetTimer()
+    startTimer()
+  }
+
+  function startRound() {
+    const { word, remaining } = pickWord(source.getWords())
+
+    setBowlState({ bowl: remaining, currentWord: word })
+    startTurn()
+  }
+
   // Returns a color string for the word-card to show swipe progress
   function computeColor(progress: number) {
     const target = progress > 0 ? palette.accent : palette.danger
@@ -110,9 +122,8 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
   // doesn't advance turns pointlessly.
   function handleTimerExpiry() {
     if (currentWord) {
-      endTurn()
-      resetTimer()
-      startTimer()
+      advanceTurn()
+      startTurn()
     }
   }
 
@@ -184,9 +195,15 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
   // Advances turn order by one, wrapping back to the first team. Team order
   // was fixed once at mount (possibly shuffled), so this only ever walks
   // through that same fixed sequence.
-  function endTurn() {
+  function advanceTurn() {
     const nextTurn = (turn + 1) % teams.length
     setTurn(nextTurn)
+  }
+
+  function advanceRound() {
+    if (round < 3) {
+      setRound((r) => r + 1 as Round)
+    }
   }
 
   // Discards the current word back into the bowl (via switchWord, which
@@ -212,7 +229,13 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
   function endRound() {
     stopTimer()
     resetTimer()
-    // TODO: end round and transition screen
+
+    // TODO: show score for each round
+    if (round === 3) return
+
+    setBowlState({ bowl: [...source.getWords()], currentWord: undefined })
+    advanceRound()
+    setTurn(0)
   }
 
   // Credits the current word to the given team's tally, then draws the next
@@ -231,80 +254,78 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
     }
   }
 
-  // TODO: remove preview line and wire up logic for curtain
   return (
-    <RoundIntroCurtain round={round} nextTeamName={team.name} onBegin={() => { }} />
-  )
-
-  return (
-    <section className="screen" aria-label={copy.gameplay.title}>
-      <div className="turn-meta">
-        <span className="badge">{copy.gameplay.roundLabel(round, copy.gameplay.round[round].label)}</span>
-        {/* Deliberately not an aria-live region: this updates every second,
+    roundReadyToStart ?
+      <RoundIntroCurtain round={round} nextTeamName={team.name} onBegin={startRound} />
+      :
+      <section className="screen" aria-label={copy.gameplay.title}>
+        <div className="turn-meta">
+          <span className="badge">{copy.gameplay.roundLabel(round, copy.gameplay.round[round].label)}</span>
+          {/* Deliberately not an aria-live region: this updates every second,
             and a live region would re-announce the countdown to screen
             reader users every tick, which is disruptive rather than
             helpful. aria-label gives it a clear accessible name instead, so
             it reads sensibly if a user navigates to it directly. */}
-        <span className="timer" aria-label={copy.gameplay.timeRemainingLabel(formatTime(timeLeft))}>{formatTime(timeLeft)}</span>
-      </div>
+          <span className="timer" aria-label={copy.gameplay.timeRemainingLabel(formatTime(timeLeft))}>{formatTime(timeLeft)}</span>
+        </div>
 
-      <p className="turn-indicator">{copy.gameplay.turnIndicator(team.name)}</p>
+        <p className="turn-indicator">{copy.gameplay.turnIndicator(team.name)}</p>
 
-      <div
-        className={`word-card${inPlay ? (
-          ((leftPressed && bowl.length > 0) ? ' word-card--skip' : '') +
-          (rightPressed ? ' word-card--correct' : '')
-        ) : ''}`}
-        ref={wordCardRef}
-      >
-        {/* role="status" (implies aria-live="polite" + aria-atomic) so a
+        <div
+          className={`word-card${inPlay ? (
+            ((leftPressed && bowl.length > 0) ? ' word-card--skip' : '') +
+            (rightPressed ? ' word-card--correct' : '')
+          ) : ''}`}
+          ref={wordCardRef}
+        >
+          {/* role="status" (implies aria-live="polite" + aria-atomic) so a
             screen reader announces the new prompt whenever it changes on
             skip/win, without announcing anything on the color-only
             className changes above (those don't touch this text node). */}
-        <p className="word-card__word" role="status">{currentWord}</p>
-      </div>
-
-      <div
-        className="turn-controls"
-        ref={controlsRef}
-        onPointerMove={followCursor}
-        onPointerCancel={releaseKnob}
-        onPointerLeave={releaseKnob}
-      >
-        <button
-          className={`turn-controls__side turn-controls__side--skip${inPlay && bowl.length > 0 && leftPressed ? ' turn-controls__side--active' : ''}`}
-          type="button"
-          onClick={skipWord}
-          disabled={!inPlay || bowl.length === 0}
-        >
-          <span aria-hidden="true">&larr;</span> {copy.gameplay.skipButton}
-        </button>
-        <div
-          id="control-knob"
-          className="turn-controls__knob"
-          aria-hidden="true"
-          style={
-            knobOffsetX
-              ? { left: `${knobOffsetX}px` }
-              : undefined
-          }
-        >
-          &harr;
+          <p className="word-card__word" role="status">{currentWord}</p>
         </div>
-        <button
-          className={`turn-controls__side turn-controls__side--pass${inPlay && rightPressed ? ' turn-controls__side--active' : ''}`}
-          type="button"
-          onClick={() => winWord(team)}
-          disabled={!inPlay}
-        >
-          {copy.gameplay.gotItButton} <span aria-hidden="true">&rarr;</span>
-        </button>
-      </div>
 
-      <p className="words-left">
-        {copy.gameplay.wordsLeft(bowl.length + (currentWord ? 1 : 0))}
-      </p>
-    </section>
+        <div
+          className="turn-controls"
+          ref={controlsRef}
+          onPointerMove={followCursor}
+          onPointerCancel={releaseKnob}
+          onPointerLeave={releaseKnob}
+        >
+          <button
+            className={`turn-controls__side turn-controls__side--skip${inPlay && bowl.length > 0 && leftPressed ? ' turn-controls__side--active' : ''}`}
+            type="button"
+            onClick={skipWord}
+            disabled={!inPlay || bowl.length === 0}
+          >
+            <span aria-hidden="true">&larr;</span> {copy.gameplay.skipButton}
+          </button>
+          <div
+            id="control-knob"
+            className="turn-controls__knob"
+            aria-hidden="true"
+            style={
+              knobOffsetX
+                ? { left: `${knobOffsetX}px` }
+                : undefined
+            }
+          >
+            &harr;
+          </div>
+          <button
+            className={`turn-controls__side turn-controls__side--pass${inPlay && rightPressed ? ' turn-controls__side--active' : ''}`}
+            type="button"
+            onClick={() => winWord(team)}
+            disabled={!inPlay}
+          >
+            {copy.gameplay.gotItButton} <span aria-hidden="true">&rarr;</span>
+          </button>
+        </div>
+
+        <p className="words-left">
+          {copy.gameplay.wordsLeft(bowl.length + (currentWord ? 1 : 0))}
+        </p>
+      </section>
   )
 }
 
