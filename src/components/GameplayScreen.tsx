@@ -24,8 +24,11 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
   const leftPressed = useKeyPress('ArrowLeft')
   const rightPressed = useKeyPress('ArrowRight')
   const controlsRef = useRef<HTMLDivElement>(null)
-  const skipWordRef = useRef(skipWord)
-  const winWordRef = useRef(() => winWord(team))
+  // Seeded with no-ops: the real handlers are assigned by syncActionRefs
+  // below before any keyup can plausibly reach them, so these initial
+  // values are never meant to be called themselves.
+  const skipWordRef = useRef(() => { })
+  const winWordRef = useRef(() => { })
   const [{ bowl, currentWord }, setBowlState] =
     useState<BowlState>(function initBowlState(): BowlState {
       const { word, remaining } = pickWord(source.getWords())
@@ -152,7 +155,7 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
   function releaseKnob(event: React.PointerEvent) {
     if (event.pointerType !== "touch" || !event.isPrimary) return
     const container = controlsRef.current
-    if (!container || !knobOffsetX) return
+    if (!container || knobOffsetX === undefined) return
 
     // Re-enable the transition so the card eases back to its base color
     // instead of snapping.
