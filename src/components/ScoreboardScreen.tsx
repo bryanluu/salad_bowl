@@ -43,6 +43,9 @@ function ScoreboardScreen({ scores }: { scores: Scores }) {
       </table>
 
       <button className="btn btn--primary" type="button">
+        {
+          // TODO: add onClick handlers for continue | playAgain actions
+        }
         {round < 3 ? copy.scoreboard.button.continue : copy.scoreboard.button.playAgain}
       </button>
     </section>
