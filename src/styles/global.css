@@ -353,6 +353,16 @@ body {
   font-weight: var(--fw-semibold);
 }
 
+/* :focus-visible (used by .btn:focus-visible above) is often suppressed
+   here: this button is autoFocus'd immediately after a touch tap on the
+   previous screen, and browsers' focus-visible heuristics tend to hide
+   the ring right after touch input. Plain :focus + a bigger ring makes
+   sure "press Enter/Space to go" is actually visible on mount. */
+.round-curtain .btn--primary:focus {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
 /* -------------------------------------------------------------------------
    Screen: Word entry
    ------------------------------------------------------------------------- */
