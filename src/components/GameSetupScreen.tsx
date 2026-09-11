@@ -142,6 +142,19 @@ function GameSetupScreen({ config, updateConfig }: { config: GameConfig, updateC
         </div>
 
         <div className="field-row">
+          <label className="field-row__label" htmlFor="shuffle-team-order">
+            {copy.gameSetup.shuffleTeamOrderLabel}
+          </label>
+          <input
+            id="shuffle-team-order"
+            className="checkbox"
+            type="checkbox"
+            checked={newConfig.shuffleTeamOrder}
+            onChange={(e) => editConfig('shuffleTeamOrder', e.target.checked)}
+          />
+        </div>
+
+        <div className="field-row">
           <span className="field-row__label">{copy.gameSetup.timerLabel}</span>
           <Stepper
             label="timer"

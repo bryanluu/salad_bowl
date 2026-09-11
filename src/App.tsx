@@ -3,23 +3,30 @@ import WordEntryScreen from './components/WordEntryScreen'
 import GameSetupScreen from './components/GameSetupScreen'
 import GameplayScreen from './components/GameplayScreen'
 import ScoreboardScreen from './components/ScoreboardScreen'
-import type { ScreenId, ScreenNavItem, GameConfig } from './types'
+import { LocalWordSource } from './wordSources/LocalWordSource'
+import type { ScreenId, ScreenNavItem, GameConfig, WordSource } from './types'
 
 const screens: ScreenNavItem[] = [
-  { id: 'word-entry', label: 'Word entry' },
   { id: 'game-setup', label: 'Game setup' },
+  { id: 'word-entry', label: 'Word entry' },
   { id: 'gameplay', label: 'Turn / gameplay' },
   { id: 'scoreboard', label: 'Scoreboard' },
 ]
 
-function renderScreen(screenId: ScreenId, config: GameConfig, updateConfig: (newConfig: GameConfig) => void) {
+type ScreenProps = {
+  source: WordSource
+  config: GameConfig
+  updateConfig: (newConfig: GameConfig) => void
+}
+
+function renderScreen(screenId: ScreenId, { source, config, updateConfig }: ScreenProps) {
   switch (screenId) {
-    case 'word-entry':
-      return <WordEntryScreen config={config} />
     case 'game-setup':
       return <GameSetupScreen config={config} updateConfig={updateConfig} />
+    case 'word-entry':
+      return <WordEntryScreen config={config} source={source} />
     case 'gameplay':
-      return <GameplayScreen />
+      return <GameplayScreen config={config} source={source} />
     case 'scoreboard':
       return <ScoreboardScreen />
   }
@@ -33,11 +40,13 @@ const defaultGameConfig: GameConfig = {
   ],
   timerSeconds: 60,
   wordsPerPlayer: 5,
+  shuffleTeamOrder: true,
 }
 
 function App() {
-  const [activeScreen, setActiveScreen] = useState<ScreenId>('word-entry')
+  const [activeScreen, setActiveScreen] = useState<ScreenId>('game-setup')
   const [gameConfig, setGameConfig] = useState<GameConfig>(defaultGameConfig)
+  const [source] = useState(() => new LocalWordSource(gameConfig.totalPlayers * gameConfig.wordsPerPlayer))
 
   function handleUpdateConfig(newConfig: GameConfig) {
     setGameConfig(newConfig)
@@ -63,7 +72,7 @@ function App() {
           ))}
         </nav>
 
-        {renderScreen(activeScreen, gameConfig, handleUpdateConfig)}
+        {renderScreen(activeScreen, { source, config: gameConfig, updateConfig: handleUpdateConfig })}
       </div>
     </main>
   )

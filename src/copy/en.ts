@@ -10,6 +10,7 @@ export const copy = {
       'unassigned-players': 'Put every player on a team to start.',
     },
     setupStatus: (assigned: number, total: number) => `${assigned} out of ${total} players assigned`,
+    shuffleTeamOrderLabel: 'Random order?',
     startButton: 'Start game',
     teamNamePlaceholder: (teamNumber: number) => `Team ${teamNumber}'s name`,
     timerLabel: 'Timer',
@@ -20,8 +21,14 @@ export const copy = {
   },
   gameplay: {
     gotItButton: 'Got it!',
+    round: {
+      1: { label: 'Taboo', instructions: 'Describe the prompt without saying it.' },
+      2: { label: 'Charades', instructions: 'Act out the prompt!' },
+      3: { label: 'Password', instructions: "Say a single-word clue that is not the prompt." }
+    },
     roundLabel: (number: number, type: string) => `Round ${number} · ${type}`,
     skipButton: 'Skip',
+    timeRemainingLabel: (formatted: string) => `Time remaining: ${formatted}`,
     title: 'Current turn',
     turnIndicator: (team: string) => `${team}'s turn`,
     wordsLeft: (count: number) => `${count} prompts left`,

@@ -1,6 +1,6 @@
 import { useState } from "react"
-import { useLocalWordSource } from "../hooks/useLocalWordSource"
-import { maxWordLength, type Word, minWordLength, type GameConfig } from "../types.ts"
+import { useWordSource } from "../hooks/useWordSource.ts"
+import { maxWordLength, type Word, minWordLength, type GameConfig, type WordSource } from "../types.ts"
 import { validateWord } from "../validation/validateWord.ts"
 import { validateBowl } from "../validation/validateBowl.ts"
 import { copy } from "../copy/en.ts"
@@ -16,12 +16,11 @@ function WordEntry({ word, onClick }: { word: Word, onClick: () => void }) {
   )
 }
 
-function WordEntryScreen({ config }: { config: GameConfig }) {
-  const maxWords = config.totalPlayers * config.wordsPerPlayer
-
-  const { words, addWord, removeWord, count } = useLocalWordSource(maxWords)
+function WordEntryScreen({ config, source }: { config: GameConfig, source: WordSource }) {
+  const { words, addWord, removeWord, count } = useWordSource(source)
   const [candidateWord, setCandidateWord] = useState("")
 
+  const maxWords = config.totalPlayers * config.wordsPerPlayer
   const wordValidation = validateWord(candidateWord, words)
   const bowlValidation = validateBowl(words, maxWords)
 
@@ -31,6 +30,8 @@ function WordEntryScreen({ config }: { config: GameConfig }) {
   }
 
   function handleAddWord() {
+    // TODO: preventDefault onSubmit behaviour so words can't be
+    // added by Enter when button is disabled
     const success = addWord(candidateWord)
     if (success) {
       setCandidateWord("")
@@ -71,7 +72,7 @@ function WordEntryScreen({ config }: { config: GameConfig }) {
           type="submit"
           aria-label={copy.wordEntry.addButton}
           onClick={handleAddWord}
-          disabled={!wordValidation.ok}
+          disabled={!wordValidation.ok || (count >= maxWords)}
         >
           +
         </button>

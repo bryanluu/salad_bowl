@@ -17,8 +17,6 @@ export interface WordSource {
   addWord(word: Word): boolean
   // Removes a word from the bowl. Returns false if the word wasn't found.
   removeWord(word: Word): boolean
-  // Picks a word from the bowl. Returns null if the bowl is empty.
-  pickWord(): Word | null
   // Returns all words in the bowl
   getWords(): readonly Word[]
   // Count words in the bowl
@@ -36,4 +34,5 @@ export interface GameConfig {
   teams: Team[]
   timerSeconds: number
   wordsPerPlayer: number
+  shuffleTeamOrder: boolean
 }

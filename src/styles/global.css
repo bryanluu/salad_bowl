@@ -282,6 +282,59 @@ body {
 }
 
 /* -------------------------------------------------------------------------
+   Checkbox
+   ------------------------------------------------------------------------- */
+
+/* TODO: fix layout so there are no hardcoded widths/heights, and things are more responsive */
+
+.checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  position: relative;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
+}
+
+.checkbox:hover {
+  border-color: var(--color-text-faint);
+}
+
+.checkbox:checked {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.checkbox:checked::after {
+  content: '';
+  position: absolute;
+  left: 7px;
+  top: 3px;
+  width: 5px;
+  height: 10px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.checkbox:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.checkbox:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* -------------------------------------------------------------------------
    Screen: Word entry
    ------------------------------------------------------------------------- */
 
@@ -404,6 +457,18 @@ body {
   background: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: background-color 200ms ease;
+}
+
+.word-card--skip {
+  background-color: var(--color-danger);
+  transition: none;
+}
+
+.word-card--correct {
+  background-color: var(--color-accent);
+  transition: none;
 }
 
 .word-card__word {
@@ -413,12 +478,40 @@ body {
   letter-spacing: -0.01em;
   text-align: center;
   text-transform: uppercase;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
+  max-width: 100%;
 }
 
 .turn-controls {
+  position: relative;
+  touch-action: pan-y;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: var(--space-3) var(--space-5);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+}
+
+.turn-controls__knob {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: 50%;
+  box-shadow: var(--shadow-card);
 }
 
 .turn-controls__side {
@@ -435,6 +528,14 @@ body {
 
 .turn-controls__side--pass {
   color: var(--color-accent-strong);
+}
+
+.turn-controls__side:disabled {
+  color: var(--color-text-muted)
+}
+
+.turn-controls__side--active {
+  transform: scale(1.08);
 }
 
 .words-left {
