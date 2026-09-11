@@ -24,7 +24,7 @@ function ScoreboardScreen({ scores }: { scores: Scores }) {
           <tr>
             <th scope="col">Team</th>
             {scores[0].rounds.map((_score, idx) => {
-              return <th scope="col">R{idx + 1}</th>
+              return <th scope="col" key={idx}>R{idx + 1}</th>
             })}
             <th scope="col">Total</th>
           </tr>
