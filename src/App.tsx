@@ -100,7 +100,7 @@ function App() {
             source,
             config: gameConfig,
             updateConfig: handleUpdateConfig,
-            scores: scores,
+            scores,
             updateScores: handleUpdateScores
           })}
       </div>
