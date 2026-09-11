@@ -32,6 +32,8 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
       return { bowl: remaining, currentWord: word }
     })
   const wordCardRef = useRef<HTMLDivElement>(null)
+  const prevLeftPressed = useRef(false)
+  const prevRightPressed = useRef(false)
   // Resolved once from the CSS custom properties so the palette can't drift
   // out of sync with the stylesheet. Lazy initializer avoids re-reading
   // computed style on every render.
@@ -75,17 +77,22 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
     return () => stopTimer()
   }, [inPlay, startTimer, stopTimer])
 
-  // Trigger a skip on the leading edge of an ArrowLeft press (not on repeat
-  // fires while held), since leftPressed only flips false->true once per
-  // physical press.
-  useEffect(function handleSkipKeyPress() {
-    if (leftPressed) skipWordRef.current()
+  // Fires skipWord only when ArrowLeft is *released*, not pressed — so the
+  // word-card can show the danger color while held without changing the
+  // word underneath the player.
+  useEffect(function handleSkipKeyRelease() {
+    if (prevLeftPressed.current && !leftPressed) {
+      skipWordRef.current()
+    }
+    prevLeftPressed.current = leftPressed
   }, [leftPressed])
 
-  // Trigger a win on the leading edge of an ArrowRight press, mirroring
-  // handleSkipKeyPress above.
-  useEffect(function handleWinKeyPress() {
-    if (rightPressed) winWordRef.current()
+  // Mirrors handleSkipKeyRelease above, for ArrowRight/winWord.
+  useEffect(function handleWinKeyRelease() {
+    if (prevRightPressed.current && !rightPressed) {
+      winWordRef.current()
+    }
+    prevRightPressed.current = rightPressed
   }, [rightPressed])
 
   // Returns a color string for the word-card to show swipe progress
@@ -122,6 +129,10 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
     const container = controlsRef.current
     if (!container) return
 
+    // Dragging should track the finger 1:1 with no easing — disable the
+    // CSS transition for the duration of the drag.
+    if (wordCardRef.current) wordCardRef.current.style.transition = 'none'
+
     const rect = container.getBoundingClientRect()
     const relativeX = event.clientX - rect.left
     const horizontalGap = 25 // experimentally determined
@@ -142,6 +153,10 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
     if (event.pointerType !== "touch" || !event.isPrimary) return
     const container = controlsRef.current
     if (!container || !knobOffsetX) return
+
+    // Re-enable the transition so the card eases back to its base color
+    // instead of snapping.
+    if (wordCardRef.current) wordCardRef.current.style.transition = ''
 
     const rect = container.getBoundingClientRect()
     const threshold = 0.3 * rect.width
@@ -225,7 +240,10 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
       <p className="turn-indicator">{copy.gameplay.turnIndicator(team.name)}</p>
 
       <div
-        className="word-card"
+        className={`word-card${inPlay ? (
+          (leftPressed ? ' word-card--skip' : '') +
+          (rightPressed ? ' word-card--correct' : '')
+        ) : ''}`}
         ref={wordCardRef}
       >
         <p className="word-card__word">{currentWord}</p>

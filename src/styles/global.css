@@ -458,6 +458,17 @@ body {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   overflow: hidden;
+  transition: background-color 200ms ease;
+}
+
+.word-card--skip {
+  background-color: var(--color-danger);
+  transition: none;
+}
+
+.word-card--correct {
+  background-color: var(--color-accent);
+  transition: none;
 }
 
 .word-card__word {
