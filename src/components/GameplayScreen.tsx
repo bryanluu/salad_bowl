@@ -5,6 +5,7 @@ import { pickWord, switchWord } from "../words/pickWord"
 import { shuffle } from "../teams/shuffle"
 import RoundIntroCurtain from "./RoundIntroCurtain"
 import TurnScreen from "./TurnScreen"
+import TurnCurtain from "./TurnCurtain"
 
 type Bowl = Word[]
 type Turn = number
@@ -28,6 +29,7 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
   const team = teams[turn]
   const roundReadyToStart = bowl.length > 0 && currentWord === undefined
   const inPlay = Boolean(currentWord) // only false when bowl is empty
+  const turnIsDone = timeLeft === 0
 
   // Start/stop the turn timer based on whether there's a word in play.
   // Deliberately keyed on the `inPlay` boolean rather than `currentWord` or
@@ -46,6 +48,7 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
   function startTurn() {
     resetTimer()
     startTimer()
+    setWonWords({ ...wonWords, onTurn: [] })
   }
 
   function startRound() {
@@ -62,7 +65,6 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
   function handleTimerExpiry() {
     if (currentWord) {
       advanceTurn()
-      startTurn()
 
       setBowlState((prev) => {
         if (!prev.currentWord) return prev
@@ -127,8 +129,15 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
   function winWord(team: Team) {
     if (!currentWord) return
 
+    // tracks teamTotal this round
     const teamWords = wonWords[team.id] ?? []
-    setWonWords({ ...wonWords, [team.id]: [...teamWords, currentWord] })
+    // tracks words won on current turn
+    const wonOnTurn = wonWords.onTurn ?? []
+    setWonWords({
+      ...wonWords,
+      [team.id]: [...teamWords, currentWord],
+      onTurn: [...wonOnTurn, currentWord]
+    })
     const { word, remaining } = pickWord(bowl)
     setBowlState({ bowl: remaining, currentWord: word })
     if (!word) {
@@ -140,15 +149,21 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
     roundReadyToStart ?
       <RoundIntroCurtain round={round} nextTeamName={team.name} onBegin={startRound} />
       :
-      <TurnScreen
-        round={round}
-        team={team}
-        timeLeft={timeLeft}
-        currentWord={currentWord}
-        bowlLength={bowl.length}
-        onSkip={skipWord}
-        onWin={() => winWord(team)}
-      />
+      (turnIsDone ?
+        <TurnCurtain
+          correctCount={wonWords.onTurn.length}
+          nextTeamName={team.name}
+          onNext={startTurn} />
+        :
+        <TurnScreen
+          round={round}
+          team={team}
+          timeLeft={timeLeft}
+          currentWord={currentWord}
+          bowlLength={bowl.length}
+          onSkip={skipWord}
+          onWin={() => winWord(team)}
+        />)
   )
 }
 

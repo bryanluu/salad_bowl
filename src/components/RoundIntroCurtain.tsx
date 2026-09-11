@@ -23,7 +23,7 @@ function RoundIntroCurtain({ round, nextTeamName, onBegin }: RoundIntroCurtainPr
   return (
     <section className="screen round-curtain" aria-labelledby="round-curtain-title">
       <div className="round-curtain__meta">
-        <span className="badge">{copy.gameplay.curtain.roundLabel(round)}</span>
+        <span className="badge">{copy.gameplay.roundCurtain.roundLabel(round)}</span>
       </div>
 
       <h1 className="round-curtain__round-name" id="round-curtain-title">
@@ -33,11 +33,11 @@ function RoundIntroCurtain({ round, nextTeamName, onBegin }: RoundIntroCurtainPr
       <p className="round-curtain__instructions">{instructions}</p>
 
       <p className="round-curtain__ready" role="status">
-        {copy.gameplay.curtain.readyPrompt(nextTeamName)}
+        {copy.gameplay.roundCurtain.readyPrompt(nextTeamName)}
       </p>
 
       <button className="btn btn--primary" type="button" onClick={onBegin} autoFocus>
-        {copy.gameplay.curtain.beginButton}
+        {copy.gameplay.roundCurtain.beginButton}
       </button>
     </section>
   )
