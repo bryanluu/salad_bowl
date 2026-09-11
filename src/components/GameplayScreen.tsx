@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { useTimer } from "../hooks/useTimer"
-import type { GameConfig, Word, WordSource, Team, Round } from "../types"
+import type { GameConfig, Word, WordSource, Team, Round, Scores } from "../types"
 import { pickWord, switchWord } from "../words/pickWord"
 import { shuffle } from "../teams/shuffle"
 import RoundIntroCurtain from "./RoundIntroCurtain"
@@ -11,7 +11,17 @@ type Bowl = Word[]
 type Turn = number
 type BowlState = { bowl: Bowl; currentWord: Word | undefined }
 
-function GameplayScreen({ config, source }: { config: GameConfig, source: WordSource }) {
+function GameplayScreen({
+  config,
+  source,
+  scores,
+  updateScores }:
+  {
+    config: GameConfig,
+    source: WordSource,
+    scores: Scores,
+    updateScores: (newScores: Scores) => void
+  }) {
   const [round, setRound] = useState<Round>(1)
   const { timeLeft, resetTimer, startTimer, stopTimer } = useTimer(config.timerSeconds, handleTimerExpiry)
   const [teams] = useState<Team[]>(function initTeamOrder() {
@@ -107,12 +117,22 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
     // if it's the last word, do nothing
   }
 
+  function tallyScores() {
+    const newScores = scores.map(
+      function addWonWordsToScores(team) {
+        const wordsWonByTeam = wonWords[team.id].length
+        return { ...team, rounds: [...team.rounds, wordsWonByTeam] }
+      })
+    updateScores(newScores)
+  }
+
   // Stops the clock and resets it in preparation for the next round.
   // Actual round-transition UI/state (advancing `round`, refilling the
   // bowl, etc.) isn't implemented yet.
   function endRound() {
     stopTimer()
     resetTimer()
+    tallyScores()
 
     // TODO: show score for each round
     if (round === 3) return

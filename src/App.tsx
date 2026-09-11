@@ -39,7 +39,7 @@ function renderScreen(screenId: ScreenId,
     case 'word-entry':
       return <WordEntryScreen config={config} source={source} />
     case 'gameplay':
-      return <GameplayScreen config={config} source={source} />
+      return <GameplayScreen config={config} source={source} scores={scores} updateScores={updateScores} />
     case 'scoreboard':
       return <ScoreboardScreen scores={scores} />
   }
