@@ -117,6 +117,16 @@ body {
 }
 
 /* -------------------------------------------------------------------------
+   Disabled
+   ------------------------------------------------------------------------- */
+
+*:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* -------------------------------------------------------------------------
    Buttons
    ------------------------------------------------------------------------- */
 
@@ -143,12 +153,6 @@ body {
 .btn:focus-visible {
   outline: 2px solid var(--color-focus);
   outline-offset: 2px;
-}
-
-.btn:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-  pointer-events: none;
 }
 
 .btn:disabled:active {
@@ -212,12 +216,6 @@ body {
 
 .stepper__btn:hover {
   border-color: var(--color-text-faint);
-}
-
-.stepper__btn:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-  pointer-events: none;
 }
 
 .stepper__value {
@@ -326,12 +324,6 @@ body {
 .checkbox:focus-visible {
   outline: 2px solid var(--color-focus);
   outline-offset: 2px;
-}
-
-.checkbox:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-  pointer-events: none;
 }
 
 /* -------------------------------------------------------------------------
@@ -561,7 +553,8 @@ body {
   color: var(--color-text-muted)
 }
 
-.turn-controls__side--active {
+.turn-controls__side--active,
+.turn-controls__side:not(:disabled):hover {
   transform: scale(1.08);
 }
 
