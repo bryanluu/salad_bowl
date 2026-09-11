@@ -25,7 +25,16 @@ function GameplayScreen({
     scores: Scores,
     updateScores: (newScores: Scores) => void
   }) {
-  const [round, setRound] = useState<Round>(1)
+  // Resumes at whatever round scores says has actually been played, rather
+  // than always starting at 1 — this component has no persistence of its
+  // own, so it remounts fresh every time the player navigates back from
+  // the scoreboard. Without this, `round` would reset to 1 on every visit
+  // while `scores[i].rounds` kept growing, and endRound's `round === 3`
+  // guard would never see round 3, letting rounds arrays grow past 3.
+  const [round, setRound] = useState<Round>(function initRound(): Round {
+    const roundsPlayed = scores[0]?.rounds.length ?? 0
+    return Math.min(roundsPlayed + 1, 3) as Round
+  })
   const { timeLeft, resetTimer, startTimer, stopTimer } = useTimer(config.timerSeconds, handleTimerExpiry)
   const [teams] = useState<Team[]>(function initTeamOrder() {
     return config.shuffleTeamOrder ? shuffle(config.teams) : [...config.teams]
