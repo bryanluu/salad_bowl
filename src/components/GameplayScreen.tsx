@@ -195,8 +195,6 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
   // is down to just this one word — leave state untouched rather than
   // clearing currentWord, since a skip shouldn't be able to end the round;
   // only winWord should.
-  // TODO: decide how to handle skipping the last word in the bowl — either
-  // end the turn or disable the skip control entirely.
   function skipWord() {
     if (!currentWord) return
 
