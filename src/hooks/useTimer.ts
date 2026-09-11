@@ -8,7 +8,6 @@ export function useTimer(timeInSeconds: number, onExpiry: () => void = () => { }
 } {
   const [timeLeft, setTimeLeft] = useState(timeInSeconds)
   const [running, setRunning] = useState(false)
-  const timerRef = useRef<number | undefined>(undefined)
   const onExpiryRef = useRef(onExpiry)
 
   // Keep the ref current without making the tick effect depend on onExpiry's identity
@@ -23,27 +22,29 @@ export function useTimer(timeInSeconds: number, onExpiry: () => void = () => { }
   const startTimer = useCallback(() => setRunning(true), [])
   const stopTimer = useCallback(() => setRunning(false), [])
 
-  // A chained setTimeout, not setInterval: each tick reads timeLeft from
-  // this render's closure rather than a stale one captured when the
-  // interval was created, so there's no separate "why is this off by one
-  // sometimes" class of bug to guard against. The cost is one extra
-  // render+effect cycle per second (the effect re-arms itself via the
-  // timeLeft dependency below), which is negligible at a 1s cadence.
+  // Local variable, not a functional setState updater: updaters must stay
+  // pure (StrictMode double-invokes them), but this needs side effects
+  // (clearInterval/setRunning/onExpiry) on reaching zero.
   useEffect(() => {
-    if (timeInSeconds <= 0 || !running || timeLeft <= 0) return
+    if (timeInSeconds <= 0 || !running) return
 
-    timerRef.current = setTimeout(() => {
-      if (timeLeft > 1) {
-        setTimeLeft(timeLeft - 1)
-      } else {
-        setTimeLeft(0)
+    let remaining = timeLeft
+
+    const id = setInterval(() => {
+      remaining = Math.max(remaining - 1, 0)
+      setTimeLeft(remaining)
+
+      if (remaining === 0) {
+        clearInterval(id)
         setRunning(false)
         onExpiryRef.current()
       }
     }, 1000)
 
-    return () => clearTimeout(timerRef.current)
-  }, [running, timeLeft, timeInSeconds])
+    return () => clearInterval(id)
+    // timeLeft is a start-of-interval snapshot only, not a dependency.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [running, timeInSeconds])
 
   return { timeLeft, resetTimer, startTimer, stopTimer }
 }
