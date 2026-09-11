@@ -10,6 +10,9 @@ import TurnCurtain from "./TurnCurtain"
 type Bowl = Word[]
 type Turn = number
 type BowlState = { bowl: Bowl; currentWord: Word | undefined }
+// Tracks per-round totals under each team's id, plus the words won during
+// the turn currently in progress under the reserved "onTurn" key.
+type WonWords = Record<string, Word[]>
 
 function GameplayScreen({
   config,
@@ -28,7 +31,7 @@ function GameplayScreen({
     return config.shuffleTeamOrder ? shuffle(config.teams) : [...config.teams]
   })
   const [turn, setTurn] = useState<Turn>(0)
-  const [wonWords, setWonWords] = useState<Record<string, Word[]>>({})
+  const [wonWords, setWonWords] = useState<WonWords>({})
   const [{ bowl, currentWord }, setBowlState] =
     useState<BowlState>(function initBowlState(): BowlState {
       return { bowl: [...source.getWords()], currentWord: undefined }
@@ -117,26 +120,33 @@ function GameplayScreen({
     // if it's the last word, do nothing
   }
 
-  function tallyScores() {
+  // Turns wonWordsToTally into this round's per-team counts and hands them
+  // off to the parent. Takes the map as a parameter rather than reading the
+  // `wonWords` state variable directly — see the comment in winWord for why.
+  // Falls back to an empty array per team (`?? []`) since a team that won
+  // nothing this round never gets a key in the map at all.
+  function tallyScores(wonWordsToTally: WonWords) {
     const newScores = scores.map(
       function addWonWordsToScores(team) {
-        const wordsWonByTeam = wonWords[team.id].length
+        const wordsWonByTeam = (wonWordsToTally[team.id] ?? []).length
         return { ...team, rounds: [...team.rounds, wordsWonByTeam] }
       })
     updateScores(newScores)
   }
 
   // Stops the clock and resets it in preparation for the next round.
-  // Actual round-transition UI/state (advancing `round`, refilling the
-  // bowl, etc.) isn't implemented yet.
-  function endRound() {
+  function endRound(wonWordsToTally: WonWords) {
     stopTimer()
     resetTimer()
-    tallyScores()
+    tallyScores(wonWordsToTally)
 
     // TODO: show score for each round
     if (round === 3) return
 
+    // Round totals live under each team's id in `wonWords`, and don't
+    // reset between rounds on their own — clear them here so round 2's
+    // tally doesn't include round 1's words.
+    setWonWords({})
     setBowlState({ bowl: [...source.getWords()], currentWord: undefined })
     advanceRound()
     setTurn(0)
@@ -153,15 +163,24 @@ function GameplayScreen({
     const teamWords = wonWords[team.id] ?? []
     // tracks words won on current turn
     const wonOnTurn = wonWords.onTurn ?? []
-    setWonWords({
+    // Built as a local variable, not just passed straight to setWonWords,
+    // because endRound (a few lines down) needs it too. setWonWords is
+    // async — if endRound instead read the `wonWords` state variable, it
+    // would see the *previous* render's value, missing the word just won
+    // here. That's most visible on the very last word of a round: it can
+    // be a team's first win, so the stale `wonWords` wouldn't even have an
+    // entry for that team yet, compounding with the missing-key case above.
+    const updatedWonWords: WonWords = {
       ...wonWords,
       [team.id]: [...teamWords, currentWord],
-      onTurn: [...wonOnTurn, currentWord]
-    })
+      onTurn: [...wonOnTurn, currentWord],
+    }
+    setWonWords(updatedWonWords)
+
     const { word, remaining } = pickWord(bowl)
     setBowlState({ bowl: remaining, currentWord: word })
     if (!word) {
-      endRound()
+      endRound(updatedWonWords)
     }
   }
 
@@ -171,7 +190,7 @@ function GameplayScreen({
       :
       (turnIsDone ?
         <TurnCurtain
-          correctCount={wonWords.onTurn.length}
+          correctCount={(wonWords.onTurn ?? []).length}
           nextTeamName={team.name}
           onNext={startTurn} />
         :
