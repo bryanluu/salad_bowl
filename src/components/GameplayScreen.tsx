@@ -286,15 +286,9 @@ function GameplayScreen({ config, source }: { config: GameConfig, source: WordSo
         </button>
       </div>
 
-      <p className="words-left">{
-        copy.gameplay.wordsLeft(bowl.length + (currentWord ? 1 : 0))
-      }</p>
-      <pre>
-        {
-          // TODO: remove debug 
-          JSON.stringify(knobOffsetX, null, "  ")
-        }
-      </pre>
+      <p className="words-left">
+        {copy.gameplay.wordsLeft(bowl.length + (currentWord ? 1 : 0))}
+      </p>
     </section>
   )
 }
