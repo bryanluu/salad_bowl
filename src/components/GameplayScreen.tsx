@@ -45,13 +45,22 @@ function GameplayScreen({
     useState<BowlState>(function initBowlState(): BowlState {
       return { bowl: [...source.getWords()], currentWord: undefined }
     })
+  // Whether the turn that just ended is waiting on TurnCurtain's "Go"
+  // before the player moves on. Deliberately its own state rather than
+  // derived from `timeLeft === 0` — both endRound and startTurn call
+  // resetTimer(), which would otherwise flip this back to "not done"
+  // before the curtain ever rendered.
+  const [turnEnded, setTurnEnded] = useState(false)
+  // Whether the pending TurnCurtain is closing out a whole round (true)
+  // vs. an ordinary mid-round turn handoff (false). Determines what
+  // handleTurnCurtainNext does once the player taps "Go".
+  const [roundJustEnded, setRoundJustEnded] = useState(false)
 
   // Display order follows the (possibly shuffled) team order, not the
   // original config order — the two can differ once shuffleTeamOrder is set.
   const team = teams[turn]
   const roundReadyToStart = bowl.length > 0 && currentWord === undefined
   const inPlay = Boolean(currentWord) // only false when bowl is empty
-  const turnIsDone = timeLeft === 0
 
   // Start/stop the turn timer based on whether there's a word in play.
   // Deliberately keyed on the `inPlay` boolean rather than `currentWord` or
@@ -77,16 +86,24 @@ function GameplayScreen({
     const { word, remaining } = pickWord(source.getWords())
 
     setBowlState({ bowl: remaining, currentWord: word })
-    startTurn()
+    // Full reset, not just onTurn: a new round means no team carries over
+    // the previous round's per-round tally either. Safe to do here (rather
+    // than in endRound) since TurnCurtain has already shown wonWords.onTurn
+    // for the round-ending turn by the time this runs.
+    setWonWords({})
+    resetTimer()
+    startTimer()
   }
 
   // Called by useTimer when the turn clock hits zero. Advances to the next
-  // team and restarts the clock for them. Guarded on currentWord so a
+  // team and queues the turn-summary curtain. Guarded on currentWord so a
   // trailing expiry firing after the bowl's already emptied (round end)
   // doesn't advance turns pointlessly.
   function handleTimerExpiry() {
     if (currentWord) {
       advanceTurn()
+      setTurnEnded(true)
+      setRoundJustEnded(false)
 
       setBowlState((prev) => {
         if (!prev.currentWord) return prev
@@ -143,19 +160,20 @@ function GameplayScreen({
     updateScores(newScores)
   }
 
-  // Stops the clock and resets it in preparation for the next round.
+  // Tallies the round's score and queues the turn-summary curtain. If
+  // there's another round to play, its bowl/turn/round-number are prepped
+  // now so RoundIntroCurtain is ready the moment the curtain closes.
+  // Doesn't touch `wonWords` or the timer — TurnCurtain still needs
+  // `wonWords.onTurn` for its recap, and startRound is what resets both
+  // once the player actually continues.
   function endRound(wonWordsToTally: WonWords) {
-    stopTimer()
-    resetTimer()
     tallyScores(wonWordsToTally)
+    setTurnEnded(true)
+    setRoundJustEnded(true)
 
-    // TODO: show score for each round
+    // TODO: wire this up to navigate to the scoreboard once round 3 ends
     if (round === 3) return
 
-    // Round totals live under each team's id in `wonWords`, and don't
-    // reset between rounds on their own — clear them here so round 2's
-    // tally doesn't include round 1's words.
-    setWonWords({})
     setBowlState({ bowl: [...source.getWords()], currentWord: undefined })
     advanceRound()
     setTurn(0)
@@ -193,15 +211,28 @@ function GameplayScreen({
     }
   }
 
+  // Closes the turn-summary curtain. If it was closing out a round,
+  // bowl/currentWord are already primed for the next round (or, at round
+  // 3, there's nowhere left to go yet — see the TODO in endRound) — either
+  // way there's nothing left to do here. Otherwise it's an ordinary
+  // mid-round handoff, so start the next turn's clock.
+  function handleTurnCurtainNext() {
+    setTurnEnded(false)
+    if (!roundJustEnded) {
+      startTurn()
+    }
+    setRoundJustEnded(false)
+  }
+
   return (
-    roundReadyToStart ?
-      <RoundIntroCurtain round={round} nextTeamName={team.name} onBegin={startRound} />
+    turnEnded ?
+      <TurnCurtain
+        correctCount={(wonWords.onTurn ?? []).length}
+        nextTeamName={team.name}
+        onNext={handleTurnCurtainNext} />
       :
-      (turnIsDone ?
-        <TurnCurtain
-          correctCount={(wonWords.onTurn ?? []).length}
-          nextTeamName={team.name}
-          onNext={startTurn} />
+      (roundReadyToStart ?
+        <RoundIntroCurtain round={round} nextTeamName={team.name} onBegin={startRound} />
         :
         <TurnScreen
           round={round}
