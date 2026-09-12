@@ -229,6 +229,8 @@ function GameplayScreen({
       <TurnCurtain
         correctCount={(wonWords.onTurn ?? []).length}
         nextTeamName={team.name}
+        round={round - 1 as Round /* NOTE: round is the next round, so we decrement */}
+        roundEnded={roundJustEnded}
         onNext={handleTurnCurtainNext} />
       :
       (roundReadyToStart ?

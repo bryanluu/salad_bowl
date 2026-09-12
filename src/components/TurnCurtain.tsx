@@ -1,3 +1,4 @@
+import type { Round } from '../types.ts'
 import { copy } from '../copy/en'
 
 type TurnCurtainProps = {
@@ -5,6 +6,10 @@ type TurnCurtainProps = {
   correctCount: number
   // Name of the team whose turn is about to start.
   nextTeamName: string
+  // Whether this is a round-ending turn that just finished
+  roundEnded: boolean,
+  // The round number that just finished
+  round: Round
   // Fired when the player taps "Go". The caller decides what that means
   // (close the curtain, start the next turn's timer, etc.) — no state
   // transition is wired up here.
@@ -15,20 +20,25 @@ type TurnCurtainProps = {
 // team changes. Recaps how many words the team that just played won, then
 // names who's up next. Mirrors RoundIntroCurtain's structure and swaps in
 // for the gameplay screen's content the same way, rather than overlaying it.
-function TurnCurtain({ correctCount, nextTeamName, onNext }: TurnCurtainProps) {
+function TurnCurtain({ correctCount, nextTeamName, round, roundEnded, onNext }: TurnCurtainProps) {
   return (
     <section className="screen turn-curtain" aria-labelledby="turn-curtain-title">
       <h1 className="turn-curtain__title" id="turn-curtain-title">
-        {copy.gameplay.turnCurtain.turnOverLabel}
+        {roundEnded ?
+          copy.gameplay.turnCurtain.roundOverLabel(round)
+          :
+          copy.gameplay.turnCurtain.turnOverLabel}
       </h1>
 
       <p className="turn-curtain__result" role="status">
         {copy.gameplay.turnCurtain.resultLabel(correctCount)}
       </p>
 
-      <p className="turn-curtain__ready">
-        {copy.gameplay.turnCurtain.readyPrompt(nextTeamName)}
-      </p>
+      {
+        roundEnded || <p className="turn-curtain__ready">
+          {copy.gameplay.turnCurtain.readyPrompt(nextTeamName)}
+        </p>
+      }
 
       <button className="btn btn--primary" type="button" onClick={onNext} autoFocus>
         {copy.gameplay.turnCurtain.goButton}

@@ -40,6 +40,7 @@ export const copy = {
       readyPrompt: (team: string) => `Next player on ${team}, ready?`,
       resultLabel: (count: number) => `You got ${count} correct.`,
       turnOverLabel: 'Turn over!',
+      roundOverLabel: (round: number) => `Round ${round} finished!`,
     },
     turnIndicator: (team: string) => `${team}'s turn`,
     wordsLeft: (count: number) => `${count} prompts left`,
