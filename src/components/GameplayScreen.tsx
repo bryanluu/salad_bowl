@@ -18,9 +18,13 @@ type WonWords = Record<string, Word[]>
 function GameplayScreen({
   config,
   source,
+  onRematch,
+  onExit,
 }: {
   config: GameConfig,
   source: WordSource,
+  onRematch: () => void,
+  onExit: () => void,
 }) {
   // Resumes at whatever round scores says has actually been played, rather
   // than always starting at 1 — this component has no persistence of its
@@ -30,7 +34,10 @@ function GameplayScreen({
   // guard would never see round 3, letting rounds arrays grow past 3.
   const [round, setRound] = useState<Round>(1)
   const { timeLeft, resetTimer, startTimer, stopTimer } = useTimer(config.timerSeconds, handleTimerExpiry)
-  const [teams, setTeams] = useState<Team[]>(() => initTeamOrder())
+  const [teams] = useState<Team[]>(
+    function initTeamOrder() {
+      return config.shuffleTeamOrder ? shuffle(config.teams) : [...config.teams]
+    })
   const [turn, setTurn] = useState<Turn>(0)
   const [wonWords, setWonWords] = useState<WonWords>({})
   const [{ bowl, currentWord }, setBowlState] =
@@ -47,7 +54,12 @@ function GameplayScreen({
   // vs. an ordinary mid-round turn handoff (false). Determines what
   // handleTurnCurtainNext does once the player taps "Go".
   const [roundJustEnded, setRoundJustEnded] = useState(false)
-  const [scores, setScores] = useState<Scores>(() => initScores())
+  const [scores, setScores] = useState<Scores>(
+    function initScores() {
+      return config.teams.map((t) => {
+        return { ...t, rounds: [] }
+      })
+    })
 
   // Display order follows the (possibly shuffled) team order, not the
   // original config order — the two can differ once shuffleTeamOrder is set.
@@ -55,16 +67,6 @@ function GameplayScreen({
   const roundReadyToStart = bowl.length > 0 && currentWord === undefined
   const inPlay = Boolean(currentWord) // only false when bowl is empty
   const gameEnded = bowl.length === 0 && currentWord === undefined
-
-  function initTeamOrder() {
-    return config.shuffleTeamOrder ? shuffle(config.teams) : [...config.teams]
-  }
-
-  function initScores() {
-    return config.teams.map((t) => {
-      return { ...t, rounds: [] }
-    })
-  }
 
   // Start/stop the turn timer based on whether there's a word in play.
   // Deliberately keyed on the `inPlay` boolean rather than `currentWord` or
@@ -230,20 +232,15 @@ function GameplayScreen({
     }
   }
 
-  function resetGame() {
-    setRound(1)
-    prepareRound()
-    setTeams(initTeamOrder())
-    setWonWords({})
-    setScores(initScores())
+  function handleScoreboardNext() {
+    setRoundJustEnded(false)
+    if (gameEnded) {
+      onRematch()
+    }
   }
 
-  function handleScoreboardNext() {
-    // TODO: fix wiring to handle return to GameSetup
-    setRoundJustEnded(false)
-    if (gameEnded) { // then we are replaying
-      resetGame()
-    }
+  function handleScoreboardExit() {
+    onExit()
   }
 
   return (
@@ -261,7 +258,8 @@ function GameplayScreen({
       (roundJustEnded ?
         <ScoreboardScreen
           scores={scores}
-          onNext={handleScoreboardNext} />
+          onNext={handleScoreboardNext}
+          onExit={handleScoreboardExit} />
         :
         (roundReadyToStart ?
           <RoundIntroCurtain round={round} nextTeamName={team.name} onBegin={startRound} />

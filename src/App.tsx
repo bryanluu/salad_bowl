@@ -20,6 +20,7 @@ type ScreenProps = {
   source: WordSource
   config: GameConfig
   updateConfig: (newConfig: GameConfig) => void
+  switchScreen: (newScreenId: ScreenId) => void
 }
 
 function renderScreen(screenId: ScreenId,
@@ -27,6 +28,7 @@ function renderScreen(screenId: ScreenId,
     source,
     config,
     updateConfig,
+    switchScreen,
   }: ScreenProps) {
   switch (screenId) {
     case 'game-setup':
@@ -34,7 +36,17 @@ function renderScreen(screenId: ScreenId,
     case 'word-entry':
       return <WordEntryScreen config={config} source={source} />
     case 'gameplay':
-      return <GameplayScreen config={config} source={source} />
+      return <GameplayScreen
+        config={config}
+        source={source}
+        onRematch={() => {
+          // TODO: empty source so the bowl is fresh for word-entry
+          switchScreen('word-entry')
+        }}
+        onExit={() => {
+          // TODO: empty source so the bowl is fresh for word-entry
+          switchScreen('game-setup')
+        }} />
   }
 }
 
@@ -56,6 +68,10 @@ function App() {
 
   function handleUpdateConfig(newConfig: GameConfig) {
     setGameConfig(newConfig)
+  }
+
+  function switchScreen(newScreenId: ScreenId) {
+    setActiveScreen(() => newScreenId)
   }
 
   return (
@@ -83,6 +99,7 @@ function App() {
             source,
             config: gameConfig,
             updateConfig: handleUpdateConfig,
+            switchScreen
           })}
       </div>
     </main>

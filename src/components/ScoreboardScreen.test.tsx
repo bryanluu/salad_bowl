@@ -12,7 +12,10 @@ describe('ScoreboardScreen', () => {
       { id: 'blue', name: 'Blue Team', rounds: [5] },
     ]
 
-    render(<ScoreboardScreen scores={scores} onNext={vi.fn()} />)
+    render(<ScoreboardScreen
+      scores={scores}
+      onNext={vi.fn()}
+      onExit={vi.fn()} />)
 
     expect(screen.getByRole('heading', { name: copy.scoreboard.title(1) })).toBeInTheDocument()
     expect(
@@ -37,7 +40,10 @@ describe('ScoreboardScreen', () => {
       { id: 'blue', name: 'Blue Team', rounds: [5, 1, 2] },
     ]
 
-    render(<ScoreboardScreen scores={scores} onNext={vi.fn()} />)
+    render(<ScoreboardScreen
+      scores={scores}
+      onNext={vi.fn()}
+      onExit={vi.fn()} />)
 
     expect(screen.getByRole('heading', { name: copy.scoreboard.title(3) })).toBeInTheDocument()
     expect(
@@ -72,7 +78,7 @@ describe('ScoreboardScreen', () => {
       { id: 'blue', name: 'Blue Team', rounds: [0] },
     ]
 
-    render(<ScoreboardScreen scores={scores} onNext={onNext} />)
+    render(<ScoreboardScreen scores={scores} onNext={onNext} onExit={vi.fn()} />)
 
     fireEvent.click(screen.getByRole('button', { name: copy.scoreboard.button.continue }))
     expect(onNext).toHaveBeenCalledTimes(1)
@@ -84,7 +90,7 @@ describe('ScoreboardScreen', () => {
       { id: 'blue', name: 'Blue Team', rounds: [0] },
     ]
 
-    render(<ScoreboardScreen scores={scores} onNext={vi.fn()} />)
+    render(<ScoreboardScreen scores={scores} onNext={vi.fn()} onExit={vi.fn()} />)
 
     expect(screen.getByRole('button', { name: copy.scoreboard.button.continue })).toHaveFocus()
   })

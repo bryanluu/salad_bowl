@@ -49,10 +49,6 @@ function continueScoreboard() {
   fireEvent.click(screen.getByRole('button', { name: copy.scoreboard.button.continue }))
 }
 
-function playAgain() {
-  fireEvent.click(screen.getByRole('button', { name: copy.scoreboard.button.playAgain }))
-}
-
 describe('GameplayScreen', () => {
   beforeEach(() => {
     vi.useFakeTimers()
@@ -68,7 +64,11 @@ describe('GameplayScreen', () => {
 
   it('shows RoundIntroCurtain for round 1 while the bowl is full and untouched', () => {
     const source = buildSource(['Apple', 'Banana'])
-    render(<GameplayScreen config={buildConfig(30)} source={source} />)
+    render(<GameplayScreen
+      config={buildConfig(30)}
+      source={source}
+      onRematch={vi.fn()}
+      onExit={vi.fn()} />)
 
     expect(screen.getByText(roundCurtain.roundLabel(1))).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: copy.gameplay.round[1].label })).toBeInTheDocument()
@@ -77,7 +77,11 @@ describe('GameplayScreen', () => {
 
   it('starting the round via onBegin shows TurnScreen with a word in play', () => {
     const source = buildSource(['Apple', 'Banana'])
-    render(<GameplayScreen config={buildConfig(30)} source={source} />)
+    render(<GameplayScreen
+      config={buildConfig(30)}
+      source={source}
+      onRematch={vi.fn()}
+      onExit={vi.fn()} />)
 
     beginRound()
 
@@ -89,7 +93,11 @@ describe('GameplayScreen', () => {
 
   it('shows TurnCurtain naming the next team when the turn timer expires mid-round', () => {
     const source = buildSource(['Apple', 'Banana'])
-    render(<GameplayScreen config={buildConfig(3)} source={source} />)
+    render(<GameplayScreen
+      config={buildConfig(3)}
+      source={source}
+      onRematch={vi.fn()}
+      onExit={vi.fn()} />)
 
     beginRound()
     act(() => { vi.advanceTimersByTime(3000) })
@@ -102,7 +110,11 @@ describe('GameplayScreen', () => {
 
   it('winning the last word ends the round and shows the round-summary TurnCurtain', () => {
     const source = buildSource(['Apple'])
-    render(<GameplayScreen config={buildConfig(30)} source={source} />)
+    render(<GameplayScreen
+      config={buildConfig(30)}
+      source={source}
+      onRematch={vi.fn()}
+      onExit={vi.fn()} />)
 
     beginRound()
     winCurrentWord()
@@ -114,7 +126,11 @@ describe('GameplayScreen', () => {
 
   it('closing the round-summary curtain shows the scoreboard with mid-game content', () => {
     const source = buildSource(['Apple'])
-    render(<GameplayScreen config={buildConfig(30)} source={source} />)
+    render(<GameplayScreen
+      config={buildConfig(30)}
+      source={source}
+      onRematch={vi.fn()}
+      onExit={vi.fn()} />)
 
     beginRound()
     winCurrentWord()
@@ -126,9 +142,13 @@ describe('GameplayScreen', () => {
     expect(screen.getByText(teamB.name)).toBeInTheDocument()
   })
 
-  it('shows final scores and a replay button after round 3, and replaying returns to round 1', () => {
+  it('shows final scores and a replay button after round 3', () => {
     const source = buildSource(['Apple'])
-    render(<GameplayScreen config={buildConfig(30)} source={source} />)
+    render(<GameplayScreen
+      config={buildConfig(30)}
+      source={source}
+      onRematch={vi.fn()}
+      onExit={vi.fn()} />)
 
     // Play through all three rounds: begin, win the only word (ends the
     // round), close the summary curtain, continue past the scoreboard.
@@ -145,15 +165,15 @@ describe('GameplayScreen', () => {
     expect(screen.getByRole('heading', { name: copy.scoreboard.title(3) })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: copy.scoreboard.button.playAgain })).toBeInTheDocument()
 
-    playAgain()
-
-    expect(screen.getByText(roundCurtain.roundLabel(1))).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: copy.gameplay.round[1].label })).toBeInTheDocument()
   })
 
   it('labels each round-ending TurnCurtain with the round that just finished', () => {
     const source = buildSource(['Apple'])
-    render(<GameplayScreen config={buildConfig(30)} source={source} />)
+    render(<GameplayScreen
+      config={buildConfig(30)}
+      source={source}
+      onRematch={vi.fn()}
+      onExit={vi.fn()} />)
 
     for (let round = 1; round <= 3; round++) {
       beginRound()
