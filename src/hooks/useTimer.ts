@@ -7,7 +7,12 @@ export function useTimer(timeInSeconds: number, onExpiry: () => void = () => { }
   startTimer: () => void
 } {
   const [timeLeft, setTimeLeft] = useState(timeInSeconds)
-  const [running, setRunning] = useState(false)
+  // Monotonic run-generation counter, not a boolean: a plain `running` flag
+  // collapses through a same-batch stop→start (e.g. the expiry handler
+  // calling startTimer synchronously) and never re-triggers the tick effect
+  // below, leaving a cleared interval behind. Bumping a counter guarantees
+  // a fresh effect dep on every start, so the interval is always re-armed.
+  const [runId, setRunId] = useState(0)
   const onExpiryRef = useRef(onExpiry)
 
   // Keep the ref current without making the tick effect depend on onExpiry's identity
@@ -19,14 +24,14 @@ export function useTimer(timeInSeconds: number, onExpiry: () => void = () => { }
     setTimeLeft(timeInSeconds)
   }, [timeInSeconds])
 
-  const startTimer = useCallback(() => setRunning(true), [])
-  const stopTimer = useCallback(() => setRunning(false), [])
+  const startTimer = useCallback(() => setRunId((id) => id + 1), [])
+  const stopTimer = useCallback(() => setRunId(0), [])
 
   // Local variable, not a functional setState updater: updaters must stay
   // pure (StrictMode double-invokes them), but this needs side effects
-  // (clearInterval/setRunning/onExpiry) on reaching zero.
+  // (clearInterval/onExpiry) on reaching zero.
   useEffect(() => {
-    if (timeInSeconds <= 0 || !running) return
+    if (timeInSeconds <= 0 || runId === 0) return
 
     let remaining = timeLeft
 
@@ -36,7 +41,6 @@ export function useTimer(timeInSeconds: number, onExpiry: () => void = () => { }
 
       if (remaining === 0) {
         clearInterval(id)
-        setRunning(false)
         onExpiryRef.current()
       }
     }, 1000)
@@ -44,7 +48,7 @@ export function useTimer(timeInSeconds: number, onExpiry: () => void = () => { }
     return () => clearInterval(id)
     // timeLeft is a start-of-interval snapshot only, not a dependency.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [running, timeInSeconds])
+  }, [runId, timeInSeconds])
 
   return { timeLeft, resetTimer, startTimer, stopTimer }
 }

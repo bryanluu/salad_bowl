@@ -4,7 +4,13 @@ import GameSetupScreen from './components/GameSetupScreen'
 import GameplayScreen from './components/GameplayScreen'
 import ScoreboardScreen from './components/ScoreboardScreen'
 import { LocalWordSource } from './wordSources/LocalWordSource'
-import type { ScreenId, ScreenNavItem, GameConfig, WordSource } from './types'
+import type {
+  ScreenId,
+  ScreenNavItem,
+  GameConfig,
+  WordSource,
+  Scores
+} from './types'
 
 const screens: ScreenNavItem[] = [
   { id: 'game-setup', label: 'Game setup' },
@@ -16,19 +22,26 @@ const screens: ScreenNavItem[] = [
 type ScreenProps = {
   source: WordSource
   config: GameConfig
+  scores: Scores
   updateConfig: (newConfig: GameConfig) => void
+  updateScores: (newScores: Scores) => void
 }
 
-function renderScreen(screenId: ScreenId, { source, config, updateConfig }: ScreenProps) {
+function renderScreen(screenId: ScreenId,
+  { source,
+    config,
+    scores,
+    updateConfig,
+    updateScores }: ScreenProps) {
   switch (screenId) {
     case 'game-setup':
       return <GameSetupScreen config={config} updateConfig={updateConfig} />
     case 'word-entry':
       return <WordEntryScreen config={config} source={source} />
     case 'gameplay':
-      return <GameplayScreen config={config} source={source} />
+      return <GameplayScreen config={config} source={source} scores={scores} updateScores={updateScores} />
     case 'scoreboard':
-      return <ScoreboardScreen />
+      return <ScoreboardScreen scores={scores} />
   }
 }
 
@@ -47,9 +60,19 @@ function App() {
   const [activeScreen, setActiveScreen] = useState<ScreenId>('game-setup')
   const [gameConfig, setGameConfig] = useState<GameConfig>(defaultGameConfig)
   const [source] = useState(() => new LocalWordSource(gameConfig.totalPlayers * gameConfig.wordsPerPlayer))
+  const [scores, setScores] = useState<Scores>(
+    function initScores() {
+      return gameConfig.teams.map((t) => {
+        return { ...t, rounds: [] }
+      })
+    })
 
   function handleUpdateConfig(newConfig: GameConfig) {
     setGameConfig(newConfig)
+  }
+
+  function handleUpdateScores(newScores: Scores) {
+    setScores(newScores)
   }
 
   return (
@@ -72,7 +95,14 @@ function App() {
           ))}
         </nav>
 
-        {renderScreen(activeScreen, { source, config: gameConfig, updateConfig: handleUpdateConfig })}
+        {renderScreen(activeScreen,
+          {
+            source,
+            config: gameConfig,
+            updateConfig: handleUpdateConfig,
+            scores,
+            updateScores: handleUpdateScores
+          })}
       </div>
     </main>
   )

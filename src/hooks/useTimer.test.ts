@@ -86,6 +86,24 @@ describe('useTimer', () => {
     expect(onExpiry).toHaveBeenCalledTimes(1)
   })
 
+  it('re-arms the countdown when onExpiry restarts the timer in the same batch', () => {
+    // Mirrors GameplayScreen.handleTimerExpiry: the expiry handler calls
+    // resetTimer + startTimer synchronously, so all updates land in one
+    // React batch (the production call stack the old boolean `running`
+    // state collapsed through, leaving a cleared interval and no re-arm).
+    const { result } = renderHook(() => useTimer(2, function restart() {
+      result.current.resetTimer()
+      result.current.startTimer()
+    }))
+
+    act(() => result.current.startTimer())
+    act(() => { vi.advanceTimersByTime(2000) }) // expires; restart lands in the same batch
+    expect(result.current.timeLeft).toBe(2)
+
+    act(() => { vi.advanceTimersByTime(1000) })
+    expect(result.current.timeLeft).toBe(1) // with the stale-interval bug it stays 2
+  })
+
   it('never fires expiry when timeInSeconds is zero', () => {
     const onExpiry = vi.fn()
     const { result } = renderHook(() => useTimer(0, onExpiry))

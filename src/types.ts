@@ -36,3 +36,13 @@ export interface GameConfig {
   wordsPerPlayer: number
   shuffleTeamOrder: boolean
 }
+
+export type Round = 1 | 2 | 3
+
+export interface TeamScore {
+  id: string
+  name: string
+  rounds: number[]
+}
+
+export type Scores = TeamScore[]

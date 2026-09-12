@@ -27,9 +27,21 @@ export const copy = {
       3: { label: 'Password', instructions: "Say a single-word clue that is not the prompt." }
     },
     roundLabel: (number: number, type: string) => `Round ${number} · ${type}`,
+    roundCurtain: {
+      beginButton: 'Begin',
+      readyPrompt: (team: string) => `Ready, ${team}?`,
+      roundLabel: (roundNumber: number) => `Round ${roundNumber}`,
+    },
     skipButton: 'Skip',
     timeRemainingLabel: (formatted: string) => `Time remaining: ${formatted}`,
     title: 'Current turn',
+    turnCurtain: {
+      goButton: 'Go',
+      readyPrompt: (team: string) => `Next player on ${team}, ready?`,
+      resultLabel: (count: number) => `You got ${count} correct.`,
+      turnOverLabel: 'Turn over!',
+      roundOverLabel: (round: number) => `Round ${round} finished!`,
+    },
     turnIndicator: (team: string) => `${team}'s turn`,
     wordsLeft: (count: number) => `${count} prompts left`,
   },
@@ -47,4 +59,16 @@ export const copy = {
     removeLabel: 'Remove prompt',
     title: 'Toss in your prompts!',
   },
+  scoreboard: {
+    tableHeader: {
+      round: (round: number) => `R${round}`,
+      team: 'Team',
+      total: 'Total'
+    },
+    title: (round: number) => (round < 3 ? 'Scores so far' : 'Final scores'),
+    button: {
+      continue: 'Continue',
+      playAgain: 'Play again'
+    },
+  }
 } as const
