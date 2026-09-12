@@ -2,6 +2,9 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import TurnCurtain from './TurnCurtain'
+import { copy } from '../copy/en'
+
+const { turnCurtain } = copy.gameplay
 
 describe('TurnCurtain', () => {
   it('shows the turn-over title and next-player prompt mid-round', () => {
@@ -15,10 +18,10 @@ describe('TurnCurtain', () => {
       />
     )
 
-    expect(screen.getByRole('heading', { name: 'Turn over!' })).toBeInTheDocument()
-    expect(screen.getByRole('status')).toHaveTextContent('You got 4 correct.')
-    expect(screen.getByText('Next player on Red Team, ready?')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Go' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: turnCurtain.turnOverLabel })).toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent(turnCurtain.resultLabel(4))
+    expect(screen.getByText(turnCurtain.readyPrompt('Red Team'))).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: turnCurtain.goButton(false) })).toBeInTheDocument()
   })
 
   it('shows the round-over title and hides the next-player prompt when the round ended', () => {
@@ -32,10 +35,10 @@ describe('TurnCurtain', () => {
       />
     )
 
-    expect(screen.getByRole('heading', { name: 'Round 2 finished!' })).toBeInTheDocument()
-    expect(screen.getByRole('status')).toHaveTextContent('You got 7 correct.')
-    expect(screen.queryByText('Next player on Blue Team, ready?')).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Continue' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: turnCurtain.roundOverLabel(2) })).toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent(turnCurtain.resultLabel(7))
+    expect(screen.queryByText(turnCurtain.readyPrompt('Blue Team'))).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: turnCurtain.goButton(true) })).toBeInTheDocument()
   })
 
   it('calls onNext when the button is clicked', () => {
@@ -51,7 +54,7 @@ describe('TurnCurtain', () => {
       />
     )
 
-    fireEvent.click(screen.getByRole('button', { name: 'Go' }))
+    fireEvent.click(screen.getByRole('button', { name: turnCurtain.goButton(false) }))
     expect(onNext).toHaveBeenCalledTimes(1)
   })
 
@@ -66,6 +69,6 @@ describe('TurnCurtain', () => {
       />
     )
 
-    expect(screen.getByRole('button', { name: 'Go' })).toHaveFocus()
+    expect(screen.getByRole('button', { name: turnCurtain.goButton(false) })).toHaveFocus()
   })
 })

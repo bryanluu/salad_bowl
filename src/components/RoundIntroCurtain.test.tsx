@@ -2,6 +2,9 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import RoundIntroCurtain from './RoundIntroCurtain'
+import { copy } from '../copy/en'
+
+const { roundCurtain, round: roundCopy } = copy.gameplay
 
 describe('RoundIntroCurtain', () => {
   it('shows the round name, instructions, and ready prompt for round 1', () => {
@@ -9,13 +12,11 @@ describe('RoundIntroCurtain', () => {
       <RoundIntroCurtain round={1} nextTeamName="Red Team" onBegin={vi.fn()} />
     )
 
-    expect(screen.getByText('Round 1')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Taboo' })).toBeInTheDocument()
-    expect(
-      screen.getByText('Describe the prompt without saying it.')
-    ).toBeInTheDocument()
-    expect(screen.getByRole('status')).toHaveTextContent('Ready, Red Team?')
-    expect(screen.getByRole('button', { name: 'Begin' })).toBeInTheDocument()
+    expect(screen.getByText(roundCurtain.roundLabel(1))).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: roundCopy[1].label })).toBeInTheDocument()
+    expect(screen.getByText(roundCopy[1].instructions)).toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent(roundCurtain.readyPrompt('Red Team'))
+    expect(screen.getByRole('button', { name: roundCurtain.beginButton })).toBeInTheDocument()
   })
 
   it('swaps in round 3 (Password) content when given round 3', () => {
@@ -23,12 +24,10 @@ describe('RoundIntroCurtain', () => {
       <RoundIntroCurtain round={3} nextTeamName="Blue Team" onBegin={vi.fn()} />
     )
 
-    expect(screen.getByText('Round 3')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Password' })).toBeInTheDocument()
-    expect(
-      screen.getByText('Say a single-word clue that is not the prompt.')
-    ).toBeInTheDocument()
-    expect(screen.getByRole('status')).toHaveTextContent('Ready, Blue Team?')
+    expect(screen.getByText(roundCurtain.roundLabel(3))).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: roundCopy[3].label })).toBeInTheDocument()
+    expect(screen.getByText(roundCopy[3].instructions)).toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent(roundCurtain.readyPrompt('Blue Team'))
   })
 
   it('calls onBegin when the button is clicked', () => {
@@ -38,7 +37,7 @@ describe('RoundIntroCurtain', () => {
       <RoundIntroCurtain round={1} nextTeamName="Red Team" onBegin={onBegin} />
     )
 
-    fireEvent.click(screen.getByRole('button', { name: 'Begin' }))
+    fireEvent.click(screen.getByRole('button', { name: roundCurtain.beginButton }))
     expect(onBegin).toHaveBeenCalledTimes(1)
   })
 
@@ -47,6 +46,6 @@ describe('RoundIntroCurtain', () => {
       <RoundIntroCurtain round={1} nextTeamName="Red Team" onBegin={vi.fn()} />
     )
 
-    expect(screen.getByRole('button', { name: 'Begin' })).toHaveFocus()
+    expect(screen.getByRole('button', { name: roundCurtain.beginButton })).toHaveFocus()
   })
 })
