@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, act } from '@testing-library/react'
 import GameplayScreen from './GameplayScreen'
 import { copy } from '../copy/en'
-import type { GameConfig, Team, Word, WordSource } from '../types'
+import type { GameConfig, Round, Team, Word, WordSource } from '../types'
 
 const teamA: Team = { id: 'team-a', name: 'Red Team', players: 2 }
 const teamB: Team = { id: 'team-b', name: 'Blue Team', players: 2 }
@@ -149,5 +149,22 @@ describe('GameplayScreen', () => {
 
     expect(screen.getByText(roundCurtain.roundLabel(1))).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: copy.gameplay.round[1].label })).toBeInTheDocument()
+  })
+
+  it('labels each round-ending TurnCurtain with the round that just finished', () => {
+    const source = buildSource(['Apple'])
+    render(<GameplayScreen config={buildConfig(30)} source={source} />)
+
+    for (let round = 1; round <= 3; round++) {
+      beginRound()
+      winCurrentWord()
+
+      expect(
+        screen.getByRole('heading', { name: turnCurtain.roundOverLabel(round as Round) })
+      ).toBeInTheDocument()
+
+      closeRoundEndCurtain()
+      if (round < 3) continueScoreboard()
+    }
   })
 })
