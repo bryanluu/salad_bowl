@@ -26,11 +26,11 @@ function ScoreboardScreen({ scores, onNext = () => { } }:
       <table className="score-table">
         <thead>
           <tr>
-            <th scope="col">Team</th>
+            <th scope="col">{copy.scoreboard.tableHeader.team}</th>
             {scores[0].rounds.map((_score, idx) => {
-              return <th scope="col" key={idx}>R{idx + 1}</th>
+              return <th scope="col" key={idx}>{copy.scoreboard.tableHeader.round(idx + 1)}</th>
             })}
-            <th scope="col">Total</th>
+            <th scope="col">{copy.scoreboard.tableHeader.total}</th>
           </tr>
         </thead>
         <tbody>
