@@ -5,7 +5,11 @@ function total(rounds: readonly number[]): number {
   return rounds.reduce((sum, score) => sum + score, 0)
 }
 
-function ScoreboardScreen({ scores }: { scores: Scores }) {
+function ScoreboardScreen({ scores, onNext = () => { } }:
+  {
+    scores: Scores,
+    onNext: () => void
+  }) {
   const round = scores[0].rounds.length
   const winnerId = scores.reduce((best, team) =>
     total(team.rounds) > total(best.rounds) ? team : best,
@@ -42,10 +46,7 @@ function ScoreboardScreen({ scores }: { scores: Scores }) {
         </tbody>
       </table>
 
-      <button className="btn btn--primary" type="button">
-        {
-          // TODO: add onClick handlers for continue | playAgain actions
-        }
+      <button className="btn btn--primary" onClick={onNext} type="button" autoFocus>
         {round < 3 ? copy.scoreboard.button.continue : copy.scoreboard.button.playAgain}
       </button>
     </section>

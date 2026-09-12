@@ -36,7 +36,7 @@ export const copy = {
     timeRemainingLabel: (formatted: string) => `Time remaining: ${formatted}`,
     title: 'Current turn',
     turnCurtain: {
-      goButton: 'Go',
+      goButton: (roundEnded: boolean) => roundEnded ? 'Continue' : 'Go',
       readyPrompt: (team: string) => `Next player on ${team}, ready?`,
       resultLabel: (count: number) => `You got ${count} correct.`,
       turnOverLabel: 'Turn over!',
