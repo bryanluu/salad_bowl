@@ -61,6 +61,7 @@ function GameplayScreen({
   const team = teams[turn]
   const roundReadyToStart = bowl.length > 0 && currentWord === undefined
   const inPlay = Boolean(currentWord) // only false when bowl is empty
+  const gameEnded = bowl.length === 0 && currentWord === undefined
 
   // Start/stop the turn timer based on whether there's a word in play.
   // Deliberately keyed on the `inPlay` boolean rather than `currentWord` or
@@ -171,7 +172,6 @@ function GameplayScreen({
     setTurnEnded(true)
     setRoundJustEnded(true)
 
-    // TODO: wire this up to navigate to the scoreboard once round 3 ends
     if (round === 3) return
 
     setBowlState({ bowl: [...source.getWords()], currentWord: undefined })
@@ -224,7 +224,7 @@ function GameplayScreen({
   }
 
   function handleScoreboardNext() {
-    // TODO: fix wiring
+    // TODO: fix wiring to handle replay and return to GameSetup
     setRoundJustEnded(false)
   }
 
@@ -233,7 +233,10 @@ function GameplayScreen({
       <TurnCurtain
         correctCount={(wonWords.onTurn ?? []).length}
         nextTeamName={team.name}
-        round={round - 1 as Round /* NOTE: round is the next round, so we decrement */}
+        round={gameEnded ?
+          round :
+          /* NOTE: when game hasn't ended, round is the next round, so we decrement */
+          round - 1 as Round}
         roundEnded={roundJustEnded}
         onNext={handleTurnCurtainNext} />
       :
