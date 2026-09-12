@@ -30,9 +30,7 @@ function GameplayScreen({
   // guard would never see round 3, letting rounds arrays grow past 3.
   const [round, setRound] = useState<Round>(1)
   const { timeLeft, resetTimer, startTimer, stopTimer } = useTimer(config.timerSeconds, handleTimerExpiry)
-  const [teams] = useState<Team[]>(function initTeamOrder() {
-    return config.shuffleTeamOrder ? shuffle(config.teams) : [...config.teams]
-  })
+  const [teams, setTeams] = useState<Team[]>(() => initTeamOrder())
   const [turn, setTurn] = useState<Turn>(0)
   const [wonWords, setWonWords] = useState<WonWords>({})
   const [{ bowl, currentWord }, setBowlState] =
@@ -49,12 +47,7 @@ function GameplayScreen({
   // vs. an ordinary mid-round turn handoff (false). Determines what
   // handleTurnCurtainNext does once the player taps "Go".
   const [roundJustEnded, setRoundJustEnded] = useState(false)
-  const [scores, setScores] = useState<Scores>(
-    function initScores() {
-      return config.teams.map((t) => {
-        return { ...t, rounds: [] }
-      })
-    })
+  const [scores, setScores] = useState<Scores>(() => initScores())
 
   // Display order follows the (possibly shuffled) team order, not the
   // original config order — the two can differ once shuffleTeamOrder is set.
@@ -62,6 +55,16 @@ function GameplayScreen({
   const roundReadyToStart = bowl.length > 0 && currentWord === undefined
   const inPlay = Boolean(currentWord) // only false when bowl is empty
   const gameEnded = bowl.length === 0 && currentWord === undefined
+
+  function initTeamOrder() {
+    return config.shuffleTeamOrder ? shuffle(config.teams) : [...config.teams]
+  }
+
+  function initScores() {
+    return config.teams.map((t) => {
+      return { ...t, rounds: [] }
+    })
+  }
 
   // Start/stop the turn timer based on whether there's a word in play.
   // Deliberately keyed on the `inPlay` boolean rather than `currentWord` or
@@ -161,6 +164,11 @@ function GameplayScreen({
     setScores(newScores)
   }
 
+  function prepareRound() {
+    setBowlState({ bowl: [...source.getWords()], currentWord: undefined })
+    setTurn(0)
+  }
+
   // Tallies the round's score and queues the turn-summary curtain. If
   // there's another round to play, its bowl/turn/round-number are prepped
   // now so RoundIntroCurtain is ready the moment the curtain closes.
@@ -174,9 +182,8 @@ function GameplayScreen({
 
     if (round === 3) return
 
-    setBowlState({ bowl: [...source.getWords()], currentWord: undefined })
     advanceRound()
-    setTurn(0)
+    prepareRound()
   }
 
   // Credits the current word to the given team's tally, then draws the next
@@ -223,9 +230,20 @@ function GameplayScreen({
     }
   }
 
+  function resetGame() {
+    setRound(1)
+    prepareRound()
+    setTeams(initTeamOrder())
+    setWonWords({})
+    setScores(initScores())
+  }
+
   function handleScoreboardNext() {
-    // TODO: fix wiring to handle replay and return to GameSetup
+    // TODO: fix wiring to handle return to GameSetup
     setRoundJustEnded(false)
+    if (gameEnded) { // then we are replaying
+      resetGame()
+    }
   }
 
   return (
