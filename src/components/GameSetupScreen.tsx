@@ -46,7 +46,7 @@ function TeamRow({ team, index, totalPlayers, assignedPlayers, onEditTeam, onSup
   )
 }
 
-function GameSetupScreen({ config, updateConfig }: { config: GameConfig, updateConfig: (gc: GameConfig) => void }) {
+function GameSetupScreen({ config, onSubmit }: { config: GameConfig, onSubmit: (gc: GameConfig) => void }) {
   const [newConfig, setNewConfig] = useState<GameConfig>({ ...config })
 
   const maxTeams = Math.floor(newConfig.totalPlayers / minPlayersPerTeam)
@@ -77,7 +77,7 @@ function GameSetupScreen({ config, updateConfig }: { config: GameConfig, updateC
 
   function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
-    updateConfig(newConfig)
+    onSubmit(newConfig)
   }
 
   // Enter in a team name input would implicitly submit the form, but

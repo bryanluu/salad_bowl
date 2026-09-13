@@ -19,34 +19,32 @@ const screens: ScreenNavItem[] = [
 type ScreenProps = {
   source: WordSource
   config: GameConfig
-  updateConfig: (newConfig: GameConfig) => void
-  switchScreen: (newScreenId: ScreenId) => void
+  onCommitConfig: (newConfig: GameConfig) => void
+  onRematch: () => void
+  onNewGame: () => void
+  onSubmitWords: () => void
 }
 
 function renderScreen(screenId: ScreenId,
   {
     source,
     config,
-    updateConfig,
-    switchScreen,
+    onCommitConfig,
+    onRematch,
+    onNewGame,
+    onSubmitWords,
   }: ScreenProps) {
   switch (screenId) {
     case 'game-setup':
-      return <GameSetupScreen config={config} updateConfig={updateConfig} />
+      return <GameSetupScreen config={config} onSubmit={onCommitConfig} />
     case 'word-entry':
-      return <WordEntryScreen config={config} source={source} />
+      return <WordEntryScreen config={config} source={source} onSubmitWords={onSubmitWords} />
     case 'gameplay':
       return <GameplayScreen
         config={config}
         source={source}
-        onRematch={() => {
-          // TODO: empty source so the bowl is fresh for word-entry
-          switchScreen('word-entry')
-        }}
-        onExit={() => {
-          // TODO: empty source so the bowl is fresh for word-entry
-          switchScreen('game-setup')
-        }} />
+        onRematch={onRematch}
+        onExit={onNewGame} />
   }
 }
 
@@ -64,14 +62,24 @@ const defaultGameConfig: GameConfig = {
 function App() {
   const [activeScreen, setActiveScreen] = useState<ScreenId>('game-setup')
   const [gameConfig, setGameConfig] = useState<GameConfig>(defaultGameConfig)
-  const [source] = useState(() => new LocalWordSource(gameConfig.totalPlayers * gameConfig.wordsPerPlayer))
+  const [source, setSource] = useState(() => new LocalWordSource(gameConfig.totalPlayers * gameConfig.wordsPerPlayer))
 
-  function handleUpdateConfig(newConfig: GameConfig) {
-    setGameConfig(newConfig)
+  function resetSource() {
+    setSource(() => new LocalWordSource(gameConfig.totalPlayers * gameConfig.wordsPerPlayer))
   }
 
   function switchScreen(newScreenId: ScreenId) {
     setActiveScreen(() => newScreenId)
+  }
+
+  function handleSubmitConfig(newConfig: GameConfig) {
+    setGameConfig(newConfig)
+    resetSource()
+    switchScreen('word-entry')
+  }
+
+  function handleSubmitWords() {
+    switchScreen('gameplay')
   }
 
   return (
@@ -98,8 +106,16 @@ function App() {
           {
             source,
             config: gameConfig,
-            updateConfig: handleUpdateConfig,
-            switchScreen
+            onCommitConfig: handleSubmitConfig,
+            onSubmitWords: handleSubmitWords,
+            onRematch: () => {
+              resetSource()
+              switchScreen('word-entry')
+            },
+            onNewGame: () => {
+              resetSource()
+              switchScreen('game-setup')
+            }
           })}
       </div>
     </main>

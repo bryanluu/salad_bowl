@@ -16,7 +16,8 @@ function WordEntry({ word, onClick }: { word: Word, onClick: () => void }) {
   )
 }
 
-function WordEntryScreen({ config, source }: { config: GameConfig, source: WordSource }) {
+function WordEntryScreen({ config, source, onSubmitWords }:
+  { config: GameConfig, source: WordSource, onSubmitWords: () => void }) {
   const { words, addWord, removeWord, count } = useWordSource(source)
   const [candidateWord, setCandidateWord] = useState("")
 
@@ -100,7 +101,9 @@ function WordEntryScreen({ config, source }: { config: GameConfig, source: WordS
         className="btn btn--primary"
         type="button"
         disabled={!bowlValidation.ok}
-        aria-describedby={!wordValidation.ok ? 'done-error' : undefined}>
+        aria-describedby={!wordValidation.ok ? 'done-error' : undefined}
+        onClick={onSubmitWords}
+      >
         {copy.wordEntry.doneButton}
       </button>
     </section>
