@@ -67,8 +67,8 @@ describe('GameplayScreen', () => {
     render(<GameplayScreen
       config={buildConfig(30)}
       source={source}
-      onRematch={vi.fn()}
-      onExit={vi.fn()} />)
+      onNewGame={vi.fn()}
+    />)
 
     expect(screen.getByText(roundCurtain.roundLabel(1))).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: copy.gameplay.round[1].label })).toBeInTheDocument()
@@ -80,8 +80,8 @@ describe('GameplayScreen', () => {
     render(<GameplayScreen
       config={buildConfig(30)}
       source={source}
-      onRematch={vi.fn()}
-      onExit={vi.fn()} />)
+      onNewGame={vi.fn()}
+    />)
 
     beginRound()
 
@@ -96,8 +96,8 @@ describe('GameplayScreen', () => {
     render(<GameplayScreen
       config={buildConfig(3)}
       source={source}
-      onRematch={vi.fn()}
-      onExit={vi.fn()} />)
+      onNewGame={vi.fn()}
+    />)
 
     beginRound()
     act(() => { vi.advanceTimersByTime(3000) })
@@ -113,8 +113,8 @@ describe('GameplayScreen', () => {
     render(<GameplayScreen
       config={buildConfig(30)}
       source={source}
-      onRematch={vi.fn()}
-      onExit={vi.fn()} />)
+      onNewGame={vi.fn()}
+    />)
 
     beginRound()
     winCurrentWord()
@@ -129,8 +129,8 @@ describe('GameplayScreen', () => {
     render(<GameplayScreen
       config={buildConfig(30)}
       source={source}
-      onRematch={vi.fn()}
-      onExit={vi.fn()} />)
+      onNewGame={vi.fn()}
+    />)
 
     beginRound()
     winCurrentWord()
@@ -147,8 +147,8 @@ describe('GameplayScreen', () => {
     render(<GameplayScreen
       config={buildConfig(30)}
       source={source}
-      onRematch={vi.fn()}
-      onExit={vi.fn()} />)
+      onNewGame={vi.fn()}
+    />)
 
     // Play through all three rounds: begin, win the only word (ends the
     // round), close the summary curtain, continue past the scoreboard.
@@ -172,8 +172,8 @@ describe('GameplayScreen', () => {
     render(<GameplayScreen
       config={buildConfig(30)}
       source={source}
-      onRematch={vi.fn()}
-      onExit={vi.fn()} />)
+      onNewGame={vi.fn()}
+    />)
 
     for (let round = 1; round <= 3; round++) {
       beginRound()

@@ -5,11 +5,10 @@ function total(rounds: readonly number[]): number {
   return rounds.reduce((sum, score) => sum + score, 0)
 }
 
-function ScoreboardScreen({ scores, onNext = () => { }, onExit = () => { } }:
+function ScoreboardScreen({ scores, onNext = () => { } }:
   {
     scores: Scores,
     onNext: () => void,
-    onExit: () => void,
   }) {
   const round = scores[0].rounds.length
   const winnerId = scores.reduce((best, team) =>
@@ -50,11 +49,6 @@ function ScoreboardScreen({ scores, onNext = () => { }, onExit = () => { } }:
       <button className="btn btn--primary" onClick={onNext} type="button" autoFocus>
         {round < 3 ? copy.scoreboard.button.continue : copy.scoreboard.button.playAgain}
       </button>
-
-      {round === 3 &&
-        <button className="btn btn--secondary" type="button" onClick={onExit}>
-          {copy.scoreboard.button.exitToSettings}
-        </button>}
     </section>
   )
 }

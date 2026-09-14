@@ -68,8 +68,7 @@ export const copy = {
     title: (round: number) => (round < 3 ? 'Scores so far' : 'Final scores'),
     button: {
       continue: 'Continue',
-      exitToSettings: 'New game',
-      playAgain: 'Rematch',
+      playAgain: 'New game',
     },
   }
 } as const

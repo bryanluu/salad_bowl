@@ -18,13 +18,11 @@ type WonWords = Record<string, Word[]>
 function GameplayScreen({
   config,
   source,
-  onRematch,
-  onExit,
+  onNewGame,
 }: {
   config: GameConfig,
   source: WordSource,
-  onRematch: () => void,
-  onExit: () => void,
+  onNewGame: () => void,
 }) {
   // Resumes at whatever round scores says has actually been played, rather
   // than always starting at 1 — this component has no persistence of its
@@ -230,12 +228,8 @@ function GameplayScreen({
   function handleScoreboardNext() {
     setRoundJustEnded(false)
     if (gameEnded) {
-      onRematch()
+      onNewGame()
     }
-  }
-
-  function handleScoreboardExit() {
-    onExit()
   }
 
   return (
@@ -253,8 +247,7 @@ function GameplayScreen({
       (roundJustEnded ?
         <ScoreboardScreen
           scores={scores}
-          onNext={handleScoreboardNext}
-          onExit={handleScoreboardExit} />
+          onNext={handleScoreboardNext} />
         :
         (roundReadyToStart ?
           <RoundIntroCurtain round={round} nextTeamName={team.name} onBegin={startRound} />

@@ -20,7 +20,6 @@ type ScreenProps = {
   source: WordSource
   config: GameConfig
   onCommitConfig: (newConfig: GameConfig) => void
-  onRematch: () => void
   onNewGame: () => void
   onSubmitWords: () => void
 }
@@ -30,7 +29,6 @@ function renderScreen(screenId: ScreenId,
     source,
     config,
     onCommitConfig,
-    onRematch,
     onNewGame,
     onSubmitWords,
   }: ScreenProps) {
@@ -43,8 +41,7 @@ function renderScreen(screenId: ScreenId,
       return <GameplayScreen
         config={config}
         source={source}
-        onRematch={onRematch}
-        onExit={onNewGame} />
+        onNewGame={onNewGame} />
   }
 }
 
@@ -108,10 +105,6 @@ function App() {
             config: gameConfig,
             onCommitConfig: handleSubmitConfig,
             onSubmitWords: handleSubmitWords,
-            onRematch: () => {
-              resetSource()
-              switchScreen('word-entry')
-            },
             onNewGame: () => {
               resetSource()
               switchScreen('game-setup')
