@@ -6,6 +6,7 @@ import { validateBowl } from "../validation/validateBowl.ts"
 import { copy } from "../copy/en.ts"
 
 function WordEntry({ word, onClick }: { word: Word, onClick: () => void }) {
+  // TODO: have option to hide words until rooms are implemented
   return (
     <li className="word-list__item">
       <span>{word}</span>

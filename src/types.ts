@@ -1,4 +1,4 @@
-export type ScreenId = 'word-entry' | 'game-setup' | 'gameplay' | 'scoreboard'
+export type ScreenId = 'word-entry' | 'game-setup' | 'gameplay'
 
 export interface ScreenNavItem {
   id: ScreenId

@@ -220,11 +220,6 @@ function GameplayScreen({
     }
   }
 
-  // Closes the turn-summary curtain. If it was closing out a round,
-  // bowl/currentWord are already primed for the next round (or, at round
-  // 3, there's nowhere left to go yet — see the TODO in endRound) — either
-  // way there's nothing left to do here. Otherwise it's an ordinary
-  // mid-round handoff, so start the next turn's clock.
   function handleTurnCurtainNext() {
     setTurnEnded(false)
     if (!roundJustEnded) {
@@ -250,7 +245,7 @@ function GameplayScreen({
         nextTeamName={team.name}
         round={gameEnded ?
           round :
-          /* NOTE: when game hasn't ended, round is the next round, so we decrement */
+          /* when game hasn't ended, round is the next round, so we decrement */
           round - 1 as Round}
         roundEnded={roundJustEnded}
         onNext={handleTurnCurtainNext} />
