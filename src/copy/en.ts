@@ -33,6 +33,22 @@ export const copy = {
       readyPrompt: (team: string) => `Ready, ${team}?`,
       roundLabel: (roundNumber: number) => `Round ${roundNumber}`,
     },
+    scoreboard: {
+      results: {
+        preliminary: (winners: string[]) => ((winners.length > 1) ? winners.join(", ") + " are tied." : `${winners[0]} is leading 👀`),
+        final: (winners: string[]) => ((winners.length > 1) ? winners.join(", ") + " tied..." : `${winners[0]} wins! 🎉`)
+      },
+      tableHeader: {
+        round: (round: number) => `R${round}`,
+        team: 'Team',
+        total: 'Total'
+      },
+      title: (round: number) => (round < 3 ? 'Scores so far' : 'Final scores'),
+      button: {
+        continue: 'Continue',
+        playAgain: 'New game',
+      },
+    },
     skipButton: 'Skip',
     timeRemainingLabel: (formatted: string) => `Time remaining: ${formatted}`,
     title: 'Current turn',
@@ -61,20 +77,5 @@ export const copy = {
     removeLabel: 'Remove prompt',
     title: 'Toss in your prompts!',
   },
-  scoreboard: {
-    results: {
-      preliminary: (winners: string[]) => ((winners.length > 1) ? winners.join(", ") + " are tied." : `${winners[0]} is leading 👀`),
-      final: (winners: string[]) => ((winners.length > 1) ? winners.join(", ") + " tied..." : `${winners[0]} wins! 🎉`)
-    },
-    tableHeader: {
-      round: (round: number) => `R${round}`,
-      team: 'Team',
-      total: 'Total'
-    },
-    title: (round: number) => (round < 3 ? 'Scores so far' : 'Final scores'),
-    button: {
-      continue: 'Continue',
-      playAgain: 'New game',
-    },
-  }
 } as const
+

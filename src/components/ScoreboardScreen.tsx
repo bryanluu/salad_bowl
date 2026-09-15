@@ -40,18 +40,18 @@ function ScoreboardScreen({ scores, onNext = () => { } }:
     <section className="screen" aria-labelledby="scoreboard-title">
       <header className="screen__header">
         <h1 className="screen__title" id="scoreboard-title">
-          {copy.scoreboard.title(round)}
+          {copy.gameplay.scoreboard.title(round)}
         </h1>
       </header>
 
       <table className="score-table">
         <thead>
           <tr>
-            <th scope="col">{copy.scoreboard.tableHeader.team}</th>
+            <th scope="col">{copy.gameplay.scoreboard.tableHeader.team}</th>
             {scores[0].rounds.map((_score, idx) => {
-              return <th scope="col" key={idx}>{copy.scoreboard.tableHeader.round(idx + 1)}</th>
+              return <th scope="col" key={idx}>{copy.gameplay.scoreboard.tableHeader.round(idx + 1)}</th>
             })}
-            <th scope="col">{copy.scoreboard.tableHeader.total}</th>
+            <th scope="col">{copy.gameplay.scoreboard.tableHeader.total}</th>
           </tr>
         </thead>
         <tbody>
@@ -71,15 +71,16 @@ function ScoreboardScreen({ scores, onNext = () => { } }:
 
       <p>
         {round < 3 ?
-          copy.scoreboard.results.preliminary(winners.map((t) => t.name)) :
-          copy.scoreboard.results.final(winners.map((t) => t.name))}
+          copy.gameplay.scoreboard.results.preliminary(winners.map((t) => t.name)) :
+          copy.gameplay.scoreboard.results.final(winners.map((t) => t.name))}
       </p>
 
       <button className="btn btn--primary" onClick={onNext} type="button" autoFocus>
-        {round < 3 ? copy.scoreboard.button.continue : copy.scoreboard.button.playAgain}
+        {round < 3 ? copy.gameplay.scoreboard.button.continue : copy.gameplay.scoreboard.button.playAgain}
       </button>
     </section>
   )
 }
 
 export default ScoreboardScreen
+

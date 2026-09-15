@@ -17,20 +17,20 @@ describe('ScoreboardScreen', () => {
       onNext={vi.fn()}
     />)
 
-    expect(screen.getByRole('heading', { name: copy.scoreboard.title(1) })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: copy.gameplay.scoreboard.title(1) })).toBeInTheDocument()
     expect(
-      screen.getByRole('columnheader', { name: copy.scoreboard.tableHeader.team })
+      screen.getByRole('columnheader', { name: copy.gameplay.scoreboard.tableHeader.team })
     ).toBeInTheDocument()
     expect(
-      screen.getByRole('columnheader', { name: copy.scoreboard.tableHeader.round(1) })
+      screen.getByRole('columnheader', { name: copy.gameplay.scoreboard.tableHeader.round(1) })
     ).toBeInTheDocument()
     expect(
-      screen.getByRole('columnheader', { name: copy.scoreboard.tableHeader.total })
+      screen.getByRole('columnheader', { name: copy.gameplay.scoreboard.tableHeader.total })
     ).toBeInTheDocument()
     expect(screen.getByText('Red Team').closest('tr')).not.toHaveClass('is-winner')
     expect(screen.getByText('Blue Team').closest('tr')).toHaveClass('is-winner')
     expect(
-      screen.getByRole('button', { name: copy.scoreboard.button.continue })
+      screen.getByRole('button', { name: copy.gameplay.scoreboard.button.continue })
     ).toBeInTheDocument()
   })
 
@@ -45,15 +45,15 @@ describe('ScoreboardScreen', () => {
       onNext={vi.fn()}
     />)
 
-    expect(screen.getByRole('heading', { name: copy.scoreboard.title(3) })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: copy.gameplay.scoreboard.title(3) })).toBeInTheDocument()
     expect(
-      screen.getByRole('columnheader', { name: copy.scoreboard.tableHeader.round(1) })
+      screen.getByRole('columnheader', { name: copy.gameplay.scoreboard.tableHeader.round(1) })
     ).toBeInTheDocument()
     expect(
-      screen.getByRole('columnheader', { name: copy.scoreboard.tableHeader.round(2) })
+      screen.getByRole('columnheader', { name: copy.gameplay.scoreboard.tableHeader.round(2) })
     ).toBeInTheDocument()
     expect(
-      screen.getByRole('columnheader', { name: copy.scoreboard.tableHeader.round(3) })
+      screen.getByRole('columnheader', { name: copy.gameplay.scoreboard.tableHeader.round(3) })
     ).toBeInTheDocument()
 
     const redRow = screen.getByText('Red Team').closest('tr') as HTMLElement
@@ -67,7 +67,7 @@ describe('ScoreboardScreen', () => {
     expect(blueRow).not.toHaveClass('is-winner')
 
     expect(
-      screen.getByRole('button', { name: copy.scoreboard.button.playAgain })
+      screen.getByRole('button', { name: copy.gameplay.scoreboard.button.playAgain })
     ).toBeInTheDocument()
   })
 
@@ -83,15 +83,15 @@ describe('ScoreboardScreen', () => {
       onNext={vi.fn()}
     />)
 
-    expect(screen.getByRole('heading', { name: copy.scoreboard.title(3) })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: copy.gameplay.scoreboard.title(3) })).toBeInTheDocument()
     expect(
-      screen.getByRole('columnheader', { name: copy.scoreboard.tableHeader.round(1) })
+      screen.getByRole('columnheader', { name: copy.gameplay.scoreboard.tableHeader.round(1) })
     ).toBeInTheDocument()
     expect(
-      screen.getByRole('columnheader', { name: copy.scoreboard.tableHeader.round(2) })
+      screen.getByRole('columnheader', { name: copy.gameplay.scoreboard.tableHeader.round(2) })
     ).toBeInTheDocument()
     expect(
-      screen.getByRole('columnheader', { name: copy.scoreboard.tableHeader.round(3) })
+      screen.getByRole('columnheader', { name: copy.gameplay.scoreboard.tableHeader.round(3) })
     ).toBeInTheDocument()
 
     const redRow = screen.getByText('Red Team').closest('tr') as HTMLElement
@@ -105,7 +105,7 @@ describe('ScoreboardScreen', () => {
     expect(greenRow).toHaveClass('is-tied')
 
     expect(
-      screen.getByRole('button', { name: copy.scoreboard.button.playAgain })
+      screen.getByRole('button', { name: copy.gameplay.scoreboard.button.playAgain })
     ).toBeInTheDocument()
   })
 
@@ -119,7 +119,7 @@ describe('ScoreboardScreen', () => {
 
     render(<ScoreboardScreen scores={scores} onNext={onNext} />)
 
-    fireEvent.click(screen.getByRole('button', { name: copy.scoreboard.button.continue }))
+    fireEvent.click(screen.getByRole('button', { name: copy.gameplay.scoreboard.button.continue }))
     expect(onNext).toHaveBeenCalledTimes(1)
   })
 
@@ -131,6 +131,7 @@ describe('ScoreboardScreen', () => {
 
     render(<ScoreboardScreen scores={scores} onNext={vi.fn()} />)
 
-    expect(screen.getByRole('button', { name: copy.scoreboard.button.continue })).toHaveFocus()
+    expect(screen.getByRole('button', { name: copy.gameplay.scoreboard.button.continue })).toHaveFocus()
   })
 })
+

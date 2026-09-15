@@ -47,7 +47,7 @@ function closeRoundEndCurtain() {
 }
 
 function continueScoreboard() {
-  fireEvent.click(screen.getByRole('button', { name: copy.scoreboard.button.continue }))
+  fireEvent.click(screen.getByRole('button', { name: copy.gameplay.scoreboard.button.continue }))
 }
 
 describe('GameplayScreen', () => {
@@ -137,8 +137,8 @@ describe('GameplayScreen', () => {
     winCurrentWord()
     closeRoundEndCurtain()
 
-    expect(screen.getByRole('heading', { name: copy.scoreboard.title(1) })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: copy.scoreboard.button.continue })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: copy.gameplay.scoreboard.title(1) })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: copy.gameplay.scoreboard.button.continue })).toBeInTheDocument()
     expect(screen.getByText(teamA.name)).toBeInTheDocument()
     expect(screen.getByText(teamB.name)).toBeInTheDocument()
   })
@@ -163,8 +163,8 @@ describe('GameplayScreen', () => {
       }
     }
 
-    expect(screen.getByRole('heading', { name: copy.scoreboard.title(3) })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: copy.scoreboard.button.playAgain })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: copy.gameplay.scoreboard.title(3) })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: copy.gameplay.scoreboard.button.playAgain })).toBeInTheDocument()
 
   })
 
@@ -189,3 +189,4 @@ describe('GameplayScreen', () => {
     }
   })
 })
+
