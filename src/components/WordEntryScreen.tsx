@@ -22,6 +22,7 @@ function WordEntryScreen({ config, source, onSubmitWords }:
   const [candidateWord, setCandidateWord] = useState("")
   const doneButtonRef = useRef<HTMLButtonElement>(null)
   const wordInputRef = useRef<HTMLInputElement>(null)
+  const [bowlFilledOnceAlready, setBowlFilledOnceAlready] = useState(false)
 
   const maxWords = config.totalPlayers * config.wordsPerPlayer
   const wordValidation = validateWord(candidateWord, words)
@@ -44,6 +45,8 @@ function WordEntryScreen({ config, source, onSubmitWords }:
     const success = addWord(candidateWord)
     if (success) {
       setCandidateWord("")
+      if (!bowlFilledOnceAlready && count + 1 === source.maxWords)
+        setBowlFilledOnceAlready(true)
     }
   }
 
@@ -105,7 +108,7 @@ function WordEntryScreen({ config, source, onSubmitWords }:
 
       <p className="counter">{copy.wordEntry.counter(count, maxWords)}</p>
 
-      {!bowlValidation.ok && (
+      {!bowlValidation.ok && bowlFilledOnceAlready && (
         <p className="done__error" id="done-error" role="status">
           {copy.wordEntry.errors[bowlValidation.reason]}
         </p>
