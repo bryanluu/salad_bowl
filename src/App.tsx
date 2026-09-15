@@ -71,7 +71,7 @@ function App() {
 
   function handleSubmitConfig(newConfig: GameConfig) {
     setGameConfig(newConfig)
-    resetSource()
+    setSource(() => new LocalWordSource(newConfig.totalPlayers * newConfig.wordsPerPlayer))
     switchScreen('word-entry')
   }
 
