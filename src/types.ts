@@ -35,6 +35,7 @@ export interface GameConfig {
   timerSeconds: number
   wordsPerPlayer: number
   shuffleTeamOrder: boolean
+  hideWordsDuringEntry: boolean
 }
 
 export type Round = 1 | 2 | 3

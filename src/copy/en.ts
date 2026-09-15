@@ -9,6 +9,7 @@ export const copy = {
       'too-many-players': 'You have more players on teams than in total.',
       'unassigned-players': 'Put every player on a team to start.',
     },
+    hideWordsDuringEntryLabel: 'Hide words during entry?',
     setupStatus: (assigned: number, total: number) => `${assigned} out of ${total} players assigned`,
     shuffleTeamOrderLabel: 'Random order?',
     startButton: 'Start game',
@@ -55,6 +56,7 @@ export const copy = {
       'too-many-words': 'Too many prompts, please remove some.',
       'not-enough-words': 'Please add more prompts.'
     },
+    hiddenWords: 'Prompts are hidden until gameplay 🙈',
     placeholder: 'Enter something for your team to guess',
     removeLabel: 'Remove prompt',
     title: 'Toss in your prompts!',

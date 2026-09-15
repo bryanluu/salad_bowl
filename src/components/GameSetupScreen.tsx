@@ -155,6 +155,19 @@ function GameSetupScreen({ config, onSubmit }: { config: GameConfig, onSubmit: (
         </div>
 
         <div className="field-row">
+          <label className="field-row__label" htmlFor="hide-words-during-entry">
+            {copy.gameSetup.hideWordsDuringEntryLabel}
+          </label>
+          <input
+            id="hide-words-during-entry"
+            className="checkbox"
+            type="checkbox"
+            checked={newConfig.hideWordsDuringEntry}
+            onChange={(e) => editConfig('hideWordsDuringEntry', e.target.checked)}
+          />
+        </div>
+
+        <div className="field-row">
           <span className="field-row__label">{copy.gameSetup.timerLabel}</span>
           <Stepper
             label="timer"

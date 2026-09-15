@@ -54,6 +54,7 @@ const defaultGameConfig: GameConfig = {
   timerSeconds: 30,
   wordsPerPlayer: 5,
   shuffleTeamOrder: true,
+  hideWordsDuringEntry: true,
 }
 
 function App() {

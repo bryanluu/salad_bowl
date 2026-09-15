@@ -96,9 +96,13 @@ function WordEntryScreen({ config, source, onSubmitWords }:
         </p>
       )}
 
-      <ul className="word-list">
-        {words.map((word) => <WordEntry key={word} word={word} onClick={handleRemoveWord(word)} />)}
-      </ul>
+      {config.hideWordsDuringEntry ?
+        // TODO: add more complex behaviour once rooms are implemented
+        <p>{copy.wordEntry.hiddenWords}</p>
+        :
+        <ul className="word-list">
+          {words.map((word) => <WordEntry key={word} word={word} onClick={handleRemoveWord(word)} />)}
+        </ul>}
 
       <p className="counter">{copy.wordEntry.counter(count, maxWords)}</p>
 
