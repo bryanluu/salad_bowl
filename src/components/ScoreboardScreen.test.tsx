@@ -71,6 +71,45 @@ describe('ScoreboardScreen', () => {
     ).toBeInTheDocument()
   })
 
+  it('shows when teams are tied', () => {
+    const scores: Scores = [
+      { id: 'red', name: 'Red Team', rounds: [3, 2, 4] },
+      { id: 'blue', name: 'Blue Team', rounds: [5, 1, 2] },
+      { id: 'green', name: "Green Team", rounds: [4, 2, 3] },
+    ]
+
+    render(<ScoreboardScreen
+      scores={scores}
+      onNext={vi.fn()}
+    />)
+
+    expect(screen.getByRole('heading', { name: copy.scoreboard.title(3) })).toBeInTheDocument()
+    expect(
+      screen.getByRole('columnheader', { name: copy.scoreboard.tableHeader.round(1) })
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('columnheader', { name: copy.scoreboard.tableHeader.round(2) })
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('columnheader', { name: copy.scoreboard.tableHeader.round(3) })
+    ).toBeInTheDocument()
+
+    const redRow = screen.getByText('Red Team').closest('tr') as HTMLElement
+    const blueRow = screen.getByText('Blue Team').closest('tr') as HTMLElement
+    const greenRow = screen.getByText('Green Team').closest('tr') as HTMLElement
+    expect(redRow).toHaveTextContent('9')
+    expect(blueRow).toHaveTextContent('8')
+    expect(greenRow).toHaveTextContent('9')
+    expect(redRow).toHaveClass('is-tied')
+    expect(blueRow).not.toHaveClass('is-tied')
+    expect(greenRow).toHaveClass('is-tied')
+
+    expect(
+      screen.getByRole('button', { name: copy.scoreboard.button.playAgain })
+    ).toBeInTheDocument()
+  })
+
+
   it('calls onNext when the button is clicked', () => {
     const onNext = vi.fn()
     const scores: Scores = [

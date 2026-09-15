@@ -13,11 +13,18 @@
   --color-text-muted: #7a7568;
   --color-text-faint: #a8a396;
 
-  --color-accent: #2f9e56;       /* primary green — teams, success, "Got it" */
-  --color-accent-soft: #e2f3e6;  /* highlighted row / winning team */
+  --color-accent: #2f9e56;
+  /* primary green — teams, success, "Got it" */
+  --color-accent-soft: #e2f3e6;
+  /* highlighted row / winning team */
   --color-accent-strong: #227a41;
 
-  --color-danger: #c1443c;       /* "Skip" */
+  --color-warning: #ffc107;
+  --color-warning-soft: #fff3cd;
+  --color-warning-strong: #664d03;
+
+  --color-danger: #c1443c;
+  /* "Skip" */
   --color-danger-soft: #f6e6e4;
 
   --color-focus: #1c6fd6;

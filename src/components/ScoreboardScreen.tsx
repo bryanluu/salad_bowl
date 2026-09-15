@@ -1,8 +1,23 @@
-import type { Scores } from "../types"
+import type { Scores, TeamScore } from "../types"
 import { copy } from "../copy/en"
 
 function total(rounds: readonly number[]): number {
   return rounds.reduce((sum, score) => sum + score, 0)
+}
+
+function computeWinners(scores: Scores) {
+  return scores.reduce((best: TeamScore[], team: TeamScore) => {
+    if (best.length === 0) return [team]
+
+    const teamTotal = total(team.rounds)
+    const bestTotal = total(best[0].rounds)
+    if (teamTotal > bestTotal)
+      return [team]
+    else if (teamTotal === bestTotal)
+      return [...best, team]
+    else
+      return best
+  }, [])
 }
 
 function ScoreboardScreen({ scores, onNext = () => { } }:
@@ -11,9 +26,15 @@ function ScoreboardScreen({ scores, onNext = () => { } }:
     onNext: () => void,
   }) {
   const round = scores[0].rounds.length
-  const winnerId = scores.reduce((best, team) =>
-    total(team.rounds) > total(best.rounds) ? team : best,
-  ).id
+  const winners = computeWinners(scores)
+
+  function hasTopScore(team: TeamScore) {
+    return winners.find((t) => t.id === team.id)
+  }
+
+  function isTied() {
+    return winners.length > 1
+  }
 
   return (
     <section className="screen" aria-labelledby="scoreboard-title">
@@ -35,7 +56,9 @@ function ScoreboardScreen({ scores, onNext = () => { } }:
         </thead>
         <tbody>
           {scores.map((team) => (
-            <tr key={team.id} className={team.id === winnerId ? 'is-winner' : undefined}>
+            <tr key={team.id}
+              className={hasTopScore(team) ?
+                (isTied() ? 'is-tied' : 'is-winner') : undefined}>
               <td>{team.name}</td>
               {team.rounds.map((score, index) => (
                 <td key={index}>{score}</td>
