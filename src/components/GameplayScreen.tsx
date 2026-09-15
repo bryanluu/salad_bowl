@@ -166,7 +166,7 @@ function GameplayScreen({
 
   function prepareRound() {
     setBowlState({ bowl: [...source.getWords()], currentWord: undefined })
-    setTurn(0)
+    advanceTurn()
   }
 
   // Tallies the round's score and queues the turn-summary curtain. If
