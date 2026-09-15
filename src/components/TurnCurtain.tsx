@@ -41,7 +41,7 @@ function TurnCurtain({ correctCount, nextTeamName, round, roundEnded, onNext }: 
       }
 
       <button className="btn btn--primary" type="button" onClick={onNext} autoFocus>
-        {copy.gameplay.turnCurtain.goButton}
+        {copy.gameplay.turnCurtain.goButton(roundEnded)}
       </button>
     </section>
   )

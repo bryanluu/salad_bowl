@@ -615,3 +615,11 @@ body {
 .score-table tr.is-winner td {
   color: var(--color-accent-strong);
 }
+
+.score-table tr.is-tied {
+  background: var(--color-warning-soft);
+}
+
+.score-table tr.is-tied td {
+  color: var(--color-warning-strong);
+}

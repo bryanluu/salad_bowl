@@ -6,6 +6,7 @@ import { shuffle } from "../teams/shuffle"
 import RoundIntroCurtain from "./RoundIntroCurtain"
 import TurnScreen from "./TurnScreen"
 import TurnCurtain from "./TurnCurtain"
+import ScoreboardScreen from "./ScoreboardScreen"
 
 type Bowl = Word[]
 type Turn = number
@@ -17,28 +18,18 @@ type WonWords = Record<string, Word[]>
 function GameplayScreen({
   config,
   source,
-  scores,
-  updateScores }:
-  {
-    config: GameConfig,
-    source: WordSource,
-    scores: Scores,
-    updateScores: (newScores: Scores) => void
-  }) {
-  // Resumes at whatever round scores says has actually been played, rather
-  // than always starting at 1 — this component has no persistence of its
-  // own, so it remounts fresh every time the player navigates back from
-  // the scoreboard. Without this, `round` would reset to 1 on every visit
-  // while `scores[i].rounds` kept growing, and endRound's `round === 3`
-  // guard would never see round 3, letting rounds arrays grow past 3.
-  const [round, setRound] = useState<Round>(function initRound(): Round {
-    const roundsPlayed = scores[0]?.rounds.length ?? 0
-    return Math.min(roundsPlayed + 1, 3) as Round
-  })
+  onNewGame,
+}: {
+  config: GameConfig,
+  source: WordSource,
+  onNewGame: () => void,
+}) {
+  const [round, setRound] = useState<Round>(1)
   const { timeLeft, resetTimer, startTimer, stopTimer } = useTimer(config.timerSeconds, handleTimerExpiry)
-  const [teams] = useState<Team[]>(function initTeamOrder() {
-    return config.shuffleTeamOrder ? shuffle(config.teams) : [...config.teams]
-  })
+  const [teams] = useState<Team[]>(
+    function initTeamOrder() {
+      return config.shuffleTeamOrder ? shuffle(config.teams) : [...config.teams]
+    })
   const [turn, setTurn] = useState<Turn>(0)
   const [wonWords, setWonWords] = useState<WonWords>({})
   const [{ bowl, currentWord }, setBowlState] =
@@ -55,12 +46,19 @@ function GameplayScreen({
   // vs. an ordinary mid-round turn handoff (false). Determines what
   // handleTurnCurtainNext does once the player taps "Go".
   const [roundJustEnded, setRoundJustEnded] = useState(false)
+  const [scores, setScores] = useState<Scores>(
+    function initScores() {
+      return config.teams.map((t) => {
+        return { ...t, rounds: [] }
+      })
+    })
 
   // Display order follows the (possibly shuffled) team order, not the
   // original config order — the two can differ once shuffleTeamOrder is set.
   const team = teams[turn]
   const roundReadyToStart = bowl.length > 0 && currentWord === undefined
   const inPlay = Boolean(currentWord) // only false when bowl is empty
+  const gameEnded = bowl.length === 0 && currentWord === undefined
 
   // Start/stop the turn timer based on whether there's a word in play.
   // Deliberately keyed on the `inPlay` boolean rather than `currentWord` or
@@ -157,7 +155,12 @@ function GameplayScreen({
         const wordsWonByTeam = (wonWordsToTally[team.id] ?? []).length
         return { ...team, rounds: [...team.rounds, wordsWonByTeam] }
       })
-    updateScores(newScores)
+    setScores(newScores)
+  }
+
+  function prepareRound() {
+    setBowlState({ bowl: [...source.getWords()], currentWord: undefined })
+    advanceTurn()
   }
 
   // Tallies the round's score and queues the turn-summary curtain. If
@@ -171,12 +174,10 @@ function GameplayScreen({
     setTurnEnded(true)
     setRoundJustEnded(true)
 
-    // TODO: wire this up to navigate to the scoreboard once round 3 ends
     if (round === 3) return
 
-    setBowlState({ bowl: [...source.getWords()], currentWord: undefined })
     advanceRound()
-    setTurn(0)
+    prepareRound()
   }
 
   // Credits the current word to the given team's tally, then draws the next
@@ -211,17 +212,18 @@ function GameplayScreen({
     }
   }
 
-  // Closes the turn-summary curtain. If it was closing out a round,
-  // bowl/currentWord are already primed for the next round (or, at round
-  // 3, there's nowhere left to go yet — see the TODO in endRound) — either
-  // way there's nothing left to do here. Otherwise it's an ordinary
-  // mid-round handoff, so start the next turn's clock.
   function handleTurnCurtainNext() {
     setTurnEnded(false)
     if (!roundJustEnded) {
       startTurn()
     }
+  }
+
+  function handleScoreboardNext() {
     setRoundJustEnded(false)
+    if (gameEnded) {
+      onNewGame()
+    }
   }
 
   return (
@@ -229,23 +231,31 @@ function GameplayScreen({
       <TurnCurtain
         correctCount={(wonWords.onTurn ?? []).length}
         nextTeamName={team.name}
-        round={round - 1 as Round /* NOTE: round is the next round, so we decrement */}
+        round={gameEnded ?
+          round :
+          /* when game hasn't ended, round is the next round, so we decrement */
+          round - 1 as Round}
         roundEnded={roundJustEnded}
         onNext={handleTurnCurtainNext} />
       :
-      (roundReadyToStart ?
-        <RoundIntroCurtain round={round} nextTeamName={team.name} onBegin={startRound} />
+      (roundJustEnded ?
+        <ScoreboardScreen
+          scores={scores}
+          onNext={handleScoreboardNext} />
         :
-        <TurnScreen
-          round={round}
-          team={team}
-          timeLeft={timeLeft}
-          currentWord={currentWord}
-          bowlLength={bowl.length}
-          onSkip={skipWord}
-          onWin={() => winWord(team)}
-        />)
-  )
+        (roundReadyToStart ?
+          <RoundIntroCurtain round={round} nextTeamName={team.name} onBegin={startRound} />
+          :
+          <TurnScreen
+            round={round}
+            team={team}
+            timeLeft={timeLeft}
+            currentWord={currentWord}
+            bowlLength={bowl.length}
+            onSkip={skipWord}
+            onWin={() => winWord(team)}
+          />
+        )))
 }
 
 export default GameplayScreen

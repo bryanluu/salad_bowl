@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useWordSource } from "../hooks/useWordSource.ts"
 import { maxWordLength, type Word, minWordLength, type GameConfig, type WordSource } from "../types.ts"
 import { validateWord } from "../validation/validateWord.ts"
@@ -16,13 +16,24 @@ function WordEntry({ word, onClick }: { word: Word, onClick: () => void }) {
   )
 }
 
-function WordEntryScreen({ config, source }: { config: GameConfig, source: WordSource }) {
+function WordEntryScreen({ config, source, onSubmitWords }:
+  { config: GameConfig, source: WordSource, onSubmitWords: () => void }) {
   const { words, addWord, removeWord, count } = useWordSource(source)
   const [candidateWord, setCandidateWord] = useState("")
+  const doneButtonRef = useRef<HTMLButtonElement>(null)
+  const wordInputRef = useRef<HTMLInputElement>(null)
+  const [bowlFilledOnceAlready, setBowlFilledOnceAlready] = useState(false)
 
-  const maxWords = config.totalPlayers * config.wordsPerPlayer
   const wordValidation = validateWord(candidateWord, words)
-  const bowlValidation = validateBowl(words, maxWords)
+  const bowlValidation = validateBowl(words, source.maxWords)
+
+  useEffect(function focusDoneButtonWhenBowlReady() {
+    if (count >= source.maxWords) {
+      doneButtonRef.current?.focus()
+    } else {
+      wordInputRef.current?.focus()
+    }
+  }, [count, source])
 
   function handleWordEdit(event: React.ChangeEvent<HTMLInputElement>) {
     const candidate: Word = event.currentTarget.value
@@ -30,11 +41,11 @@ function WordEntryScreen({ config, source }: { config: GameConfig, source: WordS
   }
 
   function handleAddWord() {
-    // TODO: preventDefault onSubmit behaviour so words can't be
-    // added by Enter when button is disabled
     const success = addWord(candidateWord)
     if (success) {
       setCandidateWord("")
+      if (!bowlFilledOnceAlready && count + 1 === source.maxWords)
+        setBowlFilledOnceAlready(true)
     }
   }
 
@@ -65,6 +76,8 @@ function WordEntryScreen({ config, source }: { config: GameConfig, source: WordS
           value={candidateWord}
           minLength={minWordLength}
           maxLength={maxWordLength}
+          disabled={(count >= source.maxWords)}
+          ref={wordInputRef}
           required
         />
         <button
@@ -72,7 +85,7 @@ function WordEntryScreen({ config, source }: { config: GameConfig, source: WordS
           type="submit"
           aria-label={copy.wordEntry.addButton}
           onClick={handleAddWord}
-          disabled={!wordValidation.ok || (count >= maxWords)}
+          disabled={!wordValidation.ok || (count >= source.maxWords)}
         >
           +
         </button>
@@ -84,13 +97,17 @@ function WordEntryScreen({ config, source }: { config: GameConfig, source: WordS
         </p>
       )}
 
-      <ul className="word-list">
-        {words.map((word) => <WordEntry key={word} word={word} onClick={handleRemoveWord(word)} />)}
-      </ul>
+      {config.hideWordsDuringEntry ?
+        // TODO: add more complex behaviour once rooms are implemented
+        <p>{copy.wordEntry.hiddenWords}</p>
+        :
+        <ul className="word-list">
+          {words.map((word) => <WordEntry key={word} word={word} onClick={handleRemoveWord(word)} />)}
+        </ul>}
 
-      <p className="counter">{copy.wordEntry.counter(count, maxWords)}</p>
+      <p className="counter">{copy.wordEntry.counter(count, source.maxWords)}</p>
 
-      {!bowlValidation.ok && (
+      {!bowlValidation.ok && bowlFilledOnceAlready && (
         <p className="done__error" id="done-error" role="status">
           {copy.wordEntry.errors[bowlValidation.reason]}
         </p>
@@ -99,8 +116,11 @@ function WordEntryScreen({ config, source }: { config: GameConfig, source: WordS
       <button
         className="btn btn--primary"
         type="button"
+        ref={doneButtonRef}
         disabled={!bowlValidation.ok}
-        aria-describedby={!wordValidation.ok ? 'done-error' : undefined}>
+        aria-describedby={!wordValidation.ok ? 'done-error' : undefined}
+        onClick={onSubmitWords}
+      >
         {copy.wordEntry.doneButton}
       </button>
     </section>

@@ -2,46 +2,46 @@ import { useState } from 'react'
 import WordEntryScreen from './components/WordEntryScreen'
 import GameSetupScreen from './components/GameSetupScreen'
 import GameplayScreen from './components/GameplayScreen'
-import ScoreboardScreen from './components/ScoreboardScreen'
 import { LocalWordSource } from './wordSources/LocalWordSource'
 import type {
   ScreenId,
   ScreenNavItem,
   GameConfig,
   WordSource,
-  Scores
 } from './types'
 
 const screens: ScreenNavItem[] = [
   { id: 'game-setup', label: 'Game setup' },
   { id: 'word-entry', label: 'Word entry' },
   { id: 'gameplay', label: 'Turn / gameplay' },
-  { id: 'scoreboard', label: 'Scoreboard' },
 ]
 
 type ScreenProps = {
   source: WordSource
   config: GameConfig
-  scores: Scores
-  updateConfig: (newConfig: GameConfig) => void
-  updateScores: (newScores: Scores) => void
+  onCommitConfig: (newConfig: GameConfig) => void
+  onNewGame: () => void
+  onSubmitWords: () => void
 }
 
 function renderScreen(screenId: ScreenId,
-  { source,
+  {
+    source,
     config,
-    scores,
-    updateConfig,
-    updateScores }: ScreenProps) {
+    onCommitConfig,
+    onNewGame,
+    onSubmitWords,
+  }: ScreenProps) {
   switch (screenId) {
     case 'game-setup':
-      return <GameSetupScreen config={config} updateConfig={updateConfig} />
+      return <GameSetupScreen config={config} onSubmit={onCommitConfig} />
     case 'word-entry':
-      return <WordEntryScreen config={config} source={source} />
+      return <WordEntryScreen config={config} source={source} onSubmitWords={onSubmitWords} />
     case 'gameplay':
-      return <GameplayScreen config={config} source={source} scores={scores} updateScores={updateScores} />
-    case 'scoreboard':
-      return <ScoreboardScreen scores={scores} />
+      return <GameplayScreen
+        config={config}
+        source={source}
+        onNewGame={onNewGame} />
   }
 }
 
@@ -51,28 +51,33 @@ const defaultGameConfig: GameConfig = {
     { id: 'team-1', name: 'Team 1', players: 2 },
     { id: 'team-2', name: 'Team 2', players: 2 },
   ],
-  timerSeconds: 60,
+  timerSeconds: 30,
   wordsPerPlayer: 5,
   shuffleTeamOrder: true,
+  hideWordsDuringEntry: true,
 }
 
 function App() {
   const [activeScreen, setActiveScreen] = useState<ScreenId>('game-setup')
   const [gameConfig, setGameConfig] = useState<GameConfig>(defaultGameConfig)
-  const [source] = useState(() => new LocalWordSource(gameConfig.totalPlayers * gameConfig.wordsPerPlayer))
-  const [scores, setScores] = useState<Scores>(
-    function initScores() {
-      return gameConfig.teams.map((t) => {
-        return { ...t, rounds: [] }
-      })
-    })
+  const [source, setSource] = useState(() => new LocalWordSource(gameConfig.totalPlayers * gameConfig.wordsPerPlayer))
 
-  function handleUpdateConfig(newConfig: GameConfig) {
-    setGameConfig(newConfig)
+  function resetSource() {
+    setSource(() => new LocalWordSource(gameConfig.totalPlayers * gameConfig.wordsPerPlayer))
   }
 
-  function handleUpdateScores(newScores: Scores) {
-    setScores(newScores)
+  function switchScreen(newScreenId: ScreenId) {
+    setActiveScreen(() => newScreenId)
+  }
+
+  function handleSubmitConfig(newConfig: GameConfig) {
+    setGameConfig(newConfig)
+    setSource(() => new LocalWordSource(newConfig.totalPlayers * newConfig.wordsPerPlayer))
+    switchScreen('word-entry')
+  }
+
+  function handleSubmitWords() {
+    switchScreen('gameplay')
   }
 
   return (
@@ -99,9 +104,12 @@ function App() {
           {
             source,
             config: gameConfig,
-            updateConfig: handleUpdateConfig,
-            scores,
-            updateScores: handleUpdateScores
+            onCommitConfig: handleSubmitConfig,
+            onSubmitWords: handleSubmitWords,
+            onNewGame: () => {
+              resetSource()
+              switchScreen('game-setup')
+            }
           })}
       </div>
     </main>

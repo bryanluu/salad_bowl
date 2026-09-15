@@ -1,4 +1,4 @@
-export type ScreenId = 'word-entry' | 'game-setup' | 'gameplay' | 'scoreboard'
+export type ScreenId = 'word-entry' | 'game-setup' | 'gameplay'
 
 export interface ScreenNavItem {
   id: ScreenId
@@ -35,6 +35,7 @@ export interface GameConfig {
   timerSeconds: number
   wordsPerPlayer: number
   shuffleTeamOrder: boolean
+  hideWordsDuringEntry: boolean
 }
 
 export type Round = 1 | 2 | 3
