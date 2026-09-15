@@ -69,6 +69,12 @@ function ScoreboardScreen({ scores, onNext = () => { } }:
         </tbody>
       </table>
 
+      <p>
+        {round < 3 ?
+          copy.scoreboard.results.preliminary(winners.map((t) => t.name)) :
+          copy.scoreboard.results.final(winners.map((t) => t.name))}
+      </p>
+
       <button className="btn btn--primary" onClick={onNext} type="button" autoFocus>
         {round < 3 ? copy.scoreboard.button.continue : copy.scoreboard.button.playAgain}
       </button>

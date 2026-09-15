@@ -62,6 +62,10 @@ export const copy = {
     title: 'Toss in your prompts!',
   },
   scoreboard: {
+    results: {
+      preliminary: (winners: string[]) => ((winners.length > 1) ? winners.join(", ") + " are tied." : `${winners[0]} is leading 👀`),
+      final: (winners: string[]) => ((winners.length > 1) ? winners.join(", ") + " tied..." : `${winners[0]} wins! 🎉`)
+    },
     tableHeader: {
       round: (round: number) => `R${round}`,
       team: 'Team',
