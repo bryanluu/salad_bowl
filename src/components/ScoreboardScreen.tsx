@@ -76,7 +76,7 @@ function ScoreboardScreen({ scores, onNext = () => { } }:
       </p>
 
       <button className="btn btn--primary" onClick={onNext} type="button" autoFocus>
-        {round < 3 ? copy.gameplay.scoreboard.button.continue : copy.gameplay.scoreboard.button.playAgain}
+        {round < 3 ? copy.gameplay.scoreboard.button.continue : copy.gameplay.scoreboard.button.newGame}
       </button>
     </section>
   )

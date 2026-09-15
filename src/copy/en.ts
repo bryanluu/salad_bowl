@@ -16,7 +16,7 @@ export const copy = {
     scoreboard: {
       button: {
         continue: 'Continue',
-        playAgain: 'New game',
+        newGame: 'New game',
       },
       results: {
         final: (winners: string[]) => ((winners.length > 1) ? winners.join(", ") + " tied..." : `${winners[0]} wins! 🎉`),

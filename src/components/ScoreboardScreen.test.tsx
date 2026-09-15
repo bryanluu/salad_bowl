@@ -67,7 +67,7 @@ describe('ScoreboardScreen', () => {
     expect(blueRow).not.toHaveClass('is-winner')
 
     expect(
-      screen.getByRole('button', { name: copy.gameplay.scoreboard.button.playAgain })
+      screen.getByRole('button', { name: copy.gameplay.scoreboard.button.newGame })
     ).toBeInTheDocument()
   })
 
@@ -105,7 +105,7 @@ describe('ScoreboardScreen', () => {
     expect(greenRow).toHaveClass('is-tied')
 
     expect(
-      screen.getByRole('button', { name: copy.gameplay.scoreboard.button.playAgain })
+      screen.getByRole('button', { name: copy.gameplay.scoreboard.button.newGame })
     ).toBeInTheDocument()
   })
 

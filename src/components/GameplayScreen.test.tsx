@@ -164,7 +164,7 @@ describe('GameplayScreen', () => {
     }
 
     expect(screen.getByRole('heading', { name: copy.gameplay.scoreboard.title(3) })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: copy.gameplay.scoreboard.button.playAgain })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: copy.gameplay.scoreboard.button.newGame })).toBeInTheDocument()
 
   })
 
