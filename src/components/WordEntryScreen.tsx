@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useWordSource } from "../hooks/useWordSource.ts"
 import { maxWordLength, type Word, minWordLength, type GameConfig, type WordSource } from "../types.ts"
 import { validateWord } from "../validation/validateWord.ts"
@@ -21,10 +21,20 @@ function WordEntryScreen({ config, source, onSubmitWords }:
   { config: GameConfig, source: WordSource, onSubmitWords: () => void }) {
   const { words, addWord, removeWord, count } = useWordSource(source)
   const [candidateWord, setCandidateWord] = useState("")
+  const doneButtonRef = useRef<HTMLButtonElement>(null)
+  const wordInputRef = useRef<HTMLInputElement>(null)
 
   const maxWords = config.totalPlayers * config.wordsPerPlayer
   const wordValidation = validateWord(candidateWord, words)
   const bowlValidation = validateBowl(words, maxWords)
+
+  useEffect(function focusDoneButtonWhenBowlReady() {
+    if (count >= source.maxWords) {
+      doneButtonRef.current?.focus()
+    } else {
+      wordInputRef.current?.focus()
+    }
+  }, [count, source])
 
   function handleWordEdit(event: React.ChangeEvent<HTMLInputElement>) {
     const candidate: Word = event.currentTarget.value
@@ -67,6 +77,8 @@ function WordEntryScreen({ config, source, onSubmitWords }:
           value={candidateWord}
           minLength={minWordLength}
           maxLength={maxWordLength}
+          disabled={(count >= maxWords)}
+          ref={wordInputRef}
           required
         />
         <button
@@ -101,6 +113,7 @@ function WordEntryScreen({ config, source, onSubmitWords }:
       <button
         className="btn btn--primary"
         type="button"
+        ref={doneButtonRef}
         disabled={!bowlValidation.ok}
         aria-describedby={!wordValidation.ok ? 'done-error' : undefined}
         onClick={onSubmitWords}
