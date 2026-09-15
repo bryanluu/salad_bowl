@@ -24,9 +24,8 @@ function WordEntryScreen({ config, source, onSubmitWords }:
   const wordInputRef = useRef<HTMLInputElement>(null)
   const [bowlFilledOnceAlready, setBowlFilledOnceAlready] = useState(false)
 
-  const maxWords = config.totalPlayers * config.wordsPerPlayer
   const wordValidation = validateWord(candidateWord, words)
-  const bowlValidation = validateBowl(words, maxWords)
+  const bowlValidation = validateBowl(words, source.maxWords)
 
   useEffect(function focusDoneButtonWhenBowlReady() {
     if (count >= source.maxWords) {
@@ -77,7 +76,7 @@ function WordEntryScreen({ config, source, onSubmitWords }:
           value={candidateWord}
           minLength={minWordLength}
           maxLength={maxWordLength}
-          disabled={(count >= maxWords)}
+          disabled={(count >= source.maxWords)}
           ref={wordInputRef}
           required
         />
@@ -86,7 +85,7 @@ function WordEntryScreen({ config, source, onSubmitWords }:
           type="submit"
           aria-label={copy.wordEntry.addButton}
           onClick={handleAddWord}
-          disabled={!wordValidation.ok || (count >= maxWords)}
+          disabled={!wordValidation.ok || (count >= source.maxWords)}
         >
           +
         </button>
@@ -106,7 +105,7 @@ function WordEntryScreen({ config, source, onSubmitWords }:
           {words.map((word) => <WordEntry key={word} word={word} onClick={handleRemoveWord(word)} />)}
         </ul>}
 
-      <p className="counter">{copy.wordEntry.counter(count, maxWords)}</p>
+      <p className="counter">{copy.wordEntry.counter(count, source.maxWords)}</p>
 
       {!bowlValidation.ok && bowlFilledOnceAlready && (
         <p className="done__error" id="done-error" role="status">
