@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { useTimer } from "../hooks/useTimer"
+import { useWakeLock } from "../hooks/useWakeLock"
 import type { GameConfig, Word, WordSource, Team, Round, Scores } from "../types"
 import { pickWord, switchWord } from "../words/pickWord"
 import { shuffle } from "../teams/shuffle"
@@ -59,6 +60,11 @@ function GameplayScreen({
   const roundReadyToStart = bowl.length > 0 && currentWord === undefined
   const inPlay = Boolean(currentWord) // only false when bowl is empty
   const gameEnded = bowl.length === 0 && currentWord === undefined
+  // Keep the screen awake while a word is in play — the live turn and the
+  // between-turn curtain, where the phone is physically passed to the next
+  // player (inPlay stays true through it). Drops during the round intro,
+  // the scoreboard, and on unmount.
+  useWakeLock(inPlay)
 
   // Start/stop the turn timer based on whether there's a word in play.
   // Deliberately keyed on the `inPlay` boolean rather than `currentWord` or

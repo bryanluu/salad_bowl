@@ -1,10 +1,5 @@
 export type ScreenId = 'word-entry' | 'game-setup' | 'gameplay'
 
-export interface ScreenNavItem {
-  id: ScreenId
-  label: string
-}
-
 export type Word = string
 
 export const minWordLength = 3
