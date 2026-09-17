@@ -5,16 +5,9 @@ import GameplayScreen from './components/GameplayScreen'
 import { LocalWordSource } from './wordSources/LocalWordSource'
 import type {
   ScreenId,
-  ScreenNavItem,
   GameConfig,
   WordSource,
 } from './types'
-
-const screens: ScreenNavItem[] = [
-  { id: 'game-setup', label: 'Game setup' },
-  { id: 'word-entry', label: 'Word entry' },
-  { id: 'gameplay', label: 'Turn / gameplay' },
-]
 
 type ScreenProps = {
   source: WordSource
@@ -83,23 +76,6 @@ function App() {
   return (
     <main className="app">
       <div className="app__inner">
-        {/* Dev-only: lets every screen be previewed without real game
-            state or routing wired up yet. Remove once navigation is
-            driven by the actual game flow. */}
-        <nav className="dev-nav" aria-label="Screen preview">
-          {screens.map((screen) => (
-            <button
-              key={screen.id}
-              type="button"
-              className="dev-nav__button"
-              aria-current={activeScreen === screen.id}
-              onClick={() => setActiveScreen(screen.id)}
-            >
-              {screen.label}
-            </button>
-          ))}
-        </nav>
-
         {renderScreen(activeScreen,
           {
             source,
