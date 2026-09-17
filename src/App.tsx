@@ -2,6 +2,7 @@ import { useState } from 'react'
 import WordEntryScreen from './components/WordEntryScreen'
 import GameSetupScreen from './components/GameSetupScreen'
 import GameplayScreen from './components/GameplayScreen'
+import Footer from './components/Footer'
 import { LocalWordSource } from './wordSources/LocalWordSource'
 import type {
   ScreenId,
@@ -88,6 +89,7 @@ function App() {
             }
           })}
       </div>
+      <Footer />
     </main>
   )
 }
