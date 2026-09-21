@@ -1,4 +1,5 @@
 import { copy } from '../copy/en.ts'
+import { assetUrl } from '../assets.ts'
 
 function StartScreen({ onStart }: { onStart: () => void }) {
   return (
@@ -8,7 +9,7 @@ function StartScreen({ onStart }: { onStart: () => void }) {
           {copy.start.title}
         </h1>
       </header>
-      <img id="logo" src="public/logo.svg" alt="Cartoon of a smiling salad bowl" />
+      <img id="logo" src={assetUrl('logo.svg')} alt="Cartoon of a smiling salad bowl" />
       <button className='btn btn--primary' onClick={onStart} autoFocus>{copy.start.button}</button>
     </section>
   )
