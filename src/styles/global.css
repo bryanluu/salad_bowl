@@ -73,6 +73,37 @@ footer .logo {
   max-width: 50px;
 }
 
+.footer__quit-icon {
+  position: relative;
+  display: block;
+  width: 50px;
+  aspect-ratio: 4000 / 4130.4268; /* matches logo.svg's viewBox */
+}
+
+.footer__quit-icon .logo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  max-width: none;
+  transition: opacity var(--duration-fast) var(--ease-standard);
+}
+
+.footer__quit-icon .logo--frown {
+  opacity: 0;
+}
+
+.footer__quit:hover .logo--smile,
+.footer__quit:focus-visible .logo--smile,
+.footer__quit:active .logo--smile {
+  opacity: 0;
+}
+
+.footer__quit:hover .logo--frown,
+.footer__quit:focus-visible .logo--frown,
+.footer__quit:active .logo--frown {
+  opacity: 1;
+}
+
 .footer__quit {
   display: flex;
   flex-direction: column;
