@@ -1,5 +1,9 @@
 // src/copy/en.ts
 export const copy = {
+  footer: {
+    quitConfirm: "Quit and return to the start screen? Your progress won't be saved.",
+    quitLabel: 'Quit',
+  },
   gameplay: {
     gotItButton: 'Got it!',
     round: {

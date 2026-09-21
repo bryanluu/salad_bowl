@@ -5,6 +5,7 @@ import GameSetupScreen from './components/GameSetupScreen'
 import GameplayScreen from './components/GameplayScreen'
 import Footer from './components/Footer'
 import { LocalWordSource } from './wordSources/LocalWordSource'
+import { copy } from './copy/en.ts'
 import type {
   ScreenId,
   GameConfig,
@@ -78,6 +79,14 @@ function App() {
     switchScreen('gameplay')
   }
 
+  function handleQuit() {
+    // No persistence (see decisions log) means quitting mid-game discards
+    // the round for good — confirm rather than losing it to a misclick.
+    if (window.confirm(copy.footer.quitConfirm)) {
+      switchScreen('start')
+    }
+  }
+
   return (
     <main className="app">
       <div className="app__inner">
@@ -93,7 +102,7 @@ function App() {
             }
           })}
       </div>
-      <Footer showLogo={started} />
+      <Footer showLogo={started} onQuit={handleQuit} />
     </main>
   )
 }
