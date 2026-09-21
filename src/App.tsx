@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import StartScreen from './components/StartScreen'
 import WordEntryScreen from './components/WordEntryScreen'
 import GameSetupScreen from './components/GameSetupScreen'
 import GameplayScreen from './components/GameplayScreen'
@@ -27,6 +28,8 @@ function renderScreen(screenId: ScreenId,
     onSubmitWords,
   }: ScreenProps) {
   switch (screenId) {
+    case 'start':
+      return <StartScreen onStart={onNewGame} />
     case 'game-setup':
       return <GameSetupScreen config={config} onSubmit={onCommitConfig} />
     case 'word-entry':
@@ -52,7 +55,7 @@ const defaultGameConfig: GameConfig = {
 }
 
 function App() {
-  const [activeScreen, setActiveScreen] = useState<ScreenId>('game-setup')
+  const [activeScreen, setActiveScreen] = useState<ScreenId>('start')
   const [gameConfig, setGameConfig] = useState<GameConfig>(defaultGameConfig)
   const [source, setSource] = useState(() => new LocalWordSource(gameConfig.totalPlayers * gameConfig.wordsPerPlayer))
 

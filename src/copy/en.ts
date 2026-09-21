@@ -62,6 +62,10 @@ export const copy = {
     totalPlayersLabel: 'Total players',
     wordsPerPlayerLabel: 'Prompts / player',
   },
+  start: {
+    button: "Play",
+    title: "Salad Bowl"
+  },
   wordEntry: {
     addButton: 'Add prompt',
     counter: (count: number, total: number) => `${count} / ${total} prompts`,

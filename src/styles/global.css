@@ -324,6 +324,31 @@ footer {
 }
 
 /* -------------------------------------------------------------------------
+   Start Screen
+   ------------------------------------------------------------------------- */
+
+.game-start {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2em;
+}
+
+#game-start-title {
+  font-size: 48pt;
+  text-align: center;
+}
+
+#logo {
+  max-width: 40%;
+}
+
+.game-start button {
+  width: 50%;
+}
+
+/* -------------------------------------------------------------------------
    Round curtain (round intro, shown before a round's turns begin)
    ------------------------------------------------------------------------- */
 
