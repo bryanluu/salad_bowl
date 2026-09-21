@@ -58,6 +58,7 @@ function App() {
   const [activeScreen, setActiveScreen] = useState<ScreenId>('start')
   const [gameConfig, setGameConfig] = useState<GameConfig>(defaultGameConfig)
   const [source, setSource] = useState(() => new LocalWordSource(gameConfig.totalPlayers * gameConfig.wordsPerPlayer))
+  const started = (activeScreen !== 'start')
 
   function resetSource() {
     setSource(() => new LocalWordSource(gameConfig.totalPlayers * gameConfig.wordsPerPlayer))
@@ -92,7 +93,7 @@ function App() {
             }
           })}
       </div>
-      <Footer />
+      <Footer showLogo={started} />
     </main>
   )
 }
