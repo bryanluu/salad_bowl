@@ -98,6 +98,10 @@ function TurnScreen({ round, team, timeLeft, currentWord, bowlLength, onSkip, on
     return colorToRgbString(interpolateColor(palette.bg, target, Math.abs(progress)))
   }
 
+  // Touch pointers only exist while a finger is in contact, so this passes
+  // only real drags — desktop mouse hover (and pen) is ignored. isPrimary
+  // keeps a second steadying finger from also starting a drag. The same
+  // two checks gate followCursor and releaseKnob below for the same reason.
   function beginDrag(event: React.PointerEvent) {
     if (!inPlay) return
     if (event.pointerType !== "touch" || !event.isPrimary) return
@@ -140,12 +144,16 @@ function TurnScreen({ round, team, timeLeft, currentWord, bowlLength, onSkip, on
     const container = controlsRef.current
     if (!container || knobOffsetX === undefined) return
 
+    // Re-enable the transition so the card eases back to its base color
+    // instead of snapping.
     if (wordCardRef.current) wordCardRef.current.style.transition = ''
 
     const rect = container.getBoundingClientRect()
     const threshold = 0.3 * rect.width
     const midpoint = rect.width * 0.5
 
+    // Check if swipe was sufficient to count as a deliberate gesture,
+    // rather than firing on any small nudge of the knob.
     if (knobOffsetX >= midpoint + threshold) onWin()
     if (knobOffsetX <= midpoint - threshold) onSkip()
 
@@ -158,6 +166,11 @@ function TurnScreen({ round, team, timeLeft, currentWord, bowlLength, onSkip, on
     <section
       className="screen turn-stage"
       aria-label={copy.gameplay.title}
+      // Handlers live on the whole screen, not just word-card/turn-controls
+      // — deliberately: the swipe surface should cover as much of the
+      // screen as a player would realistically swipe from, not just the
+      // card itself. A tap up in the meta/timer area with no drag is a
+      // no-op either way, so this doesn't risk misfiring.
       onPointerDown={beginDrag}
       onPointerMove={followCursor}
       onPointerCancel={releaseKnob}

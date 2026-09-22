@@ -407,7 +407,7 @@ footer .logo {
   text-align: center;
 }
 
-#logo {
+.game-start .logo {
   max-width: 40%;
 }
 
@@ -593,12 +593,11 @@ footer .logo {
   max-width: 100%;
 }
 
+/* .turn-stage rides alongside .screen (className="screen turn-stage") on
+   TurnScreen's root only — .screen is shared by every other screen, so this
+   is the one hook that scopes touch-action to gameplay without disabling
+   pinch-zoom/edge-swipe on screens that don't do custom dragging. */
 .turn-stage {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-  gap: var(--space-6);
   touch-action: pan-y;
 }
 

@@ -9,7 +9,7 @@ function StartScreen({ onStart }: { onStart: () => void }) {
           {copy.start.title}
         </h1>
       </header>
-      <img id="logo" src={assetUrl('logo.svg')} alt="Cartoon of a smiling salad bowl" />
+      <img src={assetUrl('logo.svg')} alt="Cartoon of a smiling salad bowl" className="logo" />
       <button className='btn btn--primary' onClick={onStart} autoFocus>{copy.start.button}</button>
     </section>
   )

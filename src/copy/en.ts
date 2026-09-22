@@ -67,8 +67,8 @@ export const copy = {
     wordsPerPlayerLabel: 'Prompts / player',
   },
   start: {
-    button: "Play",
-    title: "Salad Bowl"
+    button: 'Play',
+    title: 'Salad Bowl'
   },
   wordEntry: {
     addButton: 'Add prompt',

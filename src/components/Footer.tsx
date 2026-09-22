@@ -1,7 +1,7 @@
 import { copy } from '../copy/en.ts'
 import { assetUrl } from '../assets.ts'
 
-function Footer({ showLogo = false, onQuit }: { showLogo: boolean, onQuit: () => void }) {
+function Footer({ showLogo, onQuit }: { showLogo: boolean, onQuit: () => void }) {
   const currentYear = new Date().getFullYear();
 
   return (
