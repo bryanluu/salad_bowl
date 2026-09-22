@@ -1,8 +1,11 @@
 import { useState } from 'react'
+import StartScreen from './components/StartScreen'
 import WordEntryScreen from './components/WordEntryScreen'
 import GameSetupScreen from './components/GameSetupScreen'
 import GameplayScreen from './components/GameplayScreen'
+import Footer from './components/Footer'
 import { LocalWordSource } from './wordSources/LocalWordSource'
+import { copy } from './copy/en.ts'
 import type {
   ScreenId,
   GameConfig,
@@ -26,6 +29,8 @@ function renderScreen(screenId: ScreenId,
     onSubmitWords,
   }: ScreenProps) {
   switch (screenId) {
+    case 'start':
+      return <StartScreen onStart={onNewGame} />
     case 'game-setup':
       return <GameSetupScreen config={config} onSubmit={onCommitConfig} />
     case 'word-entry':
@@ -51,9 +56,10 @@ const defaultGameConfig: GameConfig = {
 }
 
 function App() {
-  const [activeScreen, setActiveScreen] = useState<ScreenId>('game-setup')
+  const [activeScreen, setActiveScreen] = useState<ScreenId>('start')
   const [gameConfig, setGameConfig] = useState<GameConfig>(defaultGameConfig)
   const [source, setSource] = useState(() => new LocalWordSource(gameConfig.totalPlayers * gameConfig.wordsPerPlayer))
+  const started = (activeScreen !== 'start')
 
   function resetSource() {
     setSource(() => new LocalWordSource(gameConfig.totalPlayers * gameConfig.wordsPerPlayer))
@@ -73,6 +79,14 @@ function App() {
     switchScreen('gameplay')
   }
 
+  function handleQuit() {
+    // No persistence (see decisions log) means quitting mid-game discards
+    // the round for good — confirm rather than losing it to a misclick.
+    if (window.confirm(copy.footer.quitConfirm)) {
+      switchScreen('start')
+    }
+  }
+
   return (
     <main className="app">
       <div className="app__inner">
@@ -88,6 +102,7 @@ function App() {
             }
           })}
       </div>
+      <Footer showLogo={started} onQuit={handleQuit} />
     </main>
   )
 }

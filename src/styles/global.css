@@ -30,12 +30,20 @@ body {
 
 .app {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
   min-height: 100vh;
+  min-height: 100dvh;
+  /* accounts for mobile browser chrome (address bar) */
   padding: var(--space-6) var(--space-4) var(--space-10);
 }
 
 .app__inner {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
   width: 100%;
   max-width: var(--app-max-width);
 }
@@ -46,34 +54,82 @@ body {
   }
 
   .app__inner {
+    /* Desktop keeps the original content-sized, vertically-centered card —
+       full-bleed height is a mobile-only treatment (see .screen below). */
+    flex: initial;
     max-width: var(--app-max-width-desktop);
   }
 }
 
-/* Dev-only screen switcher — remove once real navigation/routing exists */
-.dev-nav {
+footer {
+  margin-top: 1em;
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  margin-bottom: var(--space-5);
+  flex-direction: column;
+  align-items: center;
+  gap: 1em;
 }
 
-.dev-nav__button {
-  padding: var(--space-2) var(--space-3);
-  font-size: var(--fs-xs);
-  font-weight: var(--fw-medium);
+footer .logo {
+  max-width: 50px;
+}
+
+.footer__quit-icon {
+  position: relative;
+  display: block;
+  width: 50px;
+  aspect-ratio: 4000 / 4130.4268; /* matches logo.svg's viewBox */
+}
+
+.footer__quit-icon .logo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  max-width: none;
+  transition: opacity var(--duration-fast) var(--ease-standard);
+}
+
+.footer__quit-icon .logo--frown {
+  opacity: 0;
+}
+
+.footer__quit:hover .logo--smile,
+.footer__quit:focus-visible .logo--smile,
+.footer__quit:active .logo--smile {
+  opacity: 0;
+}
+
+.footer__quit:hover .logo--frown,
+.footer__quit:focus-visible .logo--frown,
+.footer__quit:active .logo--frown {
+  opacity: 1;
+}
+
+.footer__quit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  background: none;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--fs-sm);
   color: var(--color-text-muted);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-pill);
-  transition: color var(--duration-fast) var(--ease-standard),
-    border-color var(--duration-fast) var(--ease-standard);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-standard);
 }
 
-.dev-nav__button[aria-current="true"] {
-  color: var(--color-accent-strong);
-  border-color: var(--color-accent);
-  background: var(--color-accent-soft);
+.footer__quit:hover {
+  background: var(--color-bg);
+}
+
+.footer__quit:active {
+  transform: scale(0.98);
+}
+
+.footer__quit:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
 }
 
 /* -------------------------------------------------------------------------
@@ -83,12 +139,20 @@ body {
 .screen {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
   gap: var(--space-6);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
   padding: var(--space-6);
+}
+
+@media (min-width: 720px) {
+  .screen {
+    flex: initial;
+  }
 }
 
 .screen__header {
@@ -327,6 +391,31 @@ body {
 }
 
 /* -------------------------------------------------------------------------
+   Start Screen
+   ------------------------------------------------------------------------- */
+
+.game-start {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2em;
+}
+
+#game-start-title {
+  font-size: 48pt;
+  text-align: center;
+}
+
+.game-start .logo {
+  max-width: 40%;
+}
+
+.game-start button {
+  width: 50%;
+}
+
+/* -------------------------------------------------------------------------
    Round curtain (round intro, shown before a round's turns begin)
    ------------------------------------------------------------------------- */
 
@@ -471,6 +560,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex: 1;
   min-height: 160px;
   padding: var(--space-6);
   background: var(--color-bg);
@@ -503,9 +593,16 @@ body {
   max-width: 100%;
 }
 
+/* .turn-stage rides alongside .screen (className="screen turn-stage") on
+   TurnScreen's root only — .screen is shared by every other screen, so this
+   is the one hook that scopes touch-action to gameplay without disabling
+   pinch-zoom/edge-swipe on screens that don't do custom dragging. */
+.turn-stage {
+  touch-action: pan-y;
+}
+
 .turn-controls {
   position: relative;
-  touch-action: pan-y;
   display: flex;
   align-items: center;
   justify-content: space-between;

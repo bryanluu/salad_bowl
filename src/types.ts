@@ -1,4 +1,4 @@
-export type ScreenId = 'word-entry' | 'game-setup' | 'gameplay'
+export type ScreenId = 'start' | 'word-entry' | 'game-setup' | 'gameplay'
 
 export type Word = string
 

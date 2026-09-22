@@ -1,5 +1,9 @@
 // src/copy/en.ts
 export const copy = {
+  footer: {
+    quitConfirm: "Quit and return to the start screen? Your progress won't be saved.",
+    quitLabel: 'Quit',
+  },
   gameplay: {
     gotItButton: 'Got it!',
     round: {
@@ -61,6 +65,10 @@ export const copy = {
     totalPlayersHelp: (maxTeams: number, minPlayers: number) => `Up to ${maxTeams} teams · min ${minPlayers} players each`,
     totalPlayersLabel: 'Total players',
     wordsPerPlayerLabel: 'Prompts / player',
+  },
+  start: {
+    button: 'Play',
+    title: 'Salad Bowl'
   },
   wordEntry: {
     addButton: 'Add prompt',
