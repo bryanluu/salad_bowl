@@ -104,6 +104,18 @@ footer .logo {
   opacity: 1;
 }
 
+.footer__quit-label {
+  color: var(--color-text-muted);
+}
+
+.footer__quit:hover .footer__quit-label,
+.footer__quit:focus-visible .footer__quit-label,
+.footer__quit:active .footer__quit-label {
+  color: var(--color-danger);
+  transform: scale(1.02);
+  font-weight: bolder;
+}
+
 .footer__quit {
   display: flex;
   flex-direction: column;
@@ -114,7 +126,6 @@ footer .logo {
   border: none;
   border-radius: var(--radius-md);
   font-size: var(--fs-sm);
-  color: var(--color-text-muted);
   cursor: pointer;
 }
 

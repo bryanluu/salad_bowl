@@ -16,7 +16,7 @@ function Footer({ showLogo, onQuit }: { showLogo: boolean, onQuit: () => void })
             <img src={assetUrl('logo.svg')} alt="" className="logo logo--smile" />
             <img src={assetUrl('logo-quit.svg')} alt="" className="logo logo--frown" />
           </span>
-          <span>{copy.footer.quitLabel}</span>
+          <span className="footer__quit-label">{copy.footer.quitLabel}</span>
         </button>}
       <span>© {currentYear} Bryan Luu</span>
     </footer>
