@@ -77,7 +77,8 @@ footer .logo {
   position: relative;
   display: block;
   width: 50px;
-  aspect-ratio: 4000 / 4130.4268; /* matches logo.svg's viewBox */
+  aspect-ratio: 4000 / 4130.4268;
+  /* matches logo.svg's viewBox */
 }
 
 .footer__quit-icon .logo {
@@ -85,7 +86,6 @@ footer .logo {
   inset: 0;
   width: 100%;
   max-width: none;
-  transition: opacity var(--duration-fast) var(--ease-standard);
 }
 
 .footer__quit-icon .logo--frown {
@@ -116,7 +116,6 @@ footer .logo {
   font-size: var(--fs-sm);
   color: var(--color-text-muted);
   cursor: pointer;
-  transition: background var(--duration-fast) var(--ease-standard);
 }
 
 .footer__quit:hover {
