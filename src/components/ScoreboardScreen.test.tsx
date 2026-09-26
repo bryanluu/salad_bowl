@@ -110,6 +110,34 @@ describe('ScoreboardScreen', () => {
   })
 
 
+  it('always displays teams in descending score order, regardless of input order', () => {
+    const scores: Scores = [
+      { id: 'blue', name: 'Blue Team', rounds: [1] },
+      { id: 'red', name: 'Red Team', rounds: [5] },
+      { id: 'green', name: 'Green Team', rounds: [3] },
+    ]
+
+    render(<ScoreboardScreen scores={scores} onNext={vi.fn()} />)
+
+    const rows = screen.getAllByRole('row').slice(1) // drop the header row
+    expect(rows[0]).toHaveTextContent('Red Team')
+    expect(rows[1]).toHaveTextContent('Green Team')
+    expect(rows[2]).toHaveTextContent('Blue Team')
+  })
+
+  it('keeps tied teams in their original relative order', () => {
+    const scores: Scores = [
+      { id: 'blue', name: 'Blue Team', rounds: [5] },
+      { id: 'red', name: 'Red Team', rounds: [5] },
+    ]
+
+    render(<ScoreboardScreen scores={scores} onNext={vi.fn()} />)
+
+    const rows = screen.getAllByRole('row').slice(1)
+    expect(rows[0]).toHaveTextContent('Blue Team')
+    expect(rows[1]).toHaveTextContent('Red Team')
+  })
+
   it('calls onNext when the button is clicked', () => {
     const onNext = vi.fn()
     const scores: Scores = [
