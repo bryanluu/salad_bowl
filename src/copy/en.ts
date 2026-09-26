@@ -38,6 +38,7 @@ export const copy = {
     title: 'Current turn',
     turnCurtain: {
       goButton: (roundEnded: boolean) => roundEnded ? 'Continue' : 'Go',
+      holdingLabel: (secondsLeft: number) => `Hold… ${secondsLeft}`,
       readyPrompt: (team: string) => `Next player on ${team}, ready?`,
       resultLabel: (count: number) => `You got ${count} correct.`,
       roundOverLabel: (round: number) => `Round ${round} finished!`,

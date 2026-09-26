@@ -264,6 +264,53 @@ footer .logo {
   background: var(--color-bg);
 }
 
+/* TurnCurtain's continue button: starts neutral (not the usual
+   btn--primary green) so mid-fill green reads as a real state change
+   rather than blending into an already-green button. See TurnCurtain.tsx
+   for why it requires a hold instead of a tap. */
+.turn-curtain__continue {
+  position: relative;
+  overflow: hidden;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border-color: var(--color-border-strong);
+}
+
+.turn-curtain__continue:hover {
+  background: var(--color-accent-soft);
+  border-color: var(--color-text-faint);
+}
+
+.turn-curtain__continue-fill {
+  position: absolute;
+  inset: 0;
+  width: 0%;
+  background: var(--color-accent);
+  /* No transition here at rest: removing --holding and the width change
+     both land in the same render, so the fill snaps back to 0 instantly
+     instead of easing out — releasing early should feel like a reset, not
+     a continuation. */
+  transition: none;
+}
+
+.turn-curtain__continue--holding .turn-curtain__continue-fill {
+  width: 100%;
+  /* --hold-duration is set inline from HOLD_SECONDS in TurnCurtain.tsx so
+     the visual fill can't drift out of sync with the real hold timer. */
+  transition: width var(--hold-duration, 3000ms) linear;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .turn-curtain__continue-fill {
+    display: none;
+  }
+}
+
+.turn-curtain__continue-label {
+  position: relative;
+  z-index: 1;
+}
+
 /* -------------------------------------------------------------------------
    Stepper (− value +)
    ------------------------------------------------------------------------- */

@@ -1,6 +1,6 @@
 // src/components/TurnCurtain.test.tsx
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import TurnCurtain from './TurnCurtain'
 import { copy } from '../copy/en'
 
@@ -41,7 +41,7 @@ describe('TurnCurtain', () => {
     expect(screen.getByRole('button', { name: turnCurtain.goButton(true) })).toBeInTheDocument()
   })
 
-  it('calls onNext when the button is clicked', () => {
+  it('does not call onNext on a quick pointer tap', () => {
     const onNext = vi.fn()
 
     render(
@@ -54,21 +54,84 @@ describe('TurnCurtain', () => {
       />
     )
 
-    fireEvent.click(screen.getByRole('button', { name: turnCurtain.goButton(false) }))
-    expect(onNext).toHaveBeenCalledTimes(1)
+    const button = screen.getByRole('button', { name: turnCurtain.goButton(false) })
+    fireEvent.pointerDown(button, { isPrimary: true })
+    fireEvent.pointerUp(button, { isPrimary: true })
+    // A quick tap also dispatches a real click (detail >= 1), which must
+    // not be mistaken for the keyboard-instant path.
+    fireEvent.click(button, { detail: 1 })
+    expect(onNext).not.toHaveBeenCalled()
   })
 
-  it('autofocuses the button so pressing Enter advances immediately', () => {
+  it('calls onNext once the button has been held for the full duration', () => {
+    vi.useFakeTimers()
+    const onNext = vi.fn()
+
     render(
       <TurnCurtain
         correctCount={0}
         nextTeamName="Red Team"
         roundEnded={false}
         round={1}
-        onNext={vi.fn()}
+        onNext={onNext}
       />
     )
 
-    expect(screen.getByRole('button', { name: turnCurtain.goButton(false) })).toHaveFocus()
+    const button = screen.getByRole('button', { name: turnCurtain.goButton(false) })
+    fireEvent.pointerDown(button, { isPrimary: true })
+    expect(screen.getByRole('button', { name: turnCurtain.holdingLabel(3) })).toBeInTheDocument()
+
+    act(() => { vi.advanceTimersByTime(3000) })
+    expect(onNext).toHaveBeenCalledTimes(1)
+
+    vi.useRealTimers()
+  })
+
+  it('resets the hold instead of pausing it when released early', () => {
+    vi.useFakeTimers()
+    const onNext = vi.fn()
+
+    render(
+      <TurnCurtain
+        correctCount={0}
+        nextTeamName="Red Team"
+        roundEnded={false}
+        round={1}
+        onNext={onNext}
+      />
+    )
+
+    const button = screen.getByRole('button', { name: turnCurtain.goButton(false) })
+    fireEvent.pointerDown(button, { isPrimary: true })
+    act(() => { vi.advanceTimersByTime(1000) })
+    fireEvent.pointerUp(button, { isPrimary: true })
+    expect(screen.getByRole('button', { name: turnCurtain.goButton(false) })).toBeInTheDocument()
+
+    fireEvent.pointerDown(button, { isPrimary: true })
+    act(() => { vi.advanceTimersByTime(2000) })
+    expect(onNext).not.toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: turnCurtain.holdingLabel(1) })).toBeInTheDocument()
+
+    vi.useRealTimers()
+  })
+
+  it('advances instantly on a keyboard-activated click (detail 0), autofocused for Enter', () => {
+    const onNext = vi.fn()
+
+    render(
+      <TurnCurtain
+        correctCount={0}
+        nextTeamName="Red Team"
+        roundEnded={false}
+        round={1}
+        onNext={onNext}
+      />
+    )
+
+    const button = screen.getByRole('button', { name: turnCurtain.goButton(false) })
+    expect(button).toHaveFocus()
+
+    fireEvent.click(button, { detail: 0 })
+    expect(onNext).toHaveBeenCalledTimes(1)
   })
 })
