@@ -61,7 +61,7 @@ function WordEntryScreen({ config, source, onSubmitWords }:
         </h1>
       </header>
 
-      <form className="input-add" onSubmit={(event) => event.preventDefault()}>
+      {(count < source.maxWords) && <form className="input-add" onSubmit={(event) => event.preventDefault()}>
         <label className="sr-only" htmlFor="word-input">
           Word
         </label>
@@ -89,7 +89,7 @@ function WordEntryScreen({ config, source, onSubmitWords }:
         >
           +
         </button>
-      </form>
+      </form>}
 
       {!wordValidation.ok && wordValidation.reason !== 'empty' && (
         <p className="input-add__error" id="word-input-error" role="status">
