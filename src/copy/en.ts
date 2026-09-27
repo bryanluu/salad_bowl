@@ -81,6 +81,7 @@ export const copy = {
       'not-enough-words': 'Please add more prompts.',
       'too-many-words': 'Too many prompts, please remove some.',
     },
+    generateButton: 'Generate prompt',
     hiddenWords: 'Prompts are hidden until gameplay 🙈',
     placeholder: 'Enter something for your team to guess',
     removeLabel: 'Remove prompt',
