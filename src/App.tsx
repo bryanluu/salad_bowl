@@ -12,6 +12,7 @@ import type {
   WordSource,
 } from './types'
 import { generateWord } from './words/generateWord.ts'
+import { useSoundEffects } from './hooks/useSoundEffects'
 
 type ScreenProps = {
   source: WordSource
@@ -58,6 +59,7 @@ const defaultGameConfig: GameConfig = {
 }
 
 function App() {
+  const { play } = useSoundEffects()
   const [activeScreen, setActiveScreen] = useState<ScreenId>('start')
   const [gameConfig, setGameConfig] = useState<GameConfig>(defaultGameConfig)
   const [source, setSource] = useState(() => new LocalWordSource(gameConfig.totalPlayers * gameConfig.wordsPerPlayer))
@@ -100,6 +102,9 @@ function App() {
     // No persistence (see decisions log) means quitting mid-game discards
     // the round for good — confirm rather than losing it to a misclick.
     if (window.confirm(copy.footer.quitConfirm)) {
+      // A distinct, lower-key sound than the generic tap — leaving is a
+      // different event from acting.
+      play('quit')
       switchScreen('start')
     }
   }

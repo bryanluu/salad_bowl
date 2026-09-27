@@ -69,6 +69,13 @@ footer {
   gap: 1em;
 }
 
+.footer__actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
 footer .logo {
   max-width: 50px;
 }
@@ -138,6 +145,29 @@ footer .logo {
 }
 
 .footer__quit:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.footer__sound {
+  padding: var(--space-2);
+  background: none;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--fs-lg);
+  line-height: 1;
+  cursor: pointer;
+}
+
+.footer__sound:hover {
+  background: var(--color-surface);
+}
+
+.footer__sound:active {
+  transform: scale(0.98);
+}
+
+.footer__sound:focus-visible {
   outline: 2px solid var(--color-focus);
   outline-offset: 2px;
 }

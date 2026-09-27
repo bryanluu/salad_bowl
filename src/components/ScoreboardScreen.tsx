@@ -1,5 +1,7 @@
+import { useEffect } from "react"
 import type { Scores, TeamScore } from "../types"
 import { copy } from "../copy/en"
+import { useSoundEffects } from "../hooks/useSoundEffects"
 
 function total(rounds: readonly number[]): number {
   return rounds.reduce((sum, score) => sum + score, 0)
@@ -33,6 +35,7 @@ function ScoreboardScreen({ scores, onNext = () => { } }:
     scores: Scores,
     onNext: () => void,
   }) {
+  const { play } = useSoundEffects()
   const round = scores[0].rounds.length
   const winners = computeWinners(scores)
   const sortedScores = sortByScoreDescending(scores)
@@ -44,6 +47,19 @@ function ScoreboardScreen({ scores, onNext = () => { } }:
   function isTied() {
     return winners.length > 1
   }
+
+  // The scoreboard is the round's end-of-show: a distinct sting on each of
+  // rounds 1–2, and the game's verdict on round 3. Fires once, on mount —
+  // a scoreboard is always a fresh mount when it appears, and round/isTied
+  // are fixed for its lifetime, so they are deliberately not deps.
+  useEffect(function playEndOfRoundSting() {
+    if (round === 3) {
+      play(isTied() ? 'tie' : 'celebration')
+    } else {
+      play('round')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <section className="screen" aria-labelledby="scoreboard-title">
@@ -84,7 +100,7 @@ function ScoreboardScreen({ scores, onNext = () => { } }:
           copy.gameplay.scoreboard.results.final(winners.map((t) => t.name))}
       </p>
 
-      <button className="btn btn--primary" onClick={onNext} type="button" autoFocus>
+      <button className="btn btn--primary" onClick={() => { play('tap'); onNext() }} type="button" autoFocus>
         {round < 3 ? copy.gameplay.scoreboard.button.continue : copy.gameplay.scoreboard.button.newGame}
       </button>
     </section>

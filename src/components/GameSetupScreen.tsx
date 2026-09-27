@@ -4,6 +4,7 @@ import { minPlayersPerTeam, maxPlayersForTeam, splitPlayersEvenly } from '../tea
 import { copy } from '../copy/en.ts'
 import type { GameConfig, Team } from '../types.ts'
 import { validateRoster } from '../validation/validateRoster.ts'
+import { useSoundEffects } from '../hooks/useSoundEffects'
 
 const minTeams = 2
 const minPlayers = 4
@@ -47,6 +48,7 @@ function TeamRow({ team, index, totalPlayers, assignedPlayers, onEditTeam, onSup
 }
 
 function GameSetupScreen({ config, onSubmit }: { config: GameConfig, onSubmit: (gc: GameConfig) => void }) {
+  const { play } = useSoundEffects()
   const [newConfig, setNewConfig] = useState<GameConfig>({ ...config })
 
   const maxTeams = Math.floor(newConfig.totalPlayers / minPlayersPerTeam)
@@ -77,6 +79,7 @@ function GameSetupScreen({ config, onSubmit }: { config: GameConfig, onSubmit: (
 
   function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
+    play('tap')
     onSubmit(newConfig)
   }
 

@@ -8,6 +8,7 @@ import RoundIntroCurtain from "./RoundIntroCurtain"
 import TurnScreen from "./TurnScreen"
 import TurnCurtain from "./TurnCurtain"
 import ScoreboardScreen from "./ScoreboardScreen"
+import { useSoundEffects } from "../hooks/useSoundEffects"
 
 type Bowl = Word[]
 type Turn = number
@@ -15,6 +16,11 @@ type BowlState = { bowl: Bowl; currentWord: Word | undefined }
 // Tracks per-round totals under each team's id, plus the words won during
 // the turn currently in progress under the reserved "onTurn" key.
 type WonWords = Record<string, Word[]>
+
+// The countdown turns into an audible tick this far from zero: quiet for
+// most of a (possibly multi-minute) turn, urgent at the end. The buzzer
+// owns second zero itself — see playUrgencyTick below.
+const URGENT_TICK_SECONDS = 5
 
 function GameplayScreen({
   config,
@@ -25,6 +31,7 @@ function GameplayScreen({
   source: WordSource,
   onNewGame: () => void,
 }) {
+  const { play } = useSoundEffects()
   const [round, setRound] = useState<Round>(1)
   const { timeLeft, resetTimer, startTimer, stopTimer } = useTimer(config.timerSeconds, handleTimerExpiry)
   const [teams] = useState<Team[]>(
@@ -80,6 +87,16 @@ function GameplayScreen({
     return () => stopTimer()
   }, [inPlay, startTimer, stopTimer])
 
+  // The urgency tick, driven by the same timeLeft the countdown displays —
+  // exactly one tick per second, and silence before the final few seconds.
+  // Skipped at zero: that moment belongs to the expiry buzzer (and its
+  // higher priority wins the collision either way it fires).
+  useEffect(function playUrgencyTick() {
+    if (inPlay && timeLeft > 0 && timeLeft <= URGENT_TICK_SECONDS) {
+      play('tick')
+    }
+  }, [timeLeft, inPlay, play])
+
   function startTurn() {
     resetTimer()
     startTimer()
@@ -105,6 +122,9 @@ function GameplayScreen({
   // doesn't advance turns pointlessly.
   function handleTimerExpiry() {
     if (currentWord) {
+      // The buzzer is top of the priority scale: it owns the moment even
+      // when a word is won on the exact second the clock runs out.
+      play('buzzer')
       advanceTurn()
       setTurnEnded(true)
       setRoundJustEnded(false)
@@ -144,10 +164,12 @@ function GameplayScreen({
 
     const { word, remaining } = switchWord(currentWord, bowl)
 
-    if (word)
-      setBowlState({ bowl: remaining, currentWord: word })
+    // if it's the last word, do nothing — and don't play a skip for a
+    // swap that never happened either.
+    if (!word) return
 
-    // if it's the last word, do nothing
+    setBowlState({ bowl: remaining, currentWord: word })
+    play('skip')
   }
 
   // Turns wonWordsToTally into this round's per-team counts and hands them
@@ -192,6 +214,10 @@ function GameplayScreen({
   // won, so the round ends here.
   function winWord(team: Team) {
     if (!currentWord) return
+
+    // Plays even on the round-ending word — the round/celebration sting
+    // is a later moment (the scoreboard), reached via the player's tap.
+    play('win')
 
     // tracks teamTotal this round
     const teamWords = wonWords[team.id] ?? []

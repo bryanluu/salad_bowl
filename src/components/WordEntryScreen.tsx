@@ -5,6 +5,7 @@ import { validateWord } from "../validation/validateWord.ts"
 import { validateBowl } from "../validation/validateBowl.ts"
 import { copy } from "../copy/en.ts"
 import { generateWord } from "../words/generateWord.ts"
+import { useSoundEffects } from "../hooks/useSoundEffects"
 
 function WordEntry({ word, onClick }: { word: Word, onClick: () => void }) {
   return (
@@ -19,6 +20,7 @@ function WordEntry({ word, onClick }: { word: Word, onClick: () => void }) {
 
 function WordEntryScreen({ config, source, onSubmitWords }:
   { config: GameConfig, source: WordSource, onSubmitWords: () => void }) {
+  const { play } = useSoundEffects()
   const { words, addWord, removeWord, count } = useWordSource(source)
   const [candidateWord, setCandidateWord] = useState("")
   const doneButtonRef = useRef<HTMLButtonElement>(null)
@@ -42,6 +44,7 @@ function WordEntryScreen({ config, source, onSubmitWords }:
   }
 
   function handleGenerateWord() {
+    play('tap')
     let generated
     do {
       generated = generateWord()
@@ -50,6 +53,7 @@ function WordEntryScreen({ config, source, onSubmitWords }:
   }
 
   function handleAddWord() {
+    play('tap')
     const success = addWord(candidateWord)
     if (success) {
       setCandidateWord("")
@@ -139,7 +143,7 @@ function WordEntryScreen({ config, source, onSubmitWords }:
         ref={doneButtonRef}
         disabled={!bowlValidation.ok}
         aria-describedby={!wordValidation.ok ? 'done-error' : undefined}
-        onClick={onSubmitWords}
+        onClick={() => { play('tap'); onSubmitWords() }}
       >
         {copy.wordEntry.doneButton}
       </button>

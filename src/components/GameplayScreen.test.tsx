@@ -1,9 +1,10 @@
 // src/components/GameplayScreen.test.tsx
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent, act } from '@testing-library/react'
+import { screen, fireEvent, act } from '@testing-library/react'
 import GameplayScreen from './GameplayScreen'
 import { copy } from '../copy/en'
 import type { GameConfig, Round, Team, Word, WordSource } from '../types'
+import { renderWithSound } from '../test/renderWithSound'
 
 const teamA: Team = { id: 'team-a', name: 'Red Team', players: 2 }
 const teamB: Team = { id: 'team-b', name: 'Blue Team', players: 2 }
@@ -66,7 +67,7 @@ describe('GameplayScreen', () => {
 
   it('shows RoundIntroCurtain for round 1 while the bowl is full and untouched', () => {
     const source = buildSource(['Apple', 'Banana'])
-    render(<GameplayScreen
+    renderWithSound(<GameplayScreen
       config={buildConfig(30)}
       source={source}
       onNewGame={vi.fn()}
@@ -79,7 +80,7 @@ describe('GameplayScreen', () => {
 
   it('starting the round via onBegin shows TurnScreen with a word in play', () => {
     const source = buildSource(['Apple', 'Banana'])
-    render(<GameplayScreen
+    renderWithSound(<GameplayScreen
       config={buildConfig(30)}
       source={source}
       onNewGame={vi.fn()}
@@ -95,7 +96,7 @@ describe('GameplayScreen', () => {
 
   it('shows TurnCurtain naming the next team when the turn timer expires mid-round', () => {
     const source = buildSource(['Apple', 'Banana'])
-    render(<GameplayScreen
+    renderWithSound(<GameplayScreen
       config={buildConfig(3)}
       source={source}
       onNewGame={vi.fn()}
@@ -112,7 +113,7 @@ describe('GameplayScreen', () => {
 
   it('winning the last word ends the round and shows the round-summary TurnCurtain', () => {
     const source = buildSource(['Apple'])
-    render(<GameplayScreen
+    renderWithSound(<GameplayScreen
       config={buildConfig(30)}
       source={source}
       onNewGame={vi.fn()}
@@ -128,7 +129,7 @@ describe('GameplayScreen', () => {
 
   it('closing the round-summary curtain shows the scoreboard with mid-game content', () => {
     const source = buildSource(['Apple'])
-    render(<GameplayScreen
+    renderWithSound(<GameplayScreen
       config={buildConfig(30)}
       source={source}
       onNewGame={vi.fn()}
@@ -146,7 +147,7 @@ describe('GameplayScreen', () => {
 
   it('shows final scores and a replay button after round 3', () => {
     const source = buildSource(['Apple'])
-    render(<GameplayScreen
+    renderWithSound(<GameplayScreen
       config={buildConfig(30)}
       source={source}
       onNewGame={vi.fn()}
@@ -171,7 +172,7 @@ describe('GameplayScreen', () => {
 
   it('labels each round-ending TurnCurtain with the round that just finished', () => {
     const source = buildSource(['Apple'])
-    render(<GameplayScreen
+    renderWithSound(<GameplayScreen
       config={buildConfig(30)}
       source={source}
       onNewGame={vi.fn()}
