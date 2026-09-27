@@ -5,6 +5,7 @@ import { validateWord } from "../validation/validateWord.ts"
 import { validateBowl } from "../validation/validateBowl.ts"
 import { copy } from "../copy/en.ts"
 import { generateWord } from "../words/generateWord.ts"
+import { useSound } from "../context/useSound"
 
 function WordEntry({ word, onClick }: { word: Word, onClick: () => void }) {
   return (
@@ -24,6 +25,7 @@ function WordEntryScreen({ config, source, onSubmitWords }:
   const doneButtonRef = useRef<HTMLButtonElement>(null)
   const wordInputRef = useRef<HTMLInputElement>(null)
   const [bowlFilledOnceAlready, setBowlFilledOnceAlready] = useState(false)
+  const { play } = useSound()
 
   const wordValidation = validateWord(candidateWord, words)
   const bowlValidation = validateBowl(words, source.maxWords)
@@ -60,6 +62,17 @@ function WordEntryScreen({ config, source, onSubmitWords }:
 
   function handleRemoveWord(word: Word) {
     return () => removeWord(word)
+  }
+
+  // SFX: tap — general action-button sound (see sounds.ts). This is the
+  // one button on this screen wired to a sound: Done is a commit action
+  // that leaves the screen, unlike Add prompt/Generate prompt/Remove
+  // above, which fire on every rapid micro-interaction while a player is
+  // still drafting their words — sound-effecting those would get noisy
+  // fast rather than useful (see the SB-50 ticket's design notes).
+  function handleDone() {
+    play('tap')
+    onSubmitWords()
   }
 
   return (
@@ -139,7 +152,7 @@ function WordEntryScreen({ config, source, onSubmitWords }:
         ref={doneButtonRef}
         disabled={!bowlValidation.ok}
         aria-describedby={!wordValidation.ok ? 'done-error' : undefined}
-        onClick={onSubmitWords}
+        onClick={handleDone}
       >
         {copy.wordEntry.doneButton}
       </button>

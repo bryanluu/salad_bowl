@@ -4,6 +4,7 @@ import { minPlayersPerTeam, maxPlayersForTeam, splitPlayersEvenly } from '../tea
 import { copy } from '../copy/en.ts'
 import type { GameConfig, Team } from '../types.ts'
 import { validateRoster } from '../validation/validateRoster.ts'
+import { useSound } from '../context/useSound'
 
 const minTeams = 2
 const minPlayers = 4
@@ -48,6 +49,7 @@ function TeamRow({ team, index, totalPlayers, assignedPlayers, onEditTeam, onSup
 
 function GameSetupScreen({ config, onSubmit }: { config: GameConfig, onSubmit: (gc: GameConfig) => void }) {
   const [newConfig, setNewConfig] = useState<GameConfig>({ ...config })
+  const { enabled: soundEnabled, toggle: toggleSound, play } = useSound()
 
   const maxTeams = Math.floor(newConfig.totalPlayers / minPlayersPerTeam)
   const assignedPlayers = newConfig.teams.reduce((sum, t) => sum + t.players, 0)
@@ -77,6 +79,12 @@ function GameSetupScreen({ config, onSubmit }: { config: GameConfig, onSubmit: (
 
   function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
+    // SFX: tap — general action-button sound (see sounds.ts). This is the
+    // "Start game" submit, a commit action — deliberately not wired into
+    // the Steppers/checkboxes above, which are rapid config
+    // micro-interactions (see WordEntryScreen for the same reasoning
+    // applied to word entry).
+    play('tap')
     onSubmit(newConfig)
   }
 
@@ -177,6 +185,24 @@ function GameSetupScreen({ config, onSubmit }: { config: GameConfig, onSubmit: (
             type="checkbox"
             checked={newConfig.hideWordsDuringEntry}
             onChange={(e) => editConfig('hideWordsDuringEntry', e.target.checked)}
+          />
+        </div>
+
+        {/* SB-50: the sound settings toggle. Lives here for now as the
+            simplest pre-game spot for it — move it to a dedicated settings
+            screen later if one gets built. Reads/writes the app-wide
+            SoundEffectsContext, not local form state like the fields
+            above, since it isn't part of GameConfig. */}
+        <div className="field-row">
+          <label className="field-row__label" htmlFor="sound-effects">
+            {copy.gameSetup.soundEffectsLabel}
+          </label>
+          <input
+            id="sound-effects"
+            className="checkbox"
+            type="checkbox"
+            checked={soundEnabled}
+            onChange={toggleSound}
           />
         </div>
 

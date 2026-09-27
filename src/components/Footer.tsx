@@ -1,13 +1,24 @@
 import { copy } from '../copy/en.ts'
 import { assetUrl } from '../assets.ts'
+import { useSound } from '../context/useSound'
 
 function Footer({ showLogo, onQuit }: { showLogo: boolean, onQuit: () => void }) {
   const currentYear = new Date().getFullYear();
+  const { play } = useSound()
+
+  function handleQuitClick() {
+    // SFX: quit — deliberately distinct from the general `tap` sound
+    // (see sounds.ts): this is a destructive/exit action, not a
+    // forward-progress one. Plays on tap, before the confirm dialog —
+    // onQuit (App.handleQuit) still gates the actual quit on confirmation.
+    play('quit')
+    onQuit()
+  }
 
   return (
     <footer>
       {showLogo &&
-        <button type="button" className="footer__quit" onClick={onQuit}>
+        <button type="button" className="footer__quit" onClick={handleQuitClick}>
           {/* alt="" on both — the visible label below is the button's
               accessible name, so the images stay decorative. Frowning
               face crossfades in on hover/focus/active; default is the
@@ -24,4 +35,3 @@ function Footer({ showLogo, onQuit }: { showLogo: boolean, onQuit: () => void })
 }
 
 export default Footer;
-

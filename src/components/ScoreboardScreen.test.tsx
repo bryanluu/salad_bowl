@@ -1,6 +1,7 @@
 // src/components/ScoreboardScreen.test.tsx
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { screen, fireEvent } from '@testing-library/react'
+import { renderWithProviders } from '../test/renderWithProviders'
 import ScoreboardScreen from './ScoreboardScreen'
 import { copy } from '../copy/en'
 import type { Scores } from '../types'
@@ -12,7 +13,7 @@ describe('ScoreboardScreen', () => {
       { id: 'blue', name: 'Blue Team', rounds: [5] },
     ]
 
-    render(<ScoreboardScreen
+    renderWithProviders(<ScoreboardScreen
       scores={scores}
       onNext={vi.fn()}
     />)
@@ -40,7 +41,7 @@ describe('ScoreboardScreen', () => {
       { id: 'blue', name: 'Blue Team', rounds: [5, 1, 2] },
     ]
 
-    render(<ScoreboardScreen
+    renderWithProviders(<ScoreboardScreen
       scores={scores}
       onNext={vi.fn()}
     />)
@@ -78,7 +79,7 @@ describe('ScoreboardScreen', () => {
       { id: 'green', name: "Green Team", rounds: [4, 2, 3] },
     ]
 
-    render(<ScoreboardScreen
+    renderWithProviders(<ScoreboardScreen
       scores={scores}
       onNext={vi.fn()}
     />)
@@ -117,7 +118,7 @@ describe('ScoreboardScreen', () => {
       { id: 'green', name: 'Green Team', rounds: [3] },
     ]
 
-    render(<ScoreboardScreen scores={scores} onNext={vi.fn()} />)
+    renderWithProviders(<ScoreboardScreen scores={scores} onNext={vi.fn()} />)
 
     const rows = screen.getAllByRole('row').slice(1) // drop the header row
     expect(rows[0]).toHaveTextContent('Red Team')
@@ -131,7 +132,7 @@ describe('ScoreboardScreen', () => {
       { id: 'red', name: 'Red Team', rounds: [5] },
     ]
 
-    render(<ScoreboardScreen scores={scores} onNext={vi.fn()} />)
+    renderWithProviders(<ScoreboardScreen scores={scores} onNext={vi.fn()} />)
 
     const rows = screen.getAllByRole('row').slice(1)
     expect(rows[0]).toHaveTextContent('Blue Team')
@@ -145,7 +146,7 @@ describe('ScoreboardScreen', () => {
       { id: 'blue', name: 'Blue Team', rounds: [0] },
     ]
 
-    render(<ScoreboardScreen scores={scores} onNext={onNext} />)
+    renderWithProviders(<ScoreboardScreen scores={scores} onNext={onNext} />)
 
     fireEvent.click(screen.getByRole('button', { name: copy.gameplay.scoreboard.button.continue }))
     expect(onNext).toHaveBeenCalledTimes(1)
@@ -157,7 +158,7 @@ describe('ScoreboardScreen', () => {
       { id: 'blue', name: 'Blue Team', rounds: [0] },
     ]
 
-    render(<ScoreboardScreen scores={scores} onNext={vi.fn()} />)
+    renderWithProviders(<ScoreboardScreen scores={scores} onNext={vi.fn()} />)
 
     expect(screen.getByRole('button', { name: copy.gameplay.scoreboard.button.continue })).toHaveFocus()
   })

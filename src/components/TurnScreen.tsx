@@ -3,6 +3,7 @@ import type { Round, Team, Word } from "../types"
 import { copy } from "../copy/en"
 import { useKeyPress } from "../hooks/useKeyPress"
 import { interpolateColor, colorToRgbString, hexToColor, type Color } from "../colors/interpolateColor"
+import { useSound } from "../context/useSound"
 
 type TurnScreenProps = {
   round: Round
@@ -18,6 +19,13 @@ type TurnScreenProps = {
   onSkip: () => void
   onWin: () => void
 }
+
+// SB-50: how many seconds before expiry the tick sound starts playing.
+// Infinity means "tick for the whole turn". Set this to something smaller
+// (e.g. 10) for an urgency-ramp instead — an open design question from the
+// ticket, left at "always tick" for now; adjust here only, no call sites
+// need to change.
+const TICK_LAST_N_SECONDS = Infinity
 
 // Renders a raw seconds count as M:SS for the on-screen timer display.
 function formatTime(totalSeconds: number): string {
@@ -42,6 +50,8 @@ function TurnScreen({ round, team, timeLeft, currentWord, bowlLength, onSkip, on
   const prevLeftPressed = useRef(false)
   const prevRightPressed = useRef(false)
   const dragStartXRef = useRef<number | undefined>(undefined)
+  const prevTimeLeftRef = useRef(timeLeft)
+  const { play } = useSound()
   // Seeded with no-ops: the real handlers are assigned by syncActionRefs
   // below before any keyup can plausibly reach them, so these initial
   // values are never meant to be called themselves.
@@ -91,6 +101,24 @@ function TurnScreen({ round, team, timeLeft, currentWord, bowlLength, onSkip, on
     }
     prevRightPressed.current = rightPressed
   }, [rightPressed])
+
+  // SFX: tick — once per second while the timer counts down. Keyed off
+  // `timeLeft` decreasing rather than a separate interval of its own, so
+  // it can never drift out of sync with the on-screen countdown.
+  // Deliberately does NOT fire on the final tick to zero — GameplayScreen's
+  // handleTimerExpiry plays the buzzer for that instant instead, so the two
+  // sounds never overlap (see the ticket's note on sound priority).
+  useEffect(function playTickSound() {
+    if (
+      inPlay &&
+      timeLeft < prevTimeLeftRef.current &&
+      timeLeft > 0 &&
+      timeLeft <= TICK_LAST_N_SECONDS
+    ) {
+      play('tick')
+    }
+    prevTimeLeftRef.current = timeLeft
+  }, [timeLeft, inPlay, play])
 
   // Returns a color string for the word-card to show swipe progress
   function computeColor(progress: number) {

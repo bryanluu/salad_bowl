@@ -6,6 +6,7 @@ import GameplayScreen from './components/GameplayScreen'
 import Footer from './components/Footer'
 import { LocalWordSource } from './wordSources/LocalWordSource'
 import { copy } from './copy/en.ts'
+import { SoundEffectsProvider } from './context/SoundEffectsProvider'
 import type {
   ScreenId,
   GameConfig,
@@ -105,22 +106,28 @@ function App() {
   }
 
   return (
-    <main className="app">
-      <div className="app__inner">
-        {renderScreen(activeScreen,
-          {
-            source,
-            config: gameConfig,
-            onCommitConfig: handleSubmitConfig,
-            onSubmitWords: handleSubmitWords,
-            onNewGame: () => {
-              resetSource()
-              switchScreen('game-setup')
-            }
-          })}
-      </div>
-      <Footer showLogo={started} onQuit={handleQuit} />
-    </main>
+    // SB-50: wraps the whole tree so every screen/Footer shares one sound
+    // `enabled` setting and one pool of <audio> elements — see
+    // SoundEffectsContext for why this can't just be a hook call per
+    // component.
+    <SoundEffectsProvider>
+      <main className="app">
+        <div className="app__inner">
+          {renderScreen(activeScreen,
+            {
+              source,
+              config: gameConfig,
+              onCommitConfig: handleSubmitConfig,
+              onSubmitWords: handleSubmitWords,
+              onNewGame: () => {
+                resetSource()
+                switchScreen('game-setup')
+              }
+            })}
+        </div>
+        <Footer showLogo={started} onQuit={handleQuit} />
+      </main>
+    </SoundEffectsProvider>
   )
 }
 

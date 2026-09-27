@@ -8,6 +8,7 @@ import RoundIntroCurtain from "./RoundIntroCurtain"
 import TurnScreen from "./TurnScreen"
 import TurnCurtain from "./TurnCurtain"
 import ScoreboardScreen from "./ScoreboardScreen"
+import { useSound } from "../context/useSound"
 
 type Bowl = Word[]
 type Turn = number
@@ -53,6 +54,7 @@ function GameplayScreen({
         return { ...t, rounds: [] }
       })
     })
+  const { play } = useSound()
 
   // Display order follows the (possibly shuffled) team order, not the
   // original config order — the two can differ once shuffleTeamOrder is set.
@@ -86,7 +88,11 @@ function GameplayScreen({
     setWonWords({ ...wonWords, onTurn: [] })
   }
 
+  // Called by RoundIntroCurtain's "Begin" button.
   function startRound() {
+    // SFX: tap — general action-button sound (see sounds.ts)
+    play('tap')
+
     const { word, remaining } = pickWord(source.getWords())
 
     setBowlState({ bowl: remaining, currentWord: word })
@@ -105,6 +111,11 @@ function GameplayScreen({
   // doesn't advance turns pointlessly.
   function handleTimerExpiry() {
     if (currentWord) {
+      // SFX: buzzer — the turn timer reaching zero. Deliberately not a
+      // `tick`: see TurnScreen, whose per-second tick effect stops one
+      // second short of this so the two never overlap.
+      play('buzzer')
+
       advanceTurn()
       setTurnEnded(true)
       setRoundJustEnded(false)
@@ -144,8 +155,13 @@ function GameplayScreen({
 
     const { word, remaining } = switchWord(currentWord, bowl)
 
-    if (word)
+    if (word) {
       setBowlState({ bowl: remaining, currentWord: word })
+      // SFX: skip — only when the word actually changed (see the comment
+      // above: on the last word, switchWord is a no-op and nothing should
+      // play).
+      play('skip')
+    }
 
     // if it's the last word, do nothing
   }
@@ -193,6 +209,9 @@ function GameplayScreen({
   function winWord(team: Team) {
     if (!currentWord) return
 
+    // SFX: win — a word is marked correct.
+    play('win')
+
     // tracks teamTotal this round
     const teamWords = wonWords[team.id] ?? []
     // tracks words won on current turn
@@ -219,6 +238,10 @@ function GameplayScreen({
   }
 
   function handleTurnCurtainNext() {
+    // SFX: tap — general action-button sound (see sounds.ts), for
+    // TurnCurtain's Go/Continue button.
+    play('tap')
+
     setTurnEnded(false)
     if (!roundJustEnded) {
       startTurn()
@@ -226,6 +249,10 @@ function GameplayScreen({
   }
 
   function handleScoreboardNext() {
+    // SFX: tap — general action-button sound (see sounds.ts), for
+    // ScoreboardScreen's Continue/New game button.
+    play('tap')
+
     setRoundJustEnded(false)
     if (gameEnded) {
       onNewGame()

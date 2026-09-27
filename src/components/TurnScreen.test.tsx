@@ -1,6 +1,7 @@
 // src/components/TurnScreen.test.tsx
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { screen, fireEvent } from '@testing-library/react'
+import { renderWithProviders } from '../test/renderWithProviders'
 import TurnScreen from './TurnScreen'
 import { copy } from '../copy/en'
 import type { Team } from '../types'
@@ -9,7 +10,7 @@ const team: Team = { id: 't1', name: 'Red Team', players: 3 }
 
 describe('TurnScreen', () => {
   it('renders round, timer, turn indicator, word, and words-left count', () => {
-    render(
+    renderWithProviders(
       <TurnScreen
         round={1}
         team={team}
@@ -38,7 +39,7 @@ describe('TurnScreen', () => {
     const onSkip = vi.fn()
     const onWin = vi.fn()
 
-    render(
+    renderWithProviders(
       <TurnScreen
         round={1}
         team={team}
@@ -64,7 +65,7 @@ describe('TurnScreen', () => {
   })
 
   it('disables the skip button on the last word but keeps got-it enabled', () => {
-    render(
+    renderWithProviders(
       <TurnScreen
         round={1}
         team={team}
@@ -81,7 +82,7 @@ describe('TurnScreen', () => {
   })
 
   it('disables both buttons once the bowl is empty and no word is in play', () => {
-    render(
+    renderWithProviders(
       <TurnScreen
         round={1}
         team={team}

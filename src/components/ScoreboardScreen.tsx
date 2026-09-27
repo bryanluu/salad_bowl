@@ -1,5 +1,7 @@
+import { useEffect } from "react"
 import type { Scores, TeamScore } from "../types"
 import { copy } from "../copy/en"
+import { useSound } from "../context/useSound"
 
 function total(rounds: readonly number[]): number {
   return rounds.reduce((sum, score) => sum + score, 0)
@@ -36,6 +38,7 @@ function ScoreboardScreen({ scores, onNext = () => { } }:
   const round = scores[0].rounds.length
   const winners = computeWinners(scores)
   const sortedScores = sortByScoreDescending(scores)
+  const { play } = useSound()
 
   function hasTopScore(team: TeamScore) {
     return winners.find((t) => t.id === team.id)
@@ -44,6 +47,19 @@ function ScoreboardScreen({ scores, onNext = () => { } }:
   function isTied() {
     return winners.length > 1
   }
+
+  // SFX: celebrate/tie — only for the *final* scoreboard (game end), not
+  // the preliminary ones GameplayScreen shows between rounds 1 and 2.
+  // GameplayScreen swaps this component in fresh each time it's shown (see
+  // its conditional render), so a mount-only effect fires exactly once per
+  // appearance — equivalent to "when this screen appears," without needing
+  // to track "have I already played this" state of our own.
+  useEffect(function playGameEndSound() {
+    if (round < 3) return
+    play(isTied() ? 'tie' : 'celebrate')
+    // Mount-only, deliberately: see comment above.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <section className="screen" aria-labelledby="scoreboard-title">
@@ -92,4 +108,3 @@ function ScoreboardScreen({ scores, onNext = () => { } }:
 }
 
 export default ScoreboardScreen
-

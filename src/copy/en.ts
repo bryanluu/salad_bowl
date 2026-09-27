@@ -60,6 +60,7 @@ export const copy = {
     hideWordsDuringEntryLabel: 'Hide words during entry?',
     setupStatus: (assigned: number, total: number) => `${assigned} out of ${total} players assigned`,
     shuffleTeamOrderLabel: 'Random order?',
+    soundEffectsLabel: 'Sound effects?',
     startButton: 'Start game',
     teamNamePlaceholder: (teamNumber: number) => `Team ${teamNumber}'s name`,
     timerLabel: 'Timer',
@@ -89,4 +90,3 @@ export const copy = {
     title: 'Toss in your prompts!',
   },
 } as const
-
