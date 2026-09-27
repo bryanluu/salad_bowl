@@ -1,7 +1,7 @@
 # public/sounds/
 
 Empty for now (SB-50). Each sound effect the game plays is tied to a
-filename expected here — see the `TODO(SB-50)` comment above each entry in
+filename expected here — see the `TODO` comment above each entry in
 `src/sounds/sounds.ts` for the full list and what triggers it.
 
 Add a file with the exact name `sounds.ts` expects (e.g. `win.mp3`) and it

@@ -81,16 +81,13 @@ describe('useSoundEffects', () => {
       expect(warnSpy.mock.calls[0][0]).toContain('buzzer')
     })
 
-    it('only warns once per sound, even after repeated failures', async () => {
+    it('warns every time it fails, not just the first (deliberately not deduped)', async () => {
       const { result } = renderHook(() => useSoundEffects())
       act(() => result.current.play('celebrate'))
       act(() => result.current.play('celebrate'))
       act(() => result.current.play('celebrate'))
 
-      await waitFor(() => expect(warnSpy).toHaveBeenCalledTimes(1))
-      // give any extra (unwanted) warnings a chance to land before asserting
-      await new Promise((resolve) => setTimeout(resolve, 0))
-      expect(warnSpy).toHaveBeenCalledTimes(1)
+      await waitFor(() => expect(warnSpy).toHaveBeenCalledTimes(3))
     })
   })
 })

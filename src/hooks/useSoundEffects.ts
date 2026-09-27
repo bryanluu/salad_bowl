@@ -19,23 +19,6 @@ function readStoredPreference(): boolean {
   }
 }
 
-// Sounds we've already warned about this session, so a sound that plays
-// every second (tick) or every rapid tap doesn't spam the console once per
-// play — one warning per missing/broken sound is plenty to point a
-// developer at the TODO in sounds.ts. Module-level (not per-hook-instance)
-// since SoundEffectsProvider only ever mounts the hook once anyway, but
-// this also survives a component remounting mid-session.
-const warnedSounds = new Set<SoundName>()
-
-function warnMissing(name: SoundName) {
-  if (warnedSounds.has(name)) return
-  warnedSounds.add(name)
-  console.warn(
-    `[sound] "${name}" failed to play (${sounds[name]}) — ` +
-    `see the TODO for it in src/sounds/sounds.ts`
-  )
-}
-
 // Fires .play() and reports however it fails to play, instead of silently
 // swallowing it: a real browser returns a Promise that rejects — expected
 // right now, since every entry in sounds.ts is still a TODO with no file at
@@ -43,7 +26,17 @@ function warnMissing(name: SoundName) {
 // audio; jsdom (used by this repo's component tests) doesn't implement
 // HTMLMediaElement.play() at all and returns undefined instead of a
 // Promise, which Promise.resolve() here normalizes so `.catch` is always
-// safe to call.
+// safe to call. Warns every time, deliberately not deduped — the browser's
+// own console already logs its own errors for each failed load attempt
+// (see public/sounds/README.md), so a quieter, once-per-session version of
+// this warning would just be an inconsistent, confusing outlier among them.
+function warnMissing(name: SoundName) {
+  console.warn(
+    `[sound] "${name}" failed to play (${sounds[name]}) — ` +
+    `see the TODO for it in src/sounds/sounds.ts`
+  )
+}
+
 function safePlay(name: SoundName, audio: HTMLAudioElement) {
   try {
     Promise.resolve(audio.play()).catch(() => warnMissing(name))
