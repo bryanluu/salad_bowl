@@ -1,6 +1,6 @@
 // src/hooks/useSoundEffects.test.ts
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { renderHook, act } from '@testing-library/react'
+import { renderHook, act, waitFor } from '@testing-library/react'
 import { useSoundEffects } from './useSoundEffects'
 
 const STORAGE_KEY = 'salad-bowl:sound-enabled'
@@ -56,5 +56,41 @@ describe('useSoundEffects', () => {
     expect(playSpy).not.toHaveBeenCalled()
     act(() => result.current.toggle()) // off -> on: blip
     expect(playSpy).toHaveBeenCalledTimes(1)
+  })
+
+  describe('when a sound fails to play', () => {
+    // Every sounds.ts entry is currently a TODO with no file behind it
+    // (see public/sounds/README.md), so this is the expected day-to-day
+    // path in dev right now — it should be loud, not silent.
+    let warnSpy: ReturnType<typeof vi.spyOn>
+
+    beforeEach(() => {
+      playSpy.mockImplementation(() => Promise.reject(new Error('404')))
+      warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { })
+    })
+
+    afterEach(() => {
+      warnSpy.mockRestore()
+    })
+
+    it('logs a console warning naming the sound', async () => {
+      const { result } = renderHook(() => useSoundEffects())
+      act(() => result.current.play('buzzer'))
+
+      await waitFor(() => expect(warnSpy).toHaveBeenCalledTimes(1))
+      expect(warnSpy.mock.calls[0][0]).toContain('buzzer')
+    })
+
+    it('only warns once per sound, even after repeated failures', async () => {
+      const { result } = renderHook(() => useSoundEffects())
+      act(() => result.current.play('celebrate'))
+      act(() => result.current.play('celebrate'))
+      act(() => result.current.play('celebrate'))
+
+      await waitFor(() => expect(warnSpy).toHaveBeenCalledTimes(1))
+      // give any extra (unwanted) warnings a chance to land before asserting
+      await new Promise((resolve) => setTimeout(resolve, 0))
+      expect(warnSpy).toHaveBeenCalledTimes(1)
+    })
   })
 })
