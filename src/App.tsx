@@ -49,7 +49,7 @@ const defaultGameConfig: GameConfig = {
     { id: 'team-1', name: 'Team 1', players: 2 },
     { id: 'team-2', name: 'Team 2', players: 2 },
   ],
-  timerSeconds: 30,
+  timerSeconds: 60,
   wordsPerPlayer: 5,
   shuffleTeamOrder: true,
   hideWordsDuringEntry: true,
