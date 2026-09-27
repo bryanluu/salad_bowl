@@ -13,7 +13,11 @@ function Footer({ showLogo, onQuit }: { showLogo: boolean, onQuit: () => void })
         {/* The sound preference is the one persisted setting (see
             useSoundEffects), so it sits in the footer on every screen,
             start included. aria-pressed carries the state; the label
-            always names the action a press will take. */}
+            always names the action a press will take.
+            TODO: revisit this control's UX — a tiny emoji-only footer
+            button is easy to miss/mis-tap, especially mid-game on a phone
+            being passed around. Consider a clearer affordance/placement
+            once there's time to design one properly. */}
         <button
           type="button"
           className="footer__sound"

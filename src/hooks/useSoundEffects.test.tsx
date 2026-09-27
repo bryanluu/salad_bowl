@@ -15,7 +15,6 @@ class MockAudio {
   currentTime = 0
   playCalls = 0
   pauseCalls = 0
-  private endedListeners: (() => void)[] = []
 
   constructor(url: string) {
     this.url = url
@@ -30,15 +29,6 @@ class MockAudio {
 
   pause(): void {
     this.pauseCalls += 1
-  }
-
-  addEventListener(type: string, listener: () => void): void {
-    if (type === 'ended') this.endedListeners.push(listener)
-  }
-
-  // Test-only: fire the 'ended' handlers the way the browser does.
-  fireEnded(): void {
-    this.endedListeners.forEach((listener) => listener())
   }
 }
 
@@ -149,74 +139,54 @@ describe('useSoundEffects', () => {
     expect(win?.playCalls).toBe(1)
 
     fireEvent.click(screen.getByTestId('toggle')) // off
-    expect(win?.pauseCalls).toBe(1) // the active sound stops
+    expect(win?.pauseCalls).toBe(1) // whatever's playing stops
     expect(MockAudio.instances).toHaveLength(1) // "off" plays nothing
 
     fireEvent.click(screen.getByTestId('toggle')) // on
     expect(byName('tap')?.playCalls).toBe(1) // "on" confirms
   })
 
-  it('lets a higher-priority sound interrupt a lower one', () => {
-    renderControlPanel()
-    unlock()
-
-    play('tick')
-    play('buzzer')
-    expect(byName('tick')?.pauseCalls).toBe(1)
-    expect(byName('buzzer')?.playCalls).toBe(1)
-
-    // And a lower-priority sound must not cut the buzzer off.
-    play('tap')
-    expect(byName('tap')).toBeUndefined()
-  })
-
-  it('a win does not cut in after the buzzer (won word vs. expiry race)', () => {
+  // SB-50: no priority/interruption system — sounds are independent, so two
+  // different sounds really can sound at once (e.g. a word won on the exact
+  // second the buzzer fires). This is the deliberately-chosen behavior, not
+  // an oversight — see the design note atop useSoundEffects.tsx.
+  it('lets two different sounds play at the same time, unlike a priority system', () => {
     renderControlPanel()
     unlock()
 
     play('buzzer')
     play('win')
+
     expect(byName('buzzer')?.playCalls).toBe(1)
-    expect(byName('win')).toBeUndefined()
-  })
-
-  it('ignores a re-request of the sound that is already playing', () => {
-    renderControlPanel()
-    unlock()
-
-    play('win')
-    play('win')
     expect(byName('win')?.playCalls).toBe(1)
+    // Neither one paused the other.
+    expect(byName('buzzer')?.pauseCalls).toBe(0)
+    expect(byName('win')?.pauseCalls).toBe(0)
   })
 
-  it('a finished sound releases its priority slot', () => {
+  // The one case this design doesn't leave alone: retriggering the *same*
+  // sound restarts it (one element per name, not cloned/pooled per-call).
+  it('restarts a sound if it is requested again while still "playing"', () => {
     renderControlPanel()
     unlock()
 
-    play('buzzer')
-    const buzzer = byName('buzzer')
-    expect(buzzer).toBeDefined()
-
-    act(() => { buzzer?.fireEnded() })
-
-    // A lower-priority sound that comes after can now play.
-    play('round')
-    expect(byName('round')?.playCalls).toBe(1)
+    play('tap')
+    play('tap')
+    expect(byName('tap')?.playCalls).toBe(2)
   })
 
-  it('degrades to silence when the file is missing, warning once per sound', async () => {
+  it('warns every time a sound fails to play, not just the first', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => { })
     MockAudio.rejectPlay = true
     renderControlPanel()
     unlock()
 
-    // Two attempts, one warning — and play() rejections settle in a
-    // microtask, so flush them between attempts.
+    // play() rejections settle in a microtask, so flush between attempts.
     await act(async () => { play('tick') })
     await act(async () => { play('tick') })
-    expect(warn).toHaveBeenCalledTimes(1)
+    expect(warn).toHaveBeenCalledTimes(2)
 
-    // The failed sound must not hold its priority slot either.
+    // A missing sound doesn't block anything else from playing.
     MockAudio.rejectPlay = false
     play('tap')
     expect(byName('tap')?.playCalls).toBe(1)

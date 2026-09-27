@@ -44,7 +44,6 @@ function WordEntryScreen({ config, source, onSubmitWords }:
   }
 
   function handleGenerateWord() {
-    play('tap')
     let generated
     do {
       generated = generateWord()
@@ -53,7 +52,10 @@ function WordEntryScreen({ config, source, onSubmitWords }:
   }
 
   function handleAddWord() {
-    play('tap')
+    // Deliberately no `tap` here or in handleGenerateWord: these are rapid
+    // config micro-interactions while a player is still drafting their
+    // words, not commit actions — sound-effecting every one would get
+    // noisy fast rather than useful. `tap` is reserved for the Done button.
     const success = addWord(candidateWord)
     if (success) {
       setCandidateWord("")

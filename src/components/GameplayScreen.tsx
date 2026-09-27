@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useTimer } from "../hooks/useTimer"
 import { useWakeLock } from "../hooks/useWakeLock"
 import type { GameConfig, Word, WordSource, Team, Round, Scores } from "../types"
@@ -17,10 +17,11 @@ type BowlState = { bowl: Bowl; currentWord: Word | undefined }
 // the turn currently in progress under the reserved "onTurn" key.
 type WonWords = Record<string, Word[]>
 
-// The countdown turns into an audible tick this far from zero: quiet for
-// most of a (possibly multi-minute) turn, urgent at the end. The buzzer
-// owns second zero itself — see playUrgencyTick below.
-const URGENT_TICK_SECONDS = 5
+// SB-50: how many seconds before expiry the tick sound starts playing.
+// Infinity means "tick for the whole turn". Set this to something smaller
+// (e.g. 5) for an urgency-ramp instead — an open design question, left at
+// "always tick" for now; adjust here only, no call sites need to change.
+const TICK_LAST_N_SECONDS = Infinity
 
 function GameplayScreen({
   config,
@@ -88,13 +89,23 @@ function GameplayScreen({
   }, [inPlay, startTimer, stopTimer])
 
   // The urgency tick, driven by the same timeLeft the countdown displays —
-  // exactly one tick per second, and silence before the final few seconds.
-  // Skipped at zero: that moment belongs to the expiry buzzer (and its
-  // higher priority wins the collision either way it fires).
-  useEffect(function playUrgencyTick() {
-    if (inPlay && timeLeft > 0 && timeLeft <= URGENT_TICK_SECONDS) {
+  // exactly one tick per second. Guards against firing on timeLeft
+  // increasing (shouldn't normally happen, but this way the effect only
+  // reacts to genuine countdown ticks) and skips the final tick to zero —
+  // that moment belongs to the expiry buzzer instead (see
+  // handleTimerExpiry), so the two never overlap even without a priority
+  // system to fall back on.
+  const prevTimeLeftRef = useRef(timeLeft)
+  useEffect(function playTickSound() {
+    if (
+      inPlay &&
+      timeLeft < prevTimeLeftRef.current &&
+      timeLeft > 0 &&
+      timeLeft <= TICK_LAST_N_SECONDS
+    ) {
       play('tick')
     }
+    prevTimeLeftRef.current = timeLeft
   }, [timeLeft, inPlay, play])
 
   function startTurn() {
@@ -122,8 +133,10 @@ function GameplayScreen({
   // doesn't advance turns pointlessly.
   function handleTimerExpiry() {
     if (currentWord) {
-      // The buzzer is top of the priority scale: it owns the moment even
-      // when a word is won on the exact second the clock runs out.
+      // Plays regardless of whatever else might be sounding right now
+      // (e.g. a word won on this exact second) — sounds are independent,
+      // not priority-ranked, so this and a `win` sting really can overlap.
+      // Acceptable per the ticket's design notes: expected to be rare.
       play('buzzer')
       advanceTurn()
       setTurnEnded(true)
