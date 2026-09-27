@@ -1,40 +1,10 @@
 import { useEffect, useRef, useState } from "react"
-import { faker } from '@faker-js/faker'
 import { useWordSource } from "../hooks/useWordSource.ts"
 import { maxWordLength, type Word, minWordLength, type GameConfig, type WordSource } from "../types.ts"
 import { validateWord } from "../validation/validateWord.ts"
 import { validateBowl } from "../validation/validateBowl.ts"
 import { copy } from "../copy/en.ts"
-
-// Define a type for the generatedWord object
-type GeneratedWordType = {
-  word: () => string;
-  animal: () => string;
-  books: () => string;
-  musician: () => string;
-  food: () => string;
-};
-
-// Create the generatedWord object with the type
-const generateWord: GeneratedWordType = {
-  word: () => faker.word.adjective() + " " + faker.word.noun(),
-  animal: () => faker.animal.type(),
-  books: () => faker.book.series(),
-  musician: () => faker.music.artist(),
-  food: () => {
-    const choice = Math.floor(Math.random() * 3)
-    switch (choice) {
-      case 0:
-        return faker.food.meat()
-      case 1:
-        return faker.food.fruit()
-      case 2:
-        return faker.food.vegetable()
-      default:
-        return ""
-    }
-  },
-};
+import { generateWord } from "../words/generateWord.ts"
 
 function WordEntry({ word, onClick }: { word: Word, onClick: () => void }) {
   return (
@@ -72,15 +42,10 @@ function WordEntryScreen({ config, source, onSubmitWords }:
   }
 
   function handleGenerateWord() {
-    const kinds = Object.keys(generateWord) as Array<keyof GeneratedWordType>
-    let randomIndex
-    let kind
     let generated
     do {
-      randomIndex = Math.floor(Math.random() * kinds.length)
-      kind = kinds[randomIndex]
-      generated = generateWord[kind]()
-    } while (!validateWord(generated, words).ok) // ensure generated word is valid
+      generated = generateWord()
+    } while (!validateWord(generated, words).ok)
     setCandidateWord(generated);
   }
 

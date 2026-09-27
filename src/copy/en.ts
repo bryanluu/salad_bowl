@@ -56,6 +56,7 @@ export const copy = {
       'too-many-players': 'You have more players on teams than in total.',
       'unassigned-players': 'Put every player on a team to start.',
     },
+    generateAllWordsLabel: 'Randomly generate all words?',
     hideWordsDuringEntryLabel: 'Hide words during entry?',
     setupStatus: (assigned: number, total: number) => `${assigned} out of ${total} players assigned`,
     shuffleTeamOrderLabel: 'Random order?',
