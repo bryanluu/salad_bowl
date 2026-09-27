@@ -11,6 +11,7 @@ import type {
   GameConfig,
   WordSource,
 } from './types'
+import { generateWord } from './words/generateWord.ts'
 
 type ScreenProps = {
   source: WordSource
@@ -53,6 +54,7 @@ const defaultGameConfig: GameConfig = {
   wordsPerPlayer: 5,
   shuffleTeamOrder: true,
   hideWordsDuringEntry: true,
+  generateAllWords: false,
 }
 
 function App() {
@@ -71,8 +73,23 @@ function App() {
 
   function handleSubmitConfig(newConfig: GameConfig) {
     setGameConfig(newConfig)
-    setSource(() => new LocalWordSource(newConfig.totalPlayers * newConfig.wordsPerPlayer))
-    switchScreen('word-entry')
+    setSource(() => {
+      const source = new LocalWordSource(newConfig.totalPlayers * newConfig.wordsPerPlayer)
+      if (newConfig.generateAllWords) {
+        while (source.count() < source.maxWords) {
+          const generated = generateWord()
+          source.addWord(generated)
+        }
+      }
+      return source
+    })
+    if (newConfig.generateAllWords && newConfig.hideWordsDuringEntry) {
+      // we skip the word entry screen, because all words are generated and
+      // nobody can see them
+      switchScreen('gameplay')
+    } else {
+      switchScreen('word-entry')
+    }
   }
 
   function handleSubmitWords() {

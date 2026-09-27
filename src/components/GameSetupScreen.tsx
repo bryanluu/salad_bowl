@@ -155,6 +155,19 @@ function GameSetupScreen({ config, onSubmit }: { config: GameConfig, onSubmit: (
         </div>
 
         <div className="field-row">
+          <label className="field-row__label" htmlFor="generate-all-words">
+            {copy.gameSetup.generateAllWordsLabel}
+          </label>
+          <input
+            id="generate-all-words"
+            className="checkbox"
+            type="checkbox"
+            checked={newConfig.generateAllWords}
+            onChange={(e) => editConfig('generateAllWords', e.target.checked)}
+          />
+        </div>
+
+        <div className="field-row">
           <label className="field-row__label" htmlFor="hide-words-during-entry">
             {copy.gameSetup.hideWordsDuringEntryLabel}
           </label>

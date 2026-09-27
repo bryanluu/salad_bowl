@@ -4,6 +4,7 @@ import { maxWordLength, type Word, minWordLength, type GameConfig, type WordSour
 import { validateWord } from "../validation/validateWord.ts"
 import { validateBowl } from "../validation/validateBowl.ts"
 import { copy } from "../copy/en.ts"
+import { generateWord } from "../words/generateWord.ts"
 
 function WordEntry({ word, onClick }: { word: Word, onClick: () => void }) {
   return (
@@ -40,6 +41,14 @@ function WordEntryScreen({ config, source, onSubmitWords }:
     setCandidateWord(candidate)
   }
 
+  function handleGenerateWord() {
+    let generated
+    do {
+      generated = generateWord()
+    } while (!validateWord(generated, words).ok)
+    setCandidateWord(generated);
+  }
+
   function handleAddWord() {
     const success = addWord(candidateWord)
     if (success) {
@@ -61,7 +70,7 @@ function WordEntryScreen({ config, source, onSubmitWords }:
         </h1>
       </header>
 
-      <form className="input-add" onSubmit={(event) => event.preventDefault()}>
+      {(count < source.maxWords) && <form className="input-add" onSubmit={(event) => event.preventDefault()}>
         <label className="sr-only" htmlFor="word-input">
           Word
         </label>
@@ -89,7 +98,7 @@ function WordEntryScreen({ config, source, onSubmitWords }:
         >
           +
         </button>
-      </form>
+      </form>}
 
       {!wordValidation.ok && wordValidation.reason !== 'empty' && (
         <p className="input-add__error" id="word-input-error" role="status">
@@ -112,6 +121,17 @@ function WordEntryScreen({ config, source, onSubmitWords }:
           {copy.wordEntry.errors[bowlValidation.reason]}
         </p>
       )}
+
+      {count < source.maxWords &&
+        <button
+          className="btn btn--secondary"
+          type="button"
+          aria-label={copy.wordEntry.generateButton}
+          onClick={handleGenerateWord}
+          disabled={count >= source.maxWords}
+        >
+          {copy.wordEntry.generateButton} ⚂
+        </button>}
 
       <button
         className="btn btn--primary"

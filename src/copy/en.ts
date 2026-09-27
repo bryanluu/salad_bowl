@@ -38,6 +38,7 @@ export const copy = {
     title: 'Current turn',
     turnCurtain: {
       goButton: (roundEnded: boolean) => roundEnded ? 'Continue' : 'Go',
+      holdingLabel: (secondsLeft: number) => `Hold… ${secondsLeft}`,
       readyPrompt: (team: string) => `Next player on ${team}, ready?`,
       resultLabel: (count: number) => `You got ${count} correct.`,
       roundOverLabel: (round: number) => `Round ${round} finished!`,
@@ -55,6 +56,7 @@ export const copy = {
       'too-many-players': 'You have more players on teams than in total.',
       'unassigned-players': 'Put every player on a team to start.',
     },
+    generateAllWordsLabel: 'Randomly generate all words?',
     hideWordsDuringEntryLabel: 'Hide words during entry?',
     setupStatus: (assigned: number, total: number) => `${assigned} out of ${total} players assigned`,
     shuffleTeamOrderLabel: 'Random order?',
@@ -80,6 +82,7 @@ export const copy = {
       'not-enough-words': 'Please add more prompts.',
       'too-many-words': 'Too many prompts, please remove some.',
     },
+    generateButton: 'Generate prompt',
     hiddenWords: 'Prompts are hidden until gameplay 🙈',
     placeholder: 'Enter something for your team to guess',
     removeLabel: 'Remove prompt',

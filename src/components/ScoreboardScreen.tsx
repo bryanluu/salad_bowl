@@ -5,6 +5,14 @@ function total(rounds: readonly number[]): number {
   return rounds.reduce((sum, score) => sum + score, 0)
 }
 
+// Highest total first. Array.prototype.sort is stable in modern JS engines,
+// so tied teams keep their original relative order rather than reshuffling
+// on every render. Sorts a copy — scores is owned by the caller (GameplayScreen),
+// so mutating it in place would be a surprising side effect.
+function sortByScoreDescending(scores: Scores): Scores {
+  return [...scores].sort((a, b) => total(b.rounds) - total(a.rounds))
+}
+
 function computeWinners(scores: Scores) {
   return scores.reduce((best: TeamScore[], team: TeamScore) => {
     if (best.length === 0) return [team]
@@ -27,6 +35,7 @@ function ScoreboardScreen({ scores, onNext = () => { } }:
   }) {
   const round = scores[0].rounds.length
   const winners = computeWinners(scores)
+  const sortedScores = sortByScoreDescending(scores)
 
   function hasTopScore(team: TeamScore) {
     return winners.find((t) => t.id === team.id)
@@ -55,7 +64,7 @@ function ScoreboardScreen({ scores, onNext = () => { } }:
           </tr>
         </thead>
         <tbody>
-          {scores.map((team) => (
+          {sortedScores.map((team) => (
             <tr key={team.id}
               className={hasTopScore(team) ?
                 (isTied() ? 'is-tied' : 'is-winner') : undefined}>

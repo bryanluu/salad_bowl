@@ -29,6 +29,7 @@ function buildConfig(timerSeconds: number): GameConfig {
     wordsPerPlayer: 5,
     shuffleTeamOrder: false,
     hideWordsDuringEntry: false,
+    generateAllWords: false,
   }
 }
 
