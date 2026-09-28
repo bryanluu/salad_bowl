@@ -5,6 +5,7 @@ import GameplayScreen from './GameplayScreen'
 import { copy } from '../copy/en'
 import type { GameConfig, Round, Team, Word, WordSource } from '../types'
 import { renderWithSound } from '../test/renderWithSound'
+import { sounds } from '../sounds.ts'
 
 const teamA: Team = { id: 'team-a', name: 'Red Team', players: 2 }
 const teamB: Team = { id: 'team-b', name: 'Blue Team', players: 2 }
@@ -52,17 +53,54 @@ function continueScoreboard() {
   fireEvent.click(screen.getByRole('button', { name: copy.gameplay.scoreboard.button.continue }))
 }
 
+// A stand-in for HTMLAudioElement that records plays per instance. The
+// engine keeps one element per sound name (see useSoundEffects.tsx), so
+// instances map 1:1 to sounds.
+class MockAudio {
+  static instances: MockAudio[] = []
+
+  url: string
+  currentTime = 0
+  playCalls = 0
+
+  constructor(url: string) {
+    this.url = url
+    MockAudio.instances.push(this)
+  }
+
+  play(): Promise<void> {
+    this.playCalls += 1
+    return Promise.resolve()
+  }
+
+  pause(): void { }
+}
+
+function bySound(name: keyof typeof sounds): MockAudio | undefined {
+  return MockAudio.instances.find((instance) => instance.url === sounds[name])
+}
+
+// The engine withholds all sound until a user gesture (see
+// useSoundEffects.tsx), and a synthetic click doesn't provide one — unlock
+// explicitly for the tests that assert on playback.
+function unlockAudio() {
+  fireEvent.pointerDown(window)
+}
+
 describe('GameplayScreen', () => {
   beforeEach(() => {
     vi.useFakeTimers()
     // pickWord/switchWord draw via Math.random — pinning it to 0 always
     // selects the first word in the bowl, making every draw deterministic.
     vi.spyOn(Math, 'random').mockReturnValue(0)
+    vi.stubGlobal('Audio', MockAudio)
+    MockAudio.instances = []
   })
 
   afterEach(() => {
     vi.useRealTimers()
     vi.restoreAllMocks()
+    vi.unstubAllGlobals()
   })
 
   it('shows RoundIntroCurtain for round 1 while the bowl is full and untouched', () => {
@@ -189,6 +227,72 @@ describe('GameplayScreen', () => {
       closeRoundEndCurtain()
       if (round < 3) continueScoreboard()
     }
+  })
+
+  describe('sound effects', () => {
+    it('ticks at the start of a turn (t=0), then once per second', () => {
+      const source = buildSource(['Apple', 'Banana'])
+      renderWithSound(<GameplayScreen
+        config={buildConfig(30)}
+        source={source}
+        onNewGame={vi.fn()}
+      />)
+
+      unlockAudio()
+
+      beginRound()
+      expect(bySound('tick')?.playCalls).toBe(1) // the t=0 start-of-turn beat
+
+      act(() => { vi.advanceTimersByTime(1000) })
+      expect(bySound('tick')?.playCalls).toBe(2)
+
+      act(() => { vi.advanceTimersByTime(1000) })
+      expect(bySound('tick')?.playCalls).toBe(3)
+    })
+
+    it('plays the round sting as the last card is won, not when the scoreboard shows', () => {
+      const source = buildSource(['Apple'])
+      renderWithSound(<GameplayScreen
+        config={buildConfig(30)}
+        source={source}
+        onNewGame={vi.fn()}
+      />)
+      unlockAudio()
+
+      beginRound()
+      winCurrentWord() // the only word — the round ends on this win
+
+      expect(bySound('win')?.playCalls).toBe(1)
+      expect(bySound('round')?.playCalls).toBe(1) // the moment of the win
+
+      closeRoundEndCurtain() // scoreboard appears
+      expect(bySound('round')?.playCalls).toBe(1) // ...and not repeated there
+    })
+
+    it('plays the game verdict only when the final scoreboard appears', () => {
+      const source = buildSource(['Apple'])
+      renderWithSound(<GameplayScreen
+        config={buildConfig(30)}
+        source={source}
+        onNewGame={vi.fn()}
+      />)
+      unlockAudio()
+
+      for (let round = 1; round <= 3; round++) {
+        beginRound()
+        winCurrentWord()
+        closeRoundEndCurtain()
+        if (round < 3) continueScoreboard()
+      }
+
+      // Rounds 1–2 stung on their last card; round 3 did not.
+      expect(bySound('round')?.playCalls).toBe(2)
+      // Team A plays first in rounds 1 and 3, so it takes the game — the
+      // final scoreboard, the moment it appears, gets the celebration,
+      // not a tie.
+      expect(bySound('celebration')?.playCalls).toBe(1)
+      expect(bySound('tie')).toBeUndefined()
+    })
   })
 })
 

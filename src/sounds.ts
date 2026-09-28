@@ -1,24 +1,27 @@
 // src/sounds.ts
 import { assetUrl } from './assets.ts'
 
-// Drop the real files into public/sounds/ under exactly these names and the
-// game picks them up; until then each sound no-ops with a one-time console
-// warning (see src/hooks/useSoundEffects.tsx). Where each sound is called:
+// Swap any file in public/sounds/ for a different sound — the names here
+// are the contract, nothing else needs to change. A missing/broken file
+// no-ops with a console warning per failed attempt (see
+// src/hooks/useSoundEffects.tsx). Where each sound is called:
 //
 //   tap         generic action buttons — Start "Play", Setup "Start game",
-//               WordEntry "Add prompt" / "Generate prompt" / "Done",
-//               RoundIntroCurtain "Begin", TurnCurtain "Go", scoreboard
-//               "Continue" / "New game" — and the mute toggle's "on"
-//               confirmation blip
-//   quit        the footer quit button (deliberately distinct, lower-key)
+//               WordEntry "Done", RoundIntroCurtain "Begin", TurnCurtain
+//               "Go", scoreboard "Continue" / "New game" — and the mute
+//               toggle's "on" confirmation blip
+//   quit        the footer quit button, after the confirm dialog is
+//               accepted (deliberately distinct, lower-key)
 //   win         a word is won               — GameplayScreen.winWord
 //   skip        a word is skipped           — GameplayScreen.skipWord
-//   tick        urgency tick, final seconds — GameplayScreen (see
-//               URGENT_TICK_SECONDS), once per second while a turn is live
+//   tick        a beat at the start of every turn (startTurn/startRound),
+//               then once per second while a turn is live (see
+//               TICK_LAST_N_SECONDS in GameplayScreen)
 //   buzzer      the turn timer expires      — GameplayScreen.handleTimerExpiry
-//   celebration final scoreboard, one winner — ScoreboardScreen on mount
-//   tie         final scoreboard, a tie     — ScoreboardScreen on mount
-//   round       round-complete sting (rounds 1–2) — ScoreboardScreen on mount
+//   celebration final scoreboard appears, one winner — ScoreboardScreen
+//   tie         final scoreboard appears, a tie      — ScoreboardScreen
+//   round       round-complete sting (rounds 1–2) — GameplayScreen.winWord,
+//               the moment the last card of the round is won
 export const sounds = {
   tap: assetUrl('sounds/tap.mp3'),
   quit: assetUrl('sounds/quit.mp3'),

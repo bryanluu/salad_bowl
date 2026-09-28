@@ -112,6 +112,10 @@ function GameplayScreen({
     resetTimer()
     startTimer()
     setWonWords({ ...wonWords, onTurn: [] })
+    // Signals the turn beginning, immediately — otherwise the countdown's
+    // own tick effect (which only fires on a *decrease*) would leave a
+    // silent ~1s gap before the player hears anything.
+    play('tick')
   }
 
   function startRound() {
@@ -125,6 +129,9 @@ function GameplayScreen({
     setWonWords({})
     resetTimer()
     startTimer()
+    // See startTurn — same "signal t=0" reasoning applies to a round's
+    // first turn too.
+    play('tick')
   }
 
   // Called by useTimer when the turn clock hits zero. Advances to the next
@@ -214,6 +221,11 @@ function GameplayScreen({
     tallyScores(wonWordsToTally)
     setTurnEnded(true)
     setRoundJustEnded(true)
+    // Fires right as the last word is won, not later when the player
+    // dismisses the round-recap curtain and the scoreboard appears — the
+    // round is genuinely over *now*; celebration/tie for the final round
+    // still wait for the scoreboard itself (see ScoreboardScreen).
+    play('round')
 
     if (round === 3) return
 
