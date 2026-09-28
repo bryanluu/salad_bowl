@@ -269,7 +269,7 @@ describe('GameplayScreen', () => {
       expect(bySound('round')?.playCalls).toBe(1) // ...and not repeated there
     })
 
-    it('plays the game verdict only when the final scoreboard appears', () => {
+    it('stings every round on its last card (the final one too), with the verdict only once the final scoreboard appears', () => {
       const source = buildSource(['Apple'])
       renderWithSound(<GameplayScreen
         config={buildConfig(30)}
@@ -281,17 +281,26 @@ describe('GameplayScreen', () => {
       for (let round = 1; round <= 3; round++) {
         beginRound()
         winCurrentWord()
+
+        // Every round ends with the sting the moment its last card is won —
+        // round 3 included, so the player hears the same cue they've been
+        // taught to expect at the end of a round.
+        expect(bySound('round')?.playCalls).toBe(round)
+        // ...but the game's verdict waits for the scoreboard, even after
+        // the very last card.
+        expect(bySound('celebration')).toBeUndefined()
+        expect(bySound('tie')).toBeUndefined()
+
         closeRoundEndCurtain()
         if (round < 3) continueScoreboard()
       }
 
-      // Rounds 1–2 stung on their last card; round 3 did not.
-      expect(bySound('round')?.playCalls).toBe(2)
       // Team A plays first in rounds 1 and 3, so it takes the game — the
       // final scoreboard, the moment it appears, gets the celebration,
-      // not a tie.
+      // not a tie. The sting was not repeated there.
       expect(bySound('celebration')?.playCalls).toBe(1)
       expect(bySound('tie')).toBeUndefined()
+      expect(bySound('round')?.playCalls).toBe(3)
     })
   })
 })

@@ -223,8 +223,11 @@ function GameplayScreen({
     setRoundJustEnded(true)
     // Fires right as the last word is won, not later when the player
     // dismisses the round-recap curtain and the scoreboard appears — the
-    // round is genuinely over *now*; celebration/tie for the final round
-    // still wait for the scoreboard itself (see ScoreboardScreen).
+    // round is genuinely over *now*. Deliberately before the round-3 early
+    // return below: every round ends with this sting, the last one included
+    // (players expect the cue), and the game's verdict (celebration/tie)
+    // follows later, when the final scoreboard appears (see
+    // ScoreboardScreen).
     play('round')
 
     if (round === 3) return
@@ -240,8 +243,9 @@ function GameplayScreen({
   function winWord(team: Team) {
     if (!currentWord) return
 
-    // Plays even on the round-ending word — the round/celebration sting
-    // is a later moment (the scoreboard), reached via the player's tap.
+    // Plays even on the round-ending word — the round sting (endRound)
+    // layers on top of this one; the game's verdict (celebration/tie) is a
+    // later moment, the final scoreboard.
     play('win')
 
     // tracks teamTotal this round

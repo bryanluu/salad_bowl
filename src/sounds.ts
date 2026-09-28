@@ -20,8 +20,9 @@ import { assetUrl } from './assets.ts'
 //   buzzer      the turn timer expires      — GameplayScreen.handleTimerExpiry
 //   celebration final scoreboard appears, one winner — ScoreboardScreen
 //   tie         final scoreboard appears, a tie      — ScoreboardScreen
-//   round       round-complete sting (rounds 1–2) — GameplayScreen.winWord,
-//               the moment the last card of the round is won
+//   round       round-complete sting, every round including the last —
+//               GameplayScreen.endRound, the moment the last card of the
+//               round is won
 export const sounds = {
   tap: assetUrl('sounds/tap.mp3'),
   quit: assetUrl('sounds/quit.mp3'),

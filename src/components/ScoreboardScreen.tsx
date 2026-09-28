@@ -50,9 +50,10 @@ function ScoreboardScreen({ scores, onNext = () => { } }:
 
   // The scoreboard is the game's verdict, once all 3 rounds are done —
   // fires once, on mount. A between-round (round < 3) scoreboard plays
-  // nothing here: its `round` sting already fired the moment the last word
-  // of that round was won (see GameplayScreen.endRound), not when the
-  // player gets here after dismissing the recap curtain. `round` and
+  // nothing here, and the final one adds the verdict on top of a `round`
+  // sting that has already fired: every round's sting plays the moment its
+  // last word is won (see GameplayScreen.endRound), not when the player
+  // gets here after dismissing the recap curtain. `round` and
   // `isTied` are fixed for this component's lifetime — a scoreboard is
   // always a fresh mount when it appears — so they're deliberately not deps.
   useEffect(function playGameEndSting() {
