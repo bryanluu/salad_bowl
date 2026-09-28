@@ -69,18 +69,19 @@ footer {
   gap: 1em;
 }
 
-.footer__actions {
+.footer__group {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
+  justify-content: space-between;
+  gap: var(--space-1);
 }
 
 footer .logo {
   max-width: 50px;
 }
 
-.footer__quit-icon {
+.footer__logo {
   position: relative;
   display: block;
   width: 50px;
@@ -88,88 +89,72 @@ footer .logo {
   /* matches logo.svg's viewBox */
 }
 
-.footer__quit-icon .logo {
+.footer__logo .logo {
   position: absolute;
   inset: 0;
   width: 100%;
   max-width: none;
 }
 
-.footer__quit-icon .logo--frown {
+.footer__logo .logo--frown {
   opacity: 0;
 }
 
-.footer__quit:hover .logo--smile,
-.footer__quit:focus-visible .logo--smile,
-.footer__quit:active .logo--smile {
+/* The logo isn't interactive; it just reacts to the Quit link. :has() lets
+   the link (later in the DOM) drive the logo's crossfade. */
+.footer__group:has(.footer__quit:hover) .logo--smile,
+.footer__group:has(.footer__quit:focus-visible) .logo--smile,
+.footer__group:has(.footer__quit:active) .logo--smile {
   opacity: 0;
 }
 
-.footer__quit:hover .logo--frown,
-.footer__quit:focus-visible .logo--frown,
-.footer__quit:active .logo--frown {
+.footer__group:has(.footer__quit:hover) .logo--frown,
+.footer__group:has(.footer__quit:focus-visible) .logo--frown,
+.footer__group:has(.footer__quit:active) .logo--frown {
   opacity: 1;
 }
 
-.footer__quit-label {
-  color: var(--color-text-muted);
-}
-
-.footer__quit:hover .footer__quit-label,
-.footer__quit:focus-visible .footer__quit-label,
-.footer__quit:active .footer__quit-label {
-  color: var(--color-danger);
-  transform: scale(1.02);
-  font-weight: bolder;
-}
-
-.footer__quit {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-1);
-  padding: var(--space-2);
+/* Text-link-styled buttons shared by SFX and Quit. */
+.footer__link {
   background: none;
   border: none;
   border-radius: var(--radius-md);
   font-size: var(--fs-sm);
+  color: var(--color-text-muted);
   cursor: pointer;
 }
 
-.footer__quit:hover {
+.footer__link:hover,
+.footer__link:focus-visible,
+.footer__link:active {
+  transform: scale(1.02);
+  font-weight: bolder;
+}
+
+.footer__link:hover {
   background: var(--color-bg);
 }
 
+.footer__link:active {
+  transform: scale(0.98);
+}
+
+.footer__link:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* Hover color says what the link does: Quit is destructive, SFX isn't. */
+.footer__quit:hover,
+.footer__quit:focus-visible,
 .footer__quit:active {
-  transform: scale(0.98);
+  color: var(--color-danger);
 }
 
-.footer__quit:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
-}
-
-.footer__sound {
-  padding: var(--space-2);
-  background: none;
-  border: none;
-  border-radius: var(--radius-md);
-  font-size: var(--fs-lg);
-  line-height: 1;
-  cursor: pointer;
-}
-
-.footer__sound:hover {
-  background: var(--color-surface);
-}
-
+.footer__sound:hover,
+.footer__sound:focus-visible,
 .footer__sound:active {
-  transform: scale(0.98);
-}
-
-.footer__sound:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
+  color: var(--color-accent-strong);
 }
 
 /* -------------------------------------------------------------------------

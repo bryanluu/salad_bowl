@@ -3,8 +3,7 @@ export const copy = {
   footer: {
     quitConfirm: "Quit and return to the start screen? Your progress won't be saved.",
     quitLabel: 'Quit',
-    soundOff: 'Turn sound off',
-    soundOn: 'Turn sound on',
+    soundLabel: (on: boolean) => `SFX: ${on ? 'On' : 'Off'}`,
   },
   gameplay: {
     gotItButton: 'Got it!',
