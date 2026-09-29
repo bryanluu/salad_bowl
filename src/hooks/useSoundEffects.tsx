@@ -37,6 +37,43 @@ function readStoredSoundOn(): boolean {
   }
 }
 
+function errorNameOf(error: unknown): string {
+  if (typeof error === 'object' && error !== null && 'name' in error && typeof error.name === 'string') {
+    return error.name
+  }
+  return 'UnknownError'
+}
+
+// Turns a rejected play() into a warning that names the actual cause, or
+// null when the rejection isn't a failure at all. The DOMException names
+// are the ones HTMLMediaElement.play() specifies:
+//   NotAllowedError    — autoplay policy: this element hasn't been unlocked
+//                        by a user gesture (the iOS failure mode, see
+//                        unlockOnFirstGesture)
+//   NotSupportedError  — no usable source: the file 404s or is in a format
+//                        this browser can't decode
+//   AbortError         — play() was interrupted by pause() or a new load:
+//                        stop(), muting, priming, or a StrictMode
+//                        mount/cleanup/mount all do this on purpose, so
+//                        it's expected, not a failure — and stays silent
+function describePlayFailure(name: SoundName, error: unknown): string | null {
+  const errorName = errorNameOf(error)
+  switch (errorName) {
+    case 'AbortError':
+      return null
+    case 'NotAllowedError':
+      return `[sound] "${name}" was blocked by the browser's autoplay policy (${errorName}) — ` +
+        `its audio element hasn't been unlocked by a user gesture yet.`
+    case 'NotSupportedError':
+      return `[sound] "${name}" could not be loaded from ${sounds[name]} (${errorName}) — ` +
+        `the file is missing, or in a format this browser can't play.`
+    default: {
+      const detail = error instanceof Error && error.message ? `: ${error.message}` : ''
+      return `[sound] "${name}" failed to play (${errorName}${detail}).`
+    }
+  }
+}
+
 // One audio element per sound, created (and primed — see unlockOnFirstGesture
 // below) during the first user gesture, then kept for the provider's
 // lifetime: replaying is a seek-to-zero + play(), which avoids re-fetching
@@ -137,15 +174,15 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     element.currentTime = 0
     const playing = element.play()
     if (playing) {
-      playing.catch(function onPlayRejected() {
-        // play() rejects where the file is still a stub (404 → no supported
-        // sources) or the browser withholds autoplay. Warns every time,
-        // deliberately not deduped to once-per-sound — a quieter version of
-        // this warning would be a confusing outlier among the browser's own
-        // per-attempt console errors for the same failure.
-        console.warn(
-          `[sound] "${name}" is silent — no audio file at ${sounds[name]} yet (TODO in src/sounds.ts).`,
-        )
+      playing.catch(function onPlayRejected(error: unknown) {
+        // Warns every time, deliberately not deduped to once-per-sound — a
+        // quieter version of this warning would be a confusing outlier
+        // among the browser's own per-attempt console errors for the same
+        // failure. What it *says* depends on why play() rejected, though:
+        // blaming a missing file for an autoplay refusal (or vice versa)
+        // sends you looking in the wrong place.
+        const warning = describePlayFailure(name, error)
+        if (warning) console.warn(warning)
       })
     }
   }, [getAudio])

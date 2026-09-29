@@ -5,11 +5,12 @@ import { SoundProvider, useSoundEffects } from './useSoundEffects'
 import { sounds, type SoundName } from '../sounds.ts'
 
 // A stand-in for HTMLAudioElement that records what happens to each
-// instance. `rejectPlay` simulates a missing file: play() rejects the way
-// a real element does when its src 404s ("no supported sources").
+// instance. `rejectWith` makes play() reject the way a real element does —
+// e.g. a NotSupportedError DOMException when its src 404s, or a
+// NotAllowedError when autoplay is blocked.
 class MockAudio {
   static instances: MockAudio[] = []
-  static rejectPlay = false
+  static rejectWith: Error | null = null
 
   url: string
   currentTime = 0
@@ -24,7 +25,7 @@ class MockAudio {
 
   play(): Promise<void> {
     this.playCalls += 1
-    if (MockAudio.rejectPlay) return Promise.reject(new Error('no supported sources'))
+    if (MockAudio.rejectWith) return Promise.reject(MockAudio.rejectWith)
     return Promise.resolve()
   }
 
@@ -67,7 +68,7 @@ describe('useSoundEffects', () => {
   beforeEach(() => {
     vi.stubGlobal('Audio', MockAudio)
     MockAudio.instances = []
-    MockAudio.rejectPlay = false
+    MockAudio.rejectWith = null
     localStorage.clear()
   })
 
@@ -219,21 +220,82 @@ describe('useSoundEffects', () => {
     expect(byName('tap')?.playCalls).toBe(2)
   })
 
-  it('warns every time a sound fails to play, not just the first', async () => {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => { })
-    renderControlPanel()
-    await unlock() // priming succeeds here — MockAudio.rejectPlay flips after
+  describe('when a sound fails to play', () => {
+    let warn: ReturnType<typeof vi.spyOn>
 
-    MockAudio.rejectPlay = true
-    // play() rejections settle in a microtask, so flush between attempts.
-    await act(async () => { play('tick') })
-    await act(async () => { play('tick') })
-    expect(warn).toHaveBeenCalledTimes(2)
+    beforeEach(() => {
+      warn = vi.spyOn(console, 'warn').mockImplementation(() => { })
+    })
 
-    // A missing sound doesn't block anything else from playing.
-    MockAudio.rejectPlay = false
-    play('tap')
-    expect(byName('tap')?.playCalls).toBe(1)
+    // Priming succeeds at unlock; the rejection is switched on afterwards,
+    // then play() rejections settle in a microtask, so flush each attempt.
+    async function playFailingWith(error: Error, name: SoundName = 'tick') {
+      renderControlPanel()
+      await unlock()
+      MockAudio.rejectWith = error
+      await act(async () => { play(name) })
+    }
+
+    it('warns every time, not just the first', async () => {
+      await playFailingWith(new DOMException('no supported sources', 'NotSupportedError'))
+      await act(async () => { play('tick') })
+      expect(warn).toHaveBeenCalledTimes(2)
+
+      // A failing sound doesn't block anything else from playing.
+      MockAudio.rejectWith = null
+      play('tap')
+      expect(byName('tap')?.playCalls).toBe(1)
+    })
+
+    it('blames the autoplay policy — not a missing file — for a NotAllowedError', async () => {
+      await playFailingWith(new DOMException('gesture required', 'NotAllowedError'), 'buzzer')
+
+      expect(warn).toHaveBeenCalledTimes(1)
+      const message = warn.mock.calls[0][0] as string
+      expect(message).toContain('"buzzer"')
+      expect(message).toContain('autoplay policy')
+      expect(message).toContain('NotAllowedError')
+      expect(message).not.toContain(sounds.buzzer)
+      expect(message).not.toMatch(/missing/i)
+    })
+
+    it('names the file and blames the source for a NotSupportedError', async () => {
+      await playFailingWith(new DOMException('no supported sources', 'NotSupportedError'), 'tie')
+
+      expect(warn).toHaveBeenCalledTimes(1)
+      const message = warn.mock.calls[0][0] as string
+      expect(message).toContain('"tie"')
+      expect(message).toContain(sounds.tie)
+      expect(message).toContain('NotSupportedError')
+      expect(message).toMatch(/missing/i)
+      expect(message).not.toContain('autoplay')
+    })
+
+    it('stays silent for an AbortError — an interrupted play is not a failure', async () => {
+      await playFailingWith(new DOMException('interrupted by pause()', 'AbortError'))
+
+      expect(warn).not.toHaveBeenCalled()
+    })
+
+    it('reports any other error by name and message', async () => {
+      await playFailingWith(new TypeError('boom'))
+
+      expect(warn).toHaveBeenCalledTimes(1)
+      const message = warn.mock.calls[0][0] as string
+      expect(message).toContain('"tick"')
+      expect(message).toContain('TypeError')
+      expect(message).toContain('boom')
+    })
+
+    it('reports a rejection that is not an Error at all', async () => {
+      renderControlPanel()
+      await unlock()
+      MockAudio.rejectWith = 'nope' as unknown as Error
+      await act(async () => { play('tick') })
+
+      expect(warn).toHaveBeenCalledTimes(1)
+      expect(warn.mock.calls[0][0]).toContain('UnknownError')
+    })
   })
 
   describe('stop', () => {

@@ -2,8 +2,9 @@
 import { assetUrl } from './assets.ts'
 
 // Swap any file in public/sounds/ for a different sound — the names here
-// are the contract, nothing else needs to change. A missing/broken file
-// no-ops with a console warning per failed attempt (see
+// are the contract, nothing else needs to change. A play() that fails
+// (missing/broken file, or the browser blocking autoplay) no-ops with a
+// console warning per failed attempt that names the actual cause (see
 // src/hooks/useSoundEffects.tsx). Where each sound is called:
 //
 //   tap         generic action buttons — Start "Play", Setup "Start game",
