@@ -11,9 +11,10 @@ crown a winner (or a tie) at the end.
 
 Built for phones that get passed hand to hand: it holds a Screen Wake Lock
 while a turn is in play so the display can't dim mid-game, and there are no
-accounts, no backend, and no persistence — a game lives entirely in the
-current session. Full installable/offline PWA support (manifest and service
-worker) is still to come.
+accounts, no backend, and no game persistence — a game lives entirely in the
+current session. The one thing remembered between visits is your sound
+effects on/off preference, kept in `localStorage`. Full installable/offline
+PWA support (manifest and service worker) is still to come.
 
 **Play the live game:** <https://bryanluu.github.io/salad_bowl/>
 
@@ -45,23 +46,25 @@ Then open the local URL Vite prints when the dev server starts.
 ```text
 salad_bowl/
 ├── index.html            # App shell: fonts, favicon, #root mount point
-├── public/               # Static assets (logo, icons, favicon)
+├── public/               # Static assets (logo, favicon, sounds/)
 ├── src/
 │   ├── main.tsx          # Entry point — mounts App, imports global styles
 │   ├── App.tsx           # Screen state machine + shared game config
 │   ├── types.ts          # Shared types: GameConfig, Team, WordSource, Scores
 │   ├── assets.ts         # base-path-aware URL helper for public/ assets
+│   ├── sounds.ts         # Sound-effect map: cue name → file in public/sounds/
 │   ├── components/       # Screens & UI: Start, GameSetup, WordEntry, Gameplay,
 │   │                     #   round/turn curtains, scoreboard
 │   ├── colors/           # Color interpolation helpers (+ tests)
 │   ├── copy/en.ts        # All UI strings in one place
-│   ├── hooks/            # useTimer, useWakeLock, useKeyPress, useWordSource
+│   ├── hooks/            # useTimer, useWakeLock, useKeyPress, useWordSource,
+│   │                     #   useSoundEffects (SoundProvider + hook)
 │   ├── styles/           # reset.css, variables.css, global.css
 │   ├── teams/            # Roster math + team-order shuffling (+ tests)
 │   ├── validation/       # Roster, bowl, and word validators (+ tests)
 │   ├── words/            # Word normalization + bowl pick/switch (+ tests)
 │   ├── wordSources/      # WordSource implementations (LocalWordSource)
-│   └── test/setup.ts     # Vitest setup (jest-dom matchers)
+│   └── test/             # Vitest setup (jest-dom), renderWithSound helper
 ├── .github/workflows/    # test.yml (CI), build_and_deploy.yml (GitHub Pages)
 ├── eslint.config.js      # ESLint flat config
 ├── tsconfig.json         # Project references → tsconfig.app.json / tsconfig.node.json
@@ -83,6 +86,16 @@ salad_bowl/
 - **UI copy lives in one file.** Every string in the app is in
   `src/copy/en.ts`, so adding a language is a matter of adding a sibling
   file.
+- **Sound is a context, and its on/off setting is the one thing persisted.**
+  `SoundProvider` (`src/hooks/useSoundEffects.tsx`) wraps the app and exposes
+  `useSoundEffects()` → `{ soundOn, setSoundOn, play, stop }`; which file
+  plays for which cue is mapped in `src/sounds.ts`, with the files in
+  `public/sounds/`. Nothing plays until the first tap or keypress, which also
+  primes every sound so iOS will allow later ones (like the timer buzzer). The
+  on/off preference lives in `localStorage` — a deliberate exception to the
+  no-persistence rule, because it's a user preference, not game state. A
+  failed `play()` logs a console warning naming the cause rather than
+  throwing.
 - **Pure game logic, tested next to itself.** Bowl mechanics (`src/words/`),
   roster math and team shuffling (`src/teams/`), and validation
   (`src/validation/`) are framework-free modules, each paired with a
