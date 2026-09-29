@@ -35,7 +35,7 @@ function ScoreboardScreen({ scores, onNext = () => { } }:
     scores: Scores,
     onNext: () => void,
   }) {
-  const { play } = useSoundEffects()
+  const { play, stop } = useSoundEffects()
   const round = scores[0].rounds.length
   const winners = computeWinners(scores)
   const sortedScores = sortByScoreDescending(scores)
@@ -56,9 +56,18 @@ function ScoreboardScreen({ scores, onNext = () => { } }:
   // gets here after dismissing the recap curtain. `round` and
   // `isTied` are fixed for this component's lifetime — a scoreboard is
   // always a fresh mount when it appears — so they're deliberately not deps.
+  //
+  // The verdict is a long sting, so it's cut off when this screen goes
+  // away — New game and Quit (a confirmed quit unmounts the whole game)
+  // both unmount it — rather than playing on over whatever screen comes
+  // next.
   useEffect(function playGameEndSting() {
-    if (round === 3) {
-      play(isTied() ? 'tie' : 'celebration')
+    if (round !== 3) return
+
+    const verdict = isTied() ? 'tie' : 'celebration'
+    play(verdict)
+    return function stopGameEndSting() {
+      stop(verdict)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])

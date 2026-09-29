@@ -20,6 +20,9 @@ type SoundApi = {
   soundOn: boolean
   setSoundOn: (on: boolean) => void
   play: (name: SoundName) => void
+  // Cuts a sound off mid-play and rewinds it. For long stings (the game
+  // verdict) that would otherwise outlive the screen that triggered them.
+  stop: (name: SoundName) => void
 }
 
 const SoundContext = createContext<SoundApi | null>(null)
@@ -147,6 +150,16 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     }
   }, [getAudio])
 
+  const stop = useCallback(function stopSound(name: SoundName) {
+    // No-op for a sound that was never created (nothing to stop). Not
+    // gated on the gesture/mute flags: stopping is always safe, and it
+    // must still work if the player mutes mid-sound.
+    const element = audioMapRef.current.get(name)
+    if (!element) return
+    element.pause()
+    element.currentTime = 0
+  }, [])
+
   const handleSetSoundOn = useCallback(function setSoundOnAndPersist(on: boolean) {
     soundOnRef.current = on
     setSoundOnState(on)
@@ -171,9 +184,9 @@ export function SoundProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(
     function buildSoundApi() {
-      return { soundOn, setSoundOn: handleSetSoundOn, play }
+      return { soundOn, setSoundOn: handleSetSoundOn, play, stop }
     },
-    [soundOn, handleSetSoundOn, play],
+    [soundOn, handleSetSoundOn, play, stop],
   )
 
   return (

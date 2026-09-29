@@ -39,11 +39,12 @@ class MockAudio {
 let soundToPlay: SoundName = 'tap'
 
 function ControlPanel() {
-  const { play, setSoundOn, soundOn } = useSoundEffects()
+  const { play, stop, setSoundOn, soundOn } = useSoundEffects()
   return (
     <>
       <span data-testid="sound-on">{String(soundOn)}</span>
       <button data-testid="play" type="button" onClick={() => play(soundToPlay)}>{soundToPlay}</button>
+      <button data-testid="stop" type="button" onClick={() => stop(soundToPlay)}>stop</button>
       <button data-testid="toggle" type="button" onClick={() => setSoundOn(!soundOn)}>toggle</button>
     </>
   )
@@ -233,5 +234,55 @@ describe('useSoundEffects', () => {
     MockAudio.rejectPlay = false
     play('tap')
     expect(byName('tap')?.playCalls).toBe(1)
+  })
+
+  describe('stop', () => {
+    function stop(name: SoundName) {
+      soundToPlay = name
+      fireEvent.click(screen.getByTestId('stop'))
+    }
+
+    it('cuts a playing sound off and rewinds it', async () => {
+      renderControlPanel()
+      await unlock()
+
+      play('celebration')
+      const celebration = byName('celebration')
+      celebration!.currentTime = 2.5 // partway through
+
+      stop('celebration')
+      expect(celebration?.pauseCalls).toBe(1)
+      expect(celebration?.currentTime).toBe(0)
+    })
+
+    it('only stops the sound it is asked to', async () => {
+      renderControlPanel()
+      await unlock()
+
+      play('celebration')
+      play('tap')
+      stop('celebration')
+
+      expect(byName('celebration')?.pauseCalls).toBe(1)
+      expect(byName('tap')?.pauseCalls).toBe(0)
+    })
+
+    it('does nothing for a sound that was never created', () => {
+      renderControlPanel() // no gesture yet, so no elements exist
+
+      expect(() => stop('celebration')).not.toThrow()
+      expect(MockAudio.instances).toHaveLength(0)
+    })
+
+    it('still stops a sound after the player has muted', async () => {
+      renderControlPanel()
+      await unlock()
+
+      play('celebration')
+      fireEvent.click(screen.getByTestId('toggle')) // mute — pauses everything once
+      stop('celebration')
+
+      expect(byName('celebration')?.pauseCalls).toBe(2)
+    })
   })
 })
