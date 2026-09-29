@@ -1,14 +1,15 @@
 // src/components/RoundIntroCurtain.test.tsx
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { screen, fireEvent } from '@testing-library/react'
 import RoundIntroCurtain from './RoundIntroCurtain'
 import { copy } from '../copy/en'
+import { renderWithSound } from '../test/renderWithSound'
 
 const { roundCurtain, round: roundCopy } = copy.gameplay
 
 describe('RoundIntroCurtain', () => {
   it('shows the round name, instructions, and ready prompt for round 1', () => {
-    render(
+    renderWithSound(
       <RoundIntroCurtain round={1} nextTeamName="Red Team" onBegin={vi.fn()} />
     )
 
@@ -20,7 +21,7 @@ describe('RoundIntroCurtain', () => {
   })
 
   it('swaps in round 3 (Password) content when given round 3', () => {
-    render(
+    renderWithSound(
       <RoundIntroCurtain round={3} nextTeamName="Blue Team" onBegin={vi.fn()} />
     )
 
@@ -33,7 +34,7 @@ describe('RoundIntroCurtain', () => {
   it('calls onBegin when the button is clicked', () => {
     const onBegin = vi.fn()
 
-    render(
+    renderWithSound(
       <RoundIntroCurtain round={1} nextTeamName="Red Team" onBegin={onBegin} />
     )
 
@@ -42,7 +43,7 @@ describe('RoundIntroCurtain', () => {
   })
 
   it('autofocuses the button so pressing Enter starts the round immediately', () => {
-    render(
+    renderWithSound(
       <RoundIntroCurtain round={1} nextTeamName="Red Team" onBegin={vi.fn()} />
     )
 

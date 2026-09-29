@@ -1,5 +1,7 @@
+import { useEffect } from "react"
 import type { Scores, TeamScore } from "../types"
 import { copy } from "../copy/en"
+import { useSoundEffects } from "../hooks/useSoundEffects"
 
 function total(rounds: readonly number[]): number {
   return rounds.reduce((sum, score) => sum + score, 0)
@@ -33,6 +35,7 @@ function ScoreboardScreen({ scores, onNext = () => { } }:
     scores: Scores,
     onNext: () => void,
   }) {
+  const { play, stop } = useSoundEffects()
   const round = scores[0].rounds.length
   const winners = computeWinners(scores)
   const sortedScores = sortByScoreDescending(scores)
@@ -44,6 +47,30 @@ function ScoreboardScreen({ scores, onNext = () => { } }:
   function isTied() {
     return winners.length > 1
   }
+
+  // The scoreboard is the game's verdict, once all 3 rounds are done —
+  // fires once, on mount. A between-round (round < 3) scoreboard plays
+  // nothing here, and the final one adds the verdict on top of a `round`
+  // sting that has already fired: every round's sting plays the moment its
+  // last word is won (see GameplayScreen.endRound), not when the player
+  // gets here after dismissing the recap curtain. `round` and
+  // `isTied` are fixed for this component's lifetime — a scoreboard is
+  // always a fresh mount when it appears — so they're deliberately not deps.
+  //
+  // The verdict is a long sting, so it's cut off when this screen goes
+  // away — New game and Quit (a confirmed quit unmounts the whole game)
+  // both unmount it — rather than playing on over whatever screen comes
+  // next.
+  useEffect(function playGameEndSting() {
+    if (round !== 3) return
+
+    const verdict = isTied() ? 'tie' : 'celebration'
+    play(verdict)
+    return function stopGameEndSting() {
+      stop(verdict)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <section className="screen" aria-labelledby="scoreboard-title">
@@ -84,7 +111,7 @@ function ScoreboardScreen({ scores, onNext = () => { } }:
           copy.gameplay.scoreboard.results.final(winners.map((t) => t.name))}
       </p>
 
-      <button className="btn btn--primary" onClick={onNext} type="button" autoFocus>
+      <button className="btn btn--primary" onClick={() => { play('tap'); onNext() }} type="button" autoFocus>
         {round < 3 ? copy.gameplay.scoreboard.button.continue : copy.gameplay.scoreboard.button.newGame}
       </button>
     </section>

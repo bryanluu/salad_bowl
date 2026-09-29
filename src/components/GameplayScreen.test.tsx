@@ -1,9 +1,11 @@
 // src/components/GameplayScreen.test.tsx
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent, act } from '@testing-library/react'
+import { screen, fireEvent, act } from '@testing-library/react'
 import GameplayScreen from './GameplayScreen'
 import { copy } from '../copy/en'
 import type { GameConfig, Round, Team, Word, WordSource } from '../types'
+import { renderWithSound } from '../test/renderWithSound'
+import { sounds } from '../sounds.ts'
 
 const teamA: Team = { id: 'team-a', name: 'Red Team', players: 2 }
 const teamB: Team = { id: 'team-b', name: 'Blue Team', players: 2 }
@@ -51,22 +53,69 @@ function continueScoreboard() {
   fireEvent.click(screen.getByRole('button', { name: copy.gameplay.scoreboard.button.continue }))
 }
 
+// A stand-in for HTMLAudioElement that records plays per instance. The
+// engine keeps one element per sound name (see useSoundEffects.tsx), so
+// instances map 1:1 to sounds.
+class MockAudio {
+  static instances: MockAudio[] = []
+
+  url: string
+  currentTime = 0
+  playCalls = 0
+
+  constructor(url: string) {
+    this.url = url
+    MockAudio.instances.push(this)
+  }
+
+  play(): Promise<void> {
+    this.playCalls += 1
+    return Promise.resolve()
+  }
+
+  pause(): void { }
+}
+
+function bySound(name: keyof typeof sounds): MockAudio | undefined {
+  return MockAudio.instances.find((instance) => instance.url === sounds[name])
+}
+
+// The engine withholds all sound until a user gesture (see
+// useSoundEffects.tsx), and a synthetic click doesn't provide one — unlock
+// explicitly for the tests that assert on playback. The gesture also
+// primes every sound (a muted play→pause pass — see useSoundEffects.tsx),
+// which would otherwise inflate the playCalls counts these tests assert on;
+// flush that pass and zero the counters so it's invisible here (the hook's
+// own test suite covers priming itself). Uses runAllTicks rather than real
+// timers/awaits since this file runs under fake timers.
+async function unlockAudio() {
+  await act(async () => {
+    fireEvent.pointerDown(window)
+    await Promise.resolve()
+    await Promise.resolve()
+  })
+  MockAudio.instances.forEach((instance) => { instance.playCalls = 0 })
+}
+
 describe('GameplayScreen', () => {
   beforeEach(() => {
     vi.useFakeTimers()
     // pickWord/switchWord draw via Math.random — pinning it to 0 always
     // selects the first word in the bowl, making every draw deterministic.
     vi.spyOn(Math, 'random').mockReturnValue(0)
+    vi.stubGlobal('Audio', MockAudio)
+    MockAudio.instances = []
   })
 
   afterEach(() => {
     vi.useRealTimers()
     vi.restoreAllMocks()
+    vi.unstubAllGlobals()
   })
 
   it('shows RoundIntroCurtain for round 1 while the bowl is full and untouched', () => {
     const source = buildSource(['Apple', 'Banana'])
-    render(<GameplayScreen
+    renderWithSound(<GameplayScreen
       config={buildConfig(30)}
       source={source}
       onNewGame={vi.fn()}
@@ -79,7 +128,7 @@ describe('GameplayScreen', () => {
 
   it('starting the round via onBegin shows TurnScreen with a word in play', () => {
     const source = buildSource(['Apple', 'Banana'])
-    render(<GameplayScreen
+    renderWithSound(<GameplayScreen
       config={buildConfig(30)}
       source={source}
       onNewGame={vi.fn()}
@@ -95,7 +144,7 @@ describe('GameplayScreen', () => {
 
   it('shows TurnCurtain naming the next team when the turn timer expires mid-round', () => {
     const source = buildSource(['Apple', 'Banana'])
-    render(<GameplayScreen
+    renderWithSound(<GameplayScreen
       config={buildConfig(3)}
       source={source}
       onNewGame={vi.fn()}
@@ -112,7 +161,7 @@ describe('GameplayScreen', () => {
 
   it('winning the last word ends the round and shows the round-summary TurnCurtain', () => {
     const source = buildSource(['Apple'])
-    render(<GameplayScreen
+    renderWithSound(<GameplayScreen
       config={buildConfig(30)}
       source={source}
       onNewGame={vi.fn()}
@@ -128,7 +177,7 @@ describe('GameplayScreen', () => {
 
   it('closing the round-summary curtain shows the scoreboard with mid-game content', () => {
     const source = buildSource(['Apple'])
-    render(<GameplayScreen
+    renderWithSound(<GameplayScreen
       config={buildConfig(30)}
       source={source}
       onNewGame={vi.fn()}
@@ -146,7 +195,7 @@ describe('GameplayScreen', () => {
 
   it('shows final scores and a replay button after round 3', () => {
     const source = buildSource(['Apple'])
-    render(<GameplayScreen
+    renderWithSound(<GameplayScreen
       config={buildConfig(30)}
       source={source}
       onNewGame={vi.fn()}
@@ -171,7 +220,7 @@ describe('GameplayScreen', () => {
 
   it('labels each round-ending TurnCurtain with the round that just finished', () => {
     const source = buildSource(['Apple'])
-    render(<GameplayScreen
+    renderWithSound(<GameplayScreen
       config={buildConfig(30)}
       source={source}
       onNewGame={vi.fn()}
@@ -188,6 +237,81 @@ describe('GameplayScreen', () => {
       closeRoundEndCurtain()
       if (round < 3) continueScoreboard()
     }
+  })
+
+  describe('sound effects', () => {
+    it('ticks at the start of a turn (t=0), then once per second', async () => {
+      const source = buildSource(['Apple', 'Banana'])
+      renderWithSound(<GameplayScreen
+        config={buildConfig(30)}
+        source={source}
+        onNewGame={vi.fn()}
+      />)
+
+      await unlockAudio()
+
+      beginRound()
+      expect(bySound('tick')?.playCalls).toBe(1) // the t=0 start-of-turn beat
+
+      act(() => { vi.advanceTimersByTime(1000) })
+      expect(bySound('tick')?.playCalls).toBe(2)
+
+      act(() => { vi.advanceTimersByTime(1000) })
+      expect(bySound('tick')?.playCalls).toBe(3)
+    })
+
+    it('plays the round sting as the last card is won, not when the scoreboard shows', async () => {
+      const source = buildSource(['Apple'])
+      renderWithSound(<GameplayScreen
+        config={buildConfig(30)}
+        source={source}
+        onNewGame={vi.fn()}
+      />)
+      await unlockAudio()
+
+      beginRound()
+      winCurrentWord() // the only word — the round ends on this win
+
+      expect(bySound('win')?.playCalls).toBe(1)
+      expect(bySound('round')?.playCalls).toBe(1) // the moment of the win
+
+      closeRoundEndCurtain() // scoreboard appears
+      expect(bySound('round')?.playCalls).toBe(1) // ...and not repeated there
+    })
+
+    it('stings every round on its last card (the final one too), with the verdict only once the final scoreboard appears', async () => {
+      const source = buildSource(['Apple'])
+      renderWithSound(<GameplayScreen
+        config={buildConfig(30)}
+        source={source}
+        onNewGame={vi.fn()}
+      />)
+      await unlockAudio()
+
+      for (let round = 1; round <= 3; round++) {
+        beginRound()
+        winCurrentWord()
+
+        // Every round ends with the sting the moment its last card is won —
+        // round 3 included, so the player hears the same cue they've been
+        // taught to expect at the end of a round.
+        expect(bySound('round')?.playCalls).toBe(round)
+        // ...but the game's verdict waits for the scoreboard, even after
+        // the very last card.
+        expect(bySound('celebration')?.playCalls).toBe(0)
+        expect(bySound('tie')?.playCalls).toBe(0)
+
+        closeRoundEndCurtain()
+        if (round < 3) continueScoreboard()
+      }
+
+      // Team A plays first in rounds 1 and 3, so it takes the game — the
+      // final scoreboard, the moment it appears, gets the celebration,
+      // not a tie. The sting was not repeated there.
+      expect(bySound('celebration')?.playCalls).toBe(1)
+      expect(bySound('tie')?.playCalls).toBe(0)
+      expect(bySound('round')?.playCalls).toBe(3)
+    })
   })
 })
 

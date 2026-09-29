@@ -1,5 +1,6 @@
 import { copy } from '../copy/en'
 import type { Round } from '../types'
+import { useSoundEffects } from '../hooks/useSoundEffects'
 
 type RoundIntroCurtainProps = {
   round: Round
@@ -18,6 +19,7 @@ type RoundIntroCurtainProps = {
 // content rather than overlaying it, matching how the other `.screen`
 // cards are composed.
 function RoundIntroCurtain({ round, nextTeamName, onBegin }: RoundIntroCurtainProps) {
+  const { play } = useSoundEffects()
   const { label, instructions } = copy.gameplay.round[round]
 
   return (
@@ -36,7 +38,7 @@ function RoundIntroCurtain({ round, nextTeamName, onBegin }: RoundIntroCurtainPr
         {copy.gameplay.roundCurtain.readyPrompt(nextTeamName)}
       </p>
 
-      <button className="btn btn--primary" type="button" onClick={onBegin} autoFocus>
+      <button className="btn btn--primary" type="button" onClick={() => { play('tap'); onBegin() }} autoFocus>
         {copy.gameplay.roundCurtain.beginButton}
       </button>
     </section>

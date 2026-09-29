@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { Round } from '../types.ts'
 import { copy } from '../copy/en'
 import { useTimer } from '../hooks/useTimer'
+import { useSoundEffects } from '../hooks/useSoundEffects'
 
 // How long a player must hold the continue button before it fires. Chosen
 // to comfortably outlast the stray follow-up tap that lands here right
@@ -29,12 +30,16 @@ type TurnCurtainProps = {
 // names who's up next. Mirrors RoundIntroCurtain's structure and swaps in
 // for the gameplay screen's content the same way, rather than overlaying it.
 function TurnCurtain({ correctCount, nextTeamName, round, roundEnded, onNext }: TurnCurtainProps) {
+  const { play } = useSoundEffects()
   const [isHolding, setIsHolding] = useState(false)
   // 1s-granularity countdown reused as the hold's authoritative clock: the
   // fill's CSS transition is purely decorative, so onNext firing depends on
   // this timer, not on the animation completing (which prefers-reduced-motion
   // or a dropped frame could otherwise suppress).
-  const { timeLeft, startTimer, stopTimer, resetTimer } = useTimer(HOLD_SECONDS, onNext)
+  const { timeLeft, startTimer, stopTimer, resetTimer } = useTimer(HOLD_SECONDS, function holdComplete() {
+    play('tap')
+    onNext()
+  })
 
   function beginHold(event: React.PointerEvent) {
     if (!event.isPrimary) return
@@ -61,7 +66,10 @@ function TurnCurtain({ correctCount, nextTeamName, round, roundEnded, onNext }: 
   // its own hold via onPointerUp above) is never mistaken for a keyboard
   // confirm.
   function handleClick(event: React.MouseEvent) {
-    if (event.detail === 0) onNext()
+    if (event.detail === 0) {
+      play('tap')
+      onNext()
+    }
   }
 
   const continueLabel = isHolding

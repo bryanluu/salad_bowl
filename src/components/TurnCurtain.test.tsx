@@ -1,14 +1,15 @@
 // src/components/TurnCurtain.test.tsx
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent, act } from '@testing-library/react'
+import { screen, fireEvent, act } from '@testing-library/react'
 import TurnCurtain from './TurnCurtain'
 import { copy } from '../copy/en'
+import { renderWithSound } from '../test/renderWithSound'
 
 const { turnCurtain } = copy.gameplay
 
 describe('TurnCurtain', () => {
   it('shows the turn-over title and next-player prompt mid-round', () => {
-    render(
+    renderWithSound(
       <TurnCurtain
         correctCount={4}
         nextTeamName="Red Team"
@@ -25,7 +26,7 @@ describe('TurnCurtain', () => {
   })
 
   it('shows the round-over title and hides the next-player prompt when the round ended', () => {
-    render(
+    renderWithSound(
       <TurnCurtain
         correctCount={7}
         nextTeamName="Blue Team"
@@ -44,7 +45,7 @@ describe('TurnCurtain', () => {
   it('does not call onNext on a quick pointer tap', () => {
     const onNext = vi.fn()
 
-    render(
+    renderWithSound(
       <TurnCurtain
         correctCount={0}
         nextTeamName="Red Team"
@@ -67,7 +68,7 @@ describe('TurnCurtain', () => {
     vi.useFakeTimers()
     const onNext = vi.fn()
 
-    render(
+    renderWithSound(
       <TurnCurtain
         correctCount={0}
         nextTeamName="Red Team"
@@ -91,7 +92,7 @@ describe('TurnCurtain', () => {
     vi.useFakeTimers()
     const onNext = vi.fn()
 
-    render(
+    renderWithSound(
       <TurnCurtain
         correctCount={0}
         nextTeamName="Red Team"
@@ -118,7 +119,7 @@ describe('TurnCurtain', () => {
   it('advances instantly on a keyboard-activated click (detail 0), autofocused for Enter', () => {
     const onNext = vi.fn()
 
-    render(
+    renderWithSound(
       <TurnCurtain
         correctCount={0}
         nextTeamName="Red Team"

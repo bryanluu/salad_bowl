@@ -1,0 +1,369 @@
+// src/hooks/useSoundEffects.test.tsx
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { render, screen, fireEvent, act } from '@testing-library/react'
+import { SoundProvider, useSoundEffects } from './useSoundEffects'
+import { sounds, type SoundName } from '../sounds.ts'
+
+// A stand-in for HTMLAudioElement that records what happens to each
+// instance. `rejectWith` makes play() reject the way a real element does —
+// e.g. a NotSupportedError DOMException when its src 404s, or a
+// NotAllowedError when autoplay is blocked.
+class MockAudio {
+  static instances: MockAudio[] = []
+  static rejectWith: Error | null = null
+
+  url: string
+  currentTime = 0
+  muted = false
+  playCalls = 0
+  pauseCalls = 0
+
+  constructor(url: string) {
+    this.url = url
+    MockAudio.instances.push(this)
+  }
+
+  play(): Promise<void> {
+    this.playCalls += 1
+    if (MockAudio.rejectWith) return Promise.reject(MockAudio.rejectWith)
+    return Promise.resolve()
+  }
+
+  pause(): void {
+    this.pauseCalls += 1
+  }
+}
+
+// The tests drive the hook through real buttons (read/write during the
+// render pass is off-limits to eslint), pointing "play" at the sound under
+// test via this module-level selector, which is only touched by tests.
+let soundToPlay: SoundName = 'tap'
+
+function ControlPanel() {
+  const { play, stop, setSoundOn, soundOn } = useSoundEffects()
+  return (
+    <>
+      <span data-testid="sound-on">{String(soundOn)}</span>
+      <button data-testid="play" type="button" onClick={() => play(soundToPlay)}>{soundToPlay}</button>
+      <button data-testid="stop" type="button" onClick={() => stop(soundToPlay)}>stop</button>
+      <button data-testid="toggle" type="button" onClick={() => setSoundOn(!soundOn)}>toggle</button>
+    </>
+  )
+}
+
+function renderControlPanel() {
+  soundToPlay = 'tap'
+  return render(
+    <SoundProvider>
+      <ControlPanel />
+    </SoundProvider>,
+  )
+}
+
+function byName(name: string): MockAudio | undefined {
+  return MockAudio.instances.find((instance) => instance.url === sounds[name as keyof typeof sounds])
+}
+
+describe('useSoundEffects', () => {
+  beforeEach(() => {
+    vi.stubGlobal('Audio', MockAudio)
+    MockAudio.instances = []
+    MockAudio.rejectWith = null
+    localStorage.clear()
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  // Fires the gesture and lets the muted priming pass (play → pause →
+  // unmute, for every sound — see "primes every sound on the first
+  // gesture" below) settle, then zeroes every instance's counters. The
+  // rest of this suite is about steady-state play() behavior *after*
+  // unlock, so priming — covered by its own test — is made invisible here
+  // rather than asserted against in every other test.
+  async function unlock() {
+    await act(async () => {
+      fireEvent.pointerDown(window)
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+    MockAudio.instances.forEach((instance) => {
+      instance.playCalls = 0
+      instance.pauseCalls = 0
+    })
+  }
+
+  function play(name: SoundName) {
+    soundToPlay = name
+    fireEvent.click(screen.getByTestId('play'))
+  }
+
+  it('plays nothing before a user gesture, and plays after one', async () => {
+    renderControlPanel()
+
+    play('tap') // no gesture yet
+    expect(MockAudio.instances).toHaveLength(0)
+
+    await unlock()
+
+    play('tap')
+    expect(byName('tap')?.playCalls).toBe(1)
+  })
+
+  it('also unlocks on a keyboard gesture', async () => {
+    renderControlPanel()
+
+    play('tap')
+    expect(MockAudio.instances).toHaveLength(0)
+
+    await act(async () => {
+      fireEvent.keyDown(window, { key: 'Enter' })
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+    MockAudio.instances.forEach((instance) => { instance.playCalls = 0 })
+
+    play('tap')
+    expect(byName('tap')?.playCalls).toBe(1)
+  })
+
+  it('primes every sound on the first gesture, muted, then unmutes it', async () => {
+    renderControlPanel()
+
+    await act(async () => {
+      fireEvent.pointerDown(window)
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+
+    // Every sound got an element, played once (the prime) and paused, and
+    // ended up unmuted — so the buzzer (first *real* play is from a timer
+    // callback, never a click) is just as ready as a sound whose first
+    // real play is a direct button tap.
+    for (const name of Object.keys(sounds) as SoundName[]) {
+      const instance = byName(name)
+      expect(instance?.playCalls, `${name} playCalls`).toBe(1)
+      expect(instance?.pauseCalls, `${name} pauseCalls`).toBe(1)
+      expect(instance?.muted, `${name} muted`).toBe(false)
+    }
+  })
+
+  it('keeps one element per sound across re-renders, rather than rebuilding them', async () => {
+    renderControlPanel()
+    await unlock()
+
+    const before = [...MockAudio.instances]
+    expect(before).toHaveLength(Object.keys(sounds).length)
+
+    // Each of these re-renders the provider (mute state changes) and reaches
+    // for elements again; none may create a new one or lose an old one.
+    play('win')
+    fireEvent.click(screen.getByTestId('toggle')) // off
+    fireEvent.click(screen.getByTestId('toggle')) // on
+    play('win')
+
+    expect(MockAudio.instances).toHaveLength(before.length)
+    before.forEach((element, i) => expect(MockAudio.instances[i]).toBe(element))
+    expect(byName('win')?.playCalls).toBe(2)
+  })
+
+  it('is muted from the start when a previous session left it off', async () => {
+    localStorage.setItem('salad-bowl:sound-on', 'off')
+    renderControlPanel()
+    await unlock()
+
+    expect(screen.getByTestId('sound-on')).toHaveTextContent('false')
+
+    play('win')
+    // Priming already created and played win's element once (see the
+    // dedicated priming test) — muted, before this. A real play() while
+    // off doesn't add another.
+    expect(byName('win')?.playCalls).toBe(0)
+  })
+
+  it('persists the mute choice across providers (reload)', async () => {
+    const { unmount } = renderControlPanel()
+    await unlock()
+
+    fireEvent.click(screen.getByTestId('toggle'))
+    expect(localStorage.getItem('salad-bowl:sound-on')).toBe('off')
+    unmount()
+
+    renderControlPanel()
+    expect(screen.getByTestId('sound-on')).toHaveTextContent('false')
+  })
+
+  it('confirms turning sound on with a blip, and stays silent turning it off', async () => {
+    renderControlPanel()
+    await unlock()
+
+    play('win')
+    const win = byName('win')
+    expect(win?.playCalls).toBe(1)
+
+    fireEvent.click(screen.getByTestId('toggle')) // off
+    expect(win?.pauseCalls).toBe(1) // whatever's playing stops
+
+    fireEvent.click(screen.getByTestId('toggle')) // on
+    expect(byName('tap')?.playCalls).toBe(1) // "on" confirms
+  })
+
+  // SB-50: no priority/interruption system — sounds are independent, so two
+  // different sounds really can sound at once (e.g. a word won on the exact
+  // second the buzzer fires). This is the deliberately-chosen behavior, not
+  // an oversight — see the design note atop useSoundEffects.tsx.
+  it('lets two different sounds play at the same time, unlike a priority system', async () => {
+    renderControlPanel()
+    await unlock()
+
+    play('buzzer')
+    play('win')
+
+    expect(byName('buzzer')?.playCalls).toBe(1)
+    expect(byName('win')?.playCalls).toBe(1)
+    // Neither one paused the other.
+    expect(byName('buzzer')?.pauseCalls).toBe(0)
+    expect(byName('win')?.pauseCalls).toBe(0)
+  })
+
+  // The one case this design doesn't leave alone: retriggering the *same*
+  // sound restarts it (one element per name, not cloned/pooled per-call).
+  it('restarts a sound if it is requested again while still "playing"', async () => {
+    renderControlPanel()
+    await unlock()
+
+    play('tap')
+    play('tap')
+    expect(byName('tap')?.playCalls).toBe(2)
+  })
+
+  describe('when a sound fails to play', () => {
+    let warn: ReturnType<typeof vi.spyOn>
+
+    beforeEach(() => {
+      warn = vi.spyOn(console, 'warn').mockImplementation(() => { })
+    })
+
+    // Priming succeeds at unlock; the rejection is switched on afterwards,
+    // then play() rejections settle in a microtask, so flush each attempt.
+    async function playFailingWith(error: Error, name: SoundName = 'tick') {
+      renderControlPanel()
+      await unlock()
+      MockAudio.rejectWith = error
+      await act(async () => { play(name) })
+    }
+
+    it('warns every time, not just the first', async () => {
+      await playFailingWith(new DOMException('no supported sources', 'NotSupportedError'))
+      await act(async () => { play('tick') })
+      expect(warn).toHaveBeenCalledTimes(2)
+
+      // A failing sound doesn't block anything else from playing.
+      MockAudio.rejectWith = null
+      play('tap')
+      expect(byName('tap')?.playCalls).toBe(1)
+    })
+
+    it('blames the autoplay policy — not a missing file — for a NotAllowedError', async () => {
+      await playFailingWith(new DOMException('gesture required', 'NotAllowedError'), 'buzzer')
+
+      expect(warn).toHaveBeenCalledTimes(1)
+      const message = warn.mock.calls[0][0] as string
+      expect(message).toContain('"buzzer"')
+      expect(message).toContain('autoplay policy')
+      expect(message).toContain('NotAllowedError')
+      expect(message).not.toContain(sounds.buzzer)
+      expect(message).not.toMatch(/missing/i)
+    })
+
+    it('names the file and blames the source for a NotSupportedError', async () => {
+      await playFailingWith(new DOMException('no supported sources', 'NotSupportedError'), 'tie')
+
+      expect(warn).toHaveBeenCalledTimes(1)
+      const message = warn.mock.calls[0][0] as string
+      expect(message).toContain('"tie"')
+      expect(message).toContain(sounds.tie)
+      expect(message).toContain('NotSupportedError')
+      expect(message).toMatch(/missing/i)
+      expect(message).not.toContain('autoplay')
+    })
+
+    it('stays silent for an AbortError — an interrupted play is not a failure', async () => {
+      await playFailingWith(new DOMException('interrupted by pause()', 'AbortError'))
+
+      expect(warn).not.toHaveBeenCalled()
+    })
+
+    it('reports any other error by name and message', async () => {
+      await playFailingWith(new TypeError('boom'))
+
+      expect(warn).toHaveBeenCalledTimes(1)
+      const message = warn.mock.calls[0][0] as string
+      expect(message).toContain('"tick"')
+      expect(message).toContain('TypeError')
+      expect(message).toContain('boom')
+    })
+
+    it('reports a rejection that is not an Error at all', async () => {
+      renderControlPanel()
+      await unlock()
+      MockAudio.rejectWith = 'nope' as unknown as Error
+      await act(async () => { play('tick') })
+
+      expect(warn).toHaveBeenCalledTimes(1)
+      expect(warn.mock.calls[0][0]).toContain('UnknownError')
+    })
+  })
+
+  describe('stop', () => {
+    function stop(name: SoundName) {
+      soundToPlay = name
+      fireEvent.click(screen.getByTestId('stop'))
+    }
+
+    it('cuts a playing sound off and rewinds it', async () => {
+      renderControlPanel()
+      await unlock()
+
+      play('celebration')
+      const celebration = byName('celebration')
+      celebration!.currentTime = 2.5 // partway through
+
+      stop('celebration')
+      expect(celebration?.pauseCalls).toBe(1)
+      expect(celebration?.currentTime).toBe(0)
+    })
+
+    it('only stops the sound it is asked to', async () => {
+      renderControlPanel()
+      await unlock()
+
+      play('celebration')
+      play('tap')
+      stop('celebration')
+
+      expect(byName('celebration')?.pauseCalls).toBe(1)
+      expect(byName('tap')?.pauseCalls).toBe(0)
+    })
+
+    it('does nothing for a sound that was never created', () => {
+      renderControlPanel() // no gesture yet, so no elements exist
+
+      expect(() => stop('celebration')).not.toThrow()
+      expect(MockAudio.instances).toHaveLength(0)
+    })
+
+    it('still stops a sound after the player has muted', async () => {
+      renderControlPanel()
+      await unlock()
+
+      play('celebration')
+      fireEvent.click(screen.getByTestId('toggle')) // mute — pauses everything once
+      stop('celebration')
+
+      expect(byName('celebration')?.pauseCalls).toBe(2)
+    })
+  })
+})
