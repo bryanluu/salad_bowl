@@ -98,16 +98,20 @@ export function SoundProvider({ children }: { children: ReactNode }) {
   // so the first sound — the Start screen's tap blip — always traces back
   // to a user action, never to a mount.
   const unlockedRef = useRef(false)
-  const audioMapRef = useRef(new Map<SoundName, HTMLAudioElement>())
+  // Held in state purely for its lazy initializer and stable identity — the
+  // setter is never called, and the Map is mutated in place. (`useRef(new
+  // Map())` would build and discard a fresh Map on every render.) Being
+  // stable, it's safe to list as a dependency: it never re-runs anything.
+  const [audioMap] = useState(() => new Map<SoundName, HTMLAudioElement>())
 
   const getAudio = useCallback(function getAudioElement(name: SoundName): HTMLAudioElement {
-    let element = audioMapRef.current.get(name)
+    let element = audioMap.get(name)
     if (!element) {
       element = new Audio(sounds[name])
-      audioMapRef.current.set(name, element)
+      audioMap.set(name, element)
     }
     return element
-  }, [])
+  }, [audioMap])
 
   useEffect(function unlockOnFirstGesture() {
     function unlock() {
@@ -161,11 +165,10 @@ export function SoundProvider({ children }: { children: ReactNode }) {
   // If the provider unmounts mid-sound (dev HMR of all things), stop
   // whatever's still playing rather than letting it outlive the app.
   useEffect(function pauseAllOnUnmount() {
-    const audioMap = audioMapRef.current
     return function stopEverything() {
       audioMap.forEach((element) => element.pause())
     }
-  }, [])
+  }, [audioMap])
 
   const play = useCallback(function playSound(name: SoundName) {
     if (!unlockedRef.current || !soundOnRef.current) return
@@ -191,11 +194,11 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     // No-op for a sound that was never created (nothing to stop). Not
     // gated on the gesture/mute flags: stopping is always safe, and it
     // must still work if the player mutes mid-sound.
-    const element = audioMapRef.current.get(name)
+    const element = audioMap.get(name)
     if (!element) return
     element.pause()
     element.currentTime = 0
-  }, [])
+  }, [audioMap])
 
   const handleSetSoundOn = useCallback(function setSoundOnAndPersist(on: boolean) {
     soundOnRef.current = on
@@ -215,9 +218,9 @@ export function SoundProvider({ children }: { children: ReactNode }) {
       play('tap')
     } else {
       // Muting also stops whatever is sounding right now.
-      audioMapRef.current.forEach((element) => element.pause())
+      audioMap.forEach((element) => element.pause())
     }
-  }, [play])
+  }, [play, audioMap])
 
   const value = useMemo(
     function buildSoundApi() {

@@ -5,6 +5,17 @@ import Footer from './Footer'
 import { copy } from '../copy/en.ts'
 import { renderWithSound } from '../test/renderWithSound'
 
+// The logo is decorative (aria-hidden, empty alt), so it's invisible to
+// ordinary role queries by design — find its images by their `presentation`
+// role instead of by class name, so the tests don't care how it's styled.
+function logoImages(): HTMLElement[] {
+  return screen.queryAllByRole('presentation', { hidden: true })
+}
+
+function comesBefore(first: Node, second: Node): boolean {
+  return Boolean(first.compareDocumentPosition(second) & Node.DOCUMENT_POSITION_FOLLOWING)
+}
+
 describe('Footer', () => {
   beforeEach(() => {
     localStorage.clear()
@@ -15,7 +26,7 @@ describe('Footer', () => {
 
     expect(screen.getByRole('button', { name: copy.footer.soundLabel(true) })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: copy.footer.quitLabel })).not.toBeInTheDocument()
-    expect(document.querySelector('.footer__logo')).toBeNull()
+    expect(logoImages()).toHaveLength(0)
   })
 
   it('toggles between "SFX: On" and "SFX: Off" when the label is clicked', () => {
@@ -38,13 +49,14 @@ describe('Footer', () => {
   it('shows the logo, SFX toggle and Quit link (in that order) once a game is underway', () => {
     renderWithSound(<Footer showLogo={true} onQuit={() => { }} />)
 
-    const group = document.querySelector('.footer__group') as HTMLElement
-    const order = Array.from(group.children).map((el) => el.className)
-    expect(order).toEqual([
-      'footer__logo',
-      'footer__link footer__sound',
-      'footer__link footer__quit',
-    ])
+    const sfx = screen.getByRole('button', { name: copy.footer.soundLabel(true) })
+    const quit = screen.getByRole('button', { name: copy.footer.quitLabel })
+
+    expect(logoImages().length).toBeGreaterThan(0)
+    for (const image of logoImages()) {
+      expect(comesBefore(image, sfx)).toBe(true)
+    }
+    expect(comesBefore(sfx, quit)).toBe(true)
   })
 
   it('calls onQuit when the Quit link is clicked', () => {
@@ -59,13 +71,13 @@ describe('Footer', () => {
     const onQuit = vi.fn()
     renderWithSound(<Footer showLogo={true} onQuit={onQuit} />)
 
-    const logo = document.querySelector('.footer__logo') as HTMLElement
-    fireEvent.click(logo)
-    fireEvent.click(logo.querySelector('.logo--smile') as HTMLElement)
+    for (const image of logoImages()) {
+      fireEvent.click(image)
+    }
 
     expect(onQuit).not.toHaveBeenCalled()
-    // and the logo isn't exposed as a control
-    expect(logo).toHaveAttribute('aria-hidden', 'true')
+    // and the logo isn't exposed as an image or a control
+    expect(screen.queryAllByRole('img')).toHaveLength(0)
     expect(screen.getAllByRole('button')).toHaveLength(2)
   })
 })

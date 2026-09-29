@@ -150,6 +150,25 @@ describe('useSoundEffects', () => {
     }
   })
 
+  it('keeps one element per sound across re-renders, rather than rebuilding them', async () => {
+    renderControlPanel()
+    await unlock()
+
+    const before = [...MockAudio.instances]
+    expect(before).toHaveLength(Object.keys(sounds).length)
+
+    // Each of these re-renders the provider (mute state changes) and reaches
+    // for elements again; none may create a new one or lose an old one.
+    play('win')
+    fireEvent.click(screen.getByTestId('toggle')) // off
+    fireEvent.click(screen.getByTestId('toggle')) // on
+    play('win')
+
+    expect(MockAudio.instances).toHaveLength(before.length)
+    before.forEach((element, i) => expect(MockAudio.instances[i]).toBe(element))
+    expect(byName('win')?.playCalls).toBe(2)
+  })
+
   it('is muted from the start when a previous session left it off', async () => {
     localStorage.setItem('salad-bowl:sound-on', 'off')
     renderControlPanel()
