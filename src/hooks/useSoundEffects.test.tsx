@@ -13,6 +13,7 @@ class MockAudio {
 
   url: string
   currentTime = 0
+  muted = false
   playCalls = 0
   pauseCalls = 0
 
@@ -74,8 +75,22 @@ describe('useSoundEffects', () => {
     vi.restoreAllMocks()
   })
 
-  function unlock() {
-    fireEvent.pointerDown(window)
+  // Fires the gesture and lets the muted priming pass (play → pause →
+  // unmute, for every sound — see "primes every sound on the first
+  // gesture" below) settle, then zeroes every instance's counters. The
+  // rest of this suite is about steady-state play() behavior *after*
+  // unlock, so priming — covered by its own test — is made invisible here
+  // rather than asserted against in every other test.
+  async function unlock() {
+    await act(async () => {
+      fireEvent.pointerDown(window)
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+    MockAudio.instances.forEach((instance) => {
+      instance.playCalls = 0
+      instance.pauseCalls = 0
+    })
   }
 
   function play(name: SoundName) {
@@ -83,44 +98,73 @@ describe('useSoundEffects', () => {
     fireEvent.click(screen.getByTestId('play'))
   }
 
-  it('plays nothing before a user gesture, and plays after one', () => {
+  it('plays nothing before a user gesture, and plays after one', async () => {
     renderControlPanel()
 
     play('tap') // no gesture yet
     expect(MockAudio.instances).toHaveLength(0)
 
-    unlock()
+    await unlock()
 
     play('tap')
     expect(byName('tap')?.playCalls).toBe(1)
   })
 
-  it('also unlocks on a keyboard gesture', () => {
+  it('also unlocks on a keyboard gesture', async () => {
     renderControlPanel()
 
     play('tap')
     expect(MockAudio.instances).toHaveLength(0)
 
-    fireEvent.keyDown(window, { key: 'Enter' })
+    await act(async () => {
+      fireEvent.keyDown(window, { key: 'Enter' })
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+    MockAudio.instances.forEach((instance) => { instance.playCalls = 0 })
 
     play('tap')
     expect(byName('tap')?.playCalls).toBe(1)
   })
 
-  it('is muted from the start when a previous session left it off', () => {
+  it('primes every sound on the first gesture, muted, then unmutes it', async () => {
+    renderControlPanel()
+
+    await act(async () => {
+      fireEvent.pointerDown(window)
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+
+    // Every sound got an element, played once (the prime) and paused, and
+    // ended up unmuted — so the buzzer (first *real* play is from a timer
+    // callback, never a click) is just as ready as a sound whose first
+    // real play is a direct button tap.
+    for (const name of Object.keys(sounds) as SoundName[]) {
+      const instance = byName(name)
+      expect(instance?.playCalls, `${name} playCalls`).toBe(1)
+      expect(instance?.pauseCalls, `${name} pauseCalls`).toBe(1)
+      expect(instance?.muted, `${name} muted`).toBe(false)
+    }
+  })
+
+  it('is muted from the start when a previous session left it off', async () => {
     localStorage.setItem('salad-bowl:sound-on', 'off')
     renderControlPanel()
-    unlock()
+    await unlock()
 
     expect(screen.getByTestId('sound-on')).toHaveTextContent('false')
 
     play('win')
-    expect(MockAudio.instances).toHaveLength(0)
+    // Priming already created and played win's element once (see the
+    // dedicated priming test) — muted, before this. A real play() while
+    // off doesn't add another.
+    expect(byName('win')?.playCalls).toBe(0)
   })
 
-  it('persists the mute choice across providers (reload)', () => {
+  it('persists the mute choice across providers (reload)', async () => {
     const { unmount } = renderControlPanel()
-    unlock()
+    await unlock()
 
     fireEvent.click(screen.getByTestId('toggle'))
     expect(localStorage.getItem('salad-bowl:sound-on')).toBe('off')
@@ -130,9 +174,9 @@ describe('useSoundEffects', () => {
     expect(screen.getByTestId('sound-on')).toHaveTextContent('false')
   })
 
-  it('confirms turning sound on with a blip, and stays silent turning it off', () => {
+  it('confirms turning sound on with a blip, and stays silent turning it off', async () => {
     renderControlPanel()
-    unlock()
+    await unlock()
 
     play('win')
     const win = byName('win')
@@ -140,7 +184,6 @@ describe('useSoundEffects', () => {
 
     fireEvent.click(screen.getByTestId('toggle')) // off
     expect(win?.pauseCalls).toBe(1) // whatever's playing stops
-    expect(MockAudio.instances).toHaveLength(1) // "off" plays nothing
 
     fireEvent.click(screen.getByTestId('toggle')) // on
     expect(byName('tap')?.playCalls).toBe(1) // "on" confirms
@@ -150,9 +193,9 @@ describe('useSoundEffects', () => {
   // different sounds really can sound at once (e.g. a word won on the exact
   // second the buzzer fires). This is the deliberately-chosen behavior, not
   // an oversight — see the design note atop useSoundEffects.tsx.
-  it('lets two different sounds play at the same time, unlike a priority system', () => {
+  it('lets two different sounds play at the same time, unlike a priority system', async () => {
     renderControlPanel()
-    unlock()
+    await unlock()
 
     play('buzzer')
     play('win')
@@ -166,9 +209,9 @@ describe('useSoundEffects', () => {
 
   // The one case this design doesn't leave alone: retriggering the *same*
   // sound restarts it (one element per name, not cloned/pooled per-call).
-  it('restarts a sound if it is requested again while still "playing"', () => {
+  it('restarts a sound if it is requested again while still "playing"', async () => {
     renderControlPanel()
-    unlock()
+    await unlock()
 
     play('tap')
     play('tap')
@@ -177,10 +220,10 @@ describe('useSoundEffects', () => {
 
   it('warns every time a sound fails to play, not just the first', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => { })
-    MockAudio.rejectPlay = true
     renderControlPanel()
-    unlock()
+    await unlock() // priming succeeds here — MockAudio.rejectPlay flips after
 
+    MockAudio.rejectPlay = true
     // play() rejections settle in a microtask, so flush between attempts.
     await act(async () => { play('tick') })
     await act(async () => { play('tick') })

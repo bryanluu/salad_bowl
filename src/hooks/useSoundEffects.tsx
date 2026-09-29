@@ -34,9 +34,10 @@ function readStoredSoundOn(): boolean {
   }
 }
 
-// One audio element per sound, created lazily on first play and kept for
-// the provider's lifetime: replaying is a seek-to-zero + play(), which
-// avoids re-fetching the (often still missing) file for every tap.
+// One audio element per sound, created (and primed — see unlockOnFirstGesture
+// below) during the first user gesture, then kept for the provider's
+// lifetime: replaying is a seek-to-zero + play(), which avoids re-fetching
+// the (often still missing) file for every tap.
 //
 // SB-50: sounds are independent of each other — no priority system, no
 // single "active" slot — so two different sounds CAN play at once (e.g. a
@@ -59,9 +60,53 @@ export function SoundProvider({ children }: { children: ReactNode }) {
   const unlockedRef = useRef(false)
   const audioMapRef = useRef(new Map<SoundName, HTMLAudioElement>())
 
+  const getAudio = useCallback(function getAudioElement(name: SoundName): HTMLAudioElement {
+    let element = audioMapRef.current.get(name)
+    if (!element) {
+      element = new Audio(sounds[name])
+      audioMapRef.current.set(name, element)
+    }
+    return element
+  }, [])
+
   useEffect(function unlockOnFirstGesture() {
     function unlock() {
       unlockedRef.current = true
+      // Prime every sound during this real gesture — muted, played, then
+      // immediately paused and rewound — rather than just flipping the
+      // flag above. iOS (Safari and Chrome alike, both WebKit under the
+      // hood) grants the "may autoplay" exemption per <audio> element, not
+      // to the page as a whole. Without this, any element that's first
+      // *created* later from a non-gesture callback (the buzzer, fired
+      // from a timer) can still be silently refused even though a gesture
+      // already happened — which is exactly the failure mode reported on
+      // iOS Chrome, where several elements are never touched during this
+      // unlock because their sounds haven't played yet.
+      for (const name of Object.keys(sounds) as SoundName[]) {
+        const element = getAudio(name)
+        element.muted = true
+        const priming = element.play()
+        // jsdom's HTMLMediaElement.play() isn't implemented and returns
+        // undefined instead of a Promise (see the component tests, which
+        // render through the real SoundProvider); a real browser always
+        // returns one.
+        if (!priming) {
+          element.muted = false
+          continue
+        }
+        priming
+          .then(function primed() {
+            element.pause()
+            element.currentTime = 0
+            element.muted = false
+          })
+          .catch(function primeFailed() {
+            // Still missing/blocked even muted-in-a-gesture — leave muted
+            // off so a later real play() attempt surfaces its own warning
+            // normally, rather than staying silently muted forever.
+            element.muted = false
+          })
+      }
       window.removeEventListener('pointerdown', unlock)
       window.removeEventListener('keydown', unlock)
     }
@@ -71,7 +116,7 @@ export function SoundProvider({ children }: { children: ReactNode }) {
       window.removeEventListener('pointerdown', unlock)
       window.removeEventListener('keydown', unlock)
     }
-  }, [])
+  }, [getAudio])
 
   // If the provider unmounts mid-sound (dev HMR of all things), stop
   // whatever's still playing rather than letting it outlive the app.
@@ -80,15 +125,6 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     return function stopEverything() {
       audioMap.forEach((element) => element.pause())
     }
-  }, [])
-
-  const getAudio = useCallback(function getAudioElement(name: SoundName): HTMLAudioElement {
-    let element = audioMapRef.current.get(name)
-    if (!element) {
-      element = new Audio(sounds[name])
-      audioMapRef.current.set(name, element)
-    }
-    return element
   }, [])
 
   const play = useCallback(function playSound(name: SoundName) {

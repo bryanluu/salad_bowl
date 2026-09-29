@@ -82,9 +82,19 @@ function bySound(name: keyof typeof sounds): MockAudio | undefined {
 
 // The engine withholds all sound until a user gesture (see
 // useSoundEffects.tsx), and a synthetic click doesn't provide one — unlock
-// explicitly for the tests that assert on playback.
-function unlockAudio() {
-  fireEvent.pointerDown(window)
+// explicitly for the tests that assert on playback. The gesture also
+// primes every sound (a muted play→pause pass — see useSoundEffects.tsx),
+// which would otherwise inflate the playCalls counts these tests assert on;
+// flush that pass and zero the counters so it's invisible here (the hook's
+// own test suite covers priming itself). Uses runAllTicks rather than real
+// timers/awaits since this file runs under fake timers.
+async function unlockAudio() {
+  await act(async () => {
+    fireEvent.pointerDown(window)
+    await Promise.resolve()
+    await Promise.resolve()
+  })
+  MockAudio.instances.forEach((instance) => { instance.playCalls = 0 })
 }
 
 describe('GameplayScreen', () => {
@@ -230,7 +240,7 @@ describe('GameplayScreen', () => {
   })
 
   describe('sound effects', () => {
-    it('ticks at the start of a turn (t=0), then once per second', () => {
+    it('ticks at the start of a turn (t=0), then once per second', async () => {
       const source = buildSource(['Apple', 'Banana'])
       renderWithSound(<GameplayScreen
         config={buildConfig(30)}
@@ -238,7 +248,7 @@ describe('GameplayScreen', () => {
         onNewGame={vi.fn()}
       />)
 
-      unlockAudio()
+      await unlockAudio()
 
       beginRound()
       expect(bySound('tick')?.playCalls).toBe(1) // the t=0 start-of-turn beat
@@ -250,14 +260,14 @@ describe('GameplayScreen', () => {
       expect(bySound('tick')?.playCalls).toBe(3)
     })
 
-    it('plays the round sting as the last card is won, not when the scoreboard shows', () => {
+    it('plays the round sting as the last card is won, not when the scoreboard shows', async () => {
       const source = buildSource(['Apple'])
       renderWithSound(<GameplayScreen
         config={buildConfig(30)}
         source={source}
         onNewGame={vi.fn()}
       />)
-      unlockAudio()
+      await unlockAudio()
 
       beginRound()
       winCurrentWord() // the only word — the round ends on this win
@@ -269,14 +279,14 @@ describe('GameplayScreen', () => {
       expect(bySound('round')?.playCalls).toBe(1) // ...and not repeated there
     })
 
-    it('stings every round on its last card (the final one too), with the verdict only once the final scoreboard appears', () => {
+    it('stings every round on its last card (the final one too), with the verdict only once the final scoreboard appears', async () => {
       const source = buildSource(['Apple'])
       renderWithSound(<GameplayScreen
         config={buildConfig(30)}
         source={source}
         onNewGame={vi.fn()}
       />)
-      unlockAudio()
+      await unlockAudio()
 
       for (let round = 1; round <= 3; round++) {
         beginRound()
@@ -288,8 +298,8 @@ describe('GameplayScreen', () => {
         expect(bySound('round')?.playCalls).toBe(round)
         // ...but the game's verdict waits for the scoreboard, even after
         // the very last card.
-        expect(bySound('celebration')).toBeUndefined()
-        expect(bySound('tie')).toBeUndefined()
+        expect(bySound('celebration')?.playCalls).toBe(0)
+        expect(bySound('tie')?.playCalls).toBe(0)
 
         closeRoundEndCurtain()
         if (round < 3) continueScoreboard()
@@ -299,7 +309,7 @@ describe('GameplayScreen', () => {
       // final scoreboard, the moment it appears, gets the celebration,
       // not a tie. The sting was not repeated there.
       expect(bySound('celebration')?.playCalls).toBe(1)
-      expect(bySound('tie')).toBeUndefined()
+      expect(bySound('tie')?.playCalls).toBe(0)
       expect(bySound('round')?.playCalls).toBe(3)
     })
   })
