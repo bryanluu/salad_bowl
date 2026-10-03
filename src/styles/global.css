@@ -289,6 +289,10 @@ footer .logo {
   color: var(--color-text);
   background: var(--color-surface);
   border-color: var(--color-border-strong);
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+
 }
 
 .turn-curtain__continue:hover {
