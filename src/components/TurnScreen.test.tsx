@@ -1,5 +1,5 @@
 // src/components/TurnScreen.test.tsx
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import TurnScreen from './TurnScreen'
 import { copy } from '../copy/en'
@@ -96,5 +96,44 @@ describe('TurnScreen', () => {
     expect(screen.getByRole('button', { name: new RegExp(copy.gameplay.skipButton) })).toBeDisabled()
     expect(screen.getByRole('button', { name: new RegExp(copy.gameplay.gotItButton) })).toBeDisabled()
     expect(screen.getByText(copy.gameplay.wordsLeft(0))).toBeInTheDocument()
+  })
+
+  describe('swipe tracking', () => {
+    afterEach(() => {
+      vi.restoreAllMocks()
+    })
+
+    // jsdom lays nothing out, so give the controls rail a real width.
+    function mockRailWidth(width: number) {
+      vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
+        width, height: 50, top: 0, left: 0, right: width, bottom: 50, x: 0, y: 0, toJSON: () => { },
+      })
+    }
+
+    const touch = { pointerType: 'touch', isPrimary: true } as const
+
+    it('forgets a touch that was cancelled before it moved', () => {
+      mockRailWidth(300)
+      render(
+        <TurnScreen
+          round={1}
+          team={team}
+          timeLeft={60}
+          currentWord="Banana"
+          bowlLength={4}
+          onSkip={vi.fn()}
+          onWin={vi.fn()}
+        />
+      )
+      const stage = screen.getByRole('region', { name: copy.gameplay.title })
+      const knob = document.getElementById('control-knob')!
+
+      fireEvent.pointerDown(stage, { ...touch, clientX: 100 })
+      fireEvent.pointerCancel(stage, touch)
+      // A move arriving with no new pointerdown must not resume the old drag.
+      fireEvent.pointerMove(stage, { ...touch, clientX: 200 })
+
+      expect(knob.style.left).toBe('')
+    })
   })
 })
