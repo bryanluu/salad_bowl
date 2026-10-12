@@ -16,6 +16,13 @@
   border: 0;
 }
 
+html,
+body {
+  /* No pull-to-refresh or rubber-banding: an accidental vertical drag
+     mid-game can otherwise reload the page and lose the game. */
+  overscroll-behavior: none;
+}
+
 body {
   font-family: var(--font-body);
   font-size: var(--fs-base);
@@ -672,9 +679,11 @@ footer .logo {
 /* .turn-stage rides alongside .screen (className="screen turn-stage") on
    TurnScreen's root only — .screen is shared by every other screen, so this
    is the one hook that scopes touch-action to gameplay without disabling
-   pinch-zoom/edge-swipe on screens that don't do custom dragging. */
+   pinch-zoom/edge-swipe on screens that don't do custom dragging.
+   `none` hands every touch gesture to our pointer handlers (horizontal
+   win/skip swipe) and leaves the browser nothing to scroll or pull. */
 .turn-stage {
-  touch-action: pan-y;
+  touch-action: none;
 }
 
 .turn-controls {
