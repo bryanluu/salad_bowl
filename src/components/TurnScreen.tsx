@@ -141,6 +141,9 @@ function TurnScreen({ round, team, timeLeft, currentWord, bowlLength, onSkip, on
 
   function releaseKnob(event: React.PointerEvent) {
     if (event.pointerType !== "touch" || !event.isPrimary) return
+    // Forget the touch even if it never moved (so the early return below
+    // would otherwise leave its start position behind for a later move).
+    dragStartXRef.current = undefined
     const container = controlsRef.current
     if (!container || knobOffsetX === undefined) return
 
@@ -157,7 +160,6 @@ function TurnScreen({ round, team, timeLeft, currentWord, bowlLength, onSkip, on
     if (knobOffsetX >= midpoint + threshold) onWin()
     if (knobOffsetX <= midpoint - threshold) onSkip()
 
-    dragStartXRef.current = undefined
     setKnobOffsetX(undefined)
     showSwipeProgress(0)
   }
