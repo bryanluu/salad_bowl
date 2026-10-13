@@ -9,6 +9,7 @@ import TurnScreen from "./TurnScreen"
 import TurnCurtain from "./TurnCurtain"
 import ScoreboardScreen from "./ScoreboardScreen"
 import { useSoundEffects } from "../hooks/useSoundEffects"
+import type { GameplaySnapshot } from "../persistence/gameStorage"
 
 type Bowl = Word[]
 type Turn = number
@@ -27,22 +28,33 @@ function GameplayScreen({
   config,
   source,
   onNewGame,
+  // Optional starting state for a resumed game. Present only on the mount
+  // that follows a Resume tap; a fresh game omits it and the initializers
+  // below fall back to exactly today's behavior. This is also where the
+  // storage boundary's `currentWord: null` becomes the `undefined` this
+  // component uses for "no word in play".
+  initialState,
 }: {
   config: GameConfig,
   source: WordSource,
   onNewGame: () => void,
+  initialState?: GameplaySnapshot,
 }) {
   const { play } = useSoundEffects()
-  const [round, setRound] = useState<Round>(1)
+  const [round, setRound] = useState<Round>(initialState?.round ?? 1)
   const { timeLeft, resetTimer, startTimer, stopTimer } = useTimer(config.timerSeconds, handleTimerExpiry)
   const [teams] = useState<Team[]>(
     function initTeamOrder() {
+      if (initialState) return initialState.teams
       return config.shuffleTeamOrder ? shuffle(config.teams) : [...config.teams]
     })
-  const [turn, setTurn] = useState<Turn>(0)
-  const [wonWords, setWonWords] = useState<WonWords>({})
+  const [turn, setTurn] = useState<Turn>(initialState?.turn ?? 0)
+  const [wonWords, setWonWords] = useState<WonWords>(initialState?.wonWords ?? {})
   const [{ bowl, currentWord }, setBowlState] =
     useState<BowlState>(function initBowlState(): BowlState {
+      if (initialState) {
+        return { bowl: [...initialState.bowl], currentWord: initialState.currentWord ?? undefined }
+      }
       return { bowl: [...source.getWords()], currentWord: undefined }
     })
   // Whether the turn that just ended is waiting on TurnCurtain's "Go"
@@ -50,13 +62,14 @@ function GameplayScreen({
   // derived from `timeLeft === 0` — both endRound and startTurn call
   // resetTimer(), which would otherwise flip this back to "not done"
   // before the curtain ever rendered.
-  const [turnEnded, setTurnEnded] = useState(false)
+  const [turnEnded, setTurnEnded] = useState(initialState?.turnEnded ?? false)
   // Whether the pending TurnCurtain is closing out a whole round (true)
   // vs. an ordinary mid-round turn handoff (false). Determines what
   // handleTurnCurtainNext does once the player taps "Go".
-  const [roundJustEnded, setRoundJustEnded] = useState(false)
+  const [roundJustEnded, setRoundJustEnded] = useState(initialState?.roundJustEnded ?? false)
   const [scores, setScores] = useState<Scores>(
     function initScores() {
+      if (initialState) return initialState.scores
       return config.teams.map((t) => {
         return { ...t, rounds: [] }
       })

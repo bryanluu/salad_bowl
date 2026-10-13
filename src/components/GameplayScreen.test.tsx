@@ -4,6 +4,7 @@ import { screen, fireEvent, act } from '@testing-library/react'
 import GameplayScreen from './GameplayScreen'
 import { copy } from '../copy/en'
 import type { GameConfig, Round, Team, Word, WordSource } from '../types'
+import type { GameplaySnapshot } from '../persistence/gameStorage'
 import { renderWithSound } from '../test/renderWithSound'
 import { sounds } from '../sounds.ts'
 
@@ -36,6 +37,26 @@ function buildConfig(timerSeconds: number): GameConfig {
 }
 
 const { turnCurtain, roundCurtain, gotItButton } = copy.gameplay
+
+// A resumable mid-game state. Mirrors what GameplayScreen would hold at a
+// curtain — the tests below only override the few fields that differ.
+function buildSnapshot(overrides: Partial<GameplaySnapshot> = {}): GameplaySnapshot {
+  return {
+    teams: [teamA, teamB],
+    round: 1,
+    turn: 0,
+    bowl: ['Banana', 'Cherry'],
+    currentWord: 'Apple',
+    wonWords: {},
+    scores: [
+      { id: 'team-a', name: 'Red Team', rounds: [] },
+      { id: 'team-b', name: 'Blue Team', rounds: [] },
+    ],
+    turnEnded: false,
+    roundJustEnded: false,
+    ...overrides,
+  }
+}
 
 function beginRound() {
   fireEvent.click(screen.getByRole('button', { name: roundCurtain.beginButton }))
@@ -237,6 +258,70 @@ describe('GameplayScreen', () => {
       closeRoundEndCurtain()
       if (round < 3) continueScoreboard()
     }
+  })
+
+  describe('resume from a snapshot', () => {
+    it('shows the turn-recap curtain naming the next team, and Go starts that turn with the saved word', () => {
+      renderWithSound(<GameplayScreen
+        config={buildConfig(30)}
+        source={buildSource(['Apple', 'Banana', 'Cherry'])}
+        onNewGame={vi.fn()}
+        initialState={buildSnapshot({ turn: 1, turnEnded: true, currentWord: 'Apple' })}
+      />)
+
+      expect(screen.getByRole('heading', { name: turnCurtain.turnOverLabel })).toBeInTheDocument()
+      expect(screen.getByText(turnCurtain.readyPrompt(teamB.name))).toBeInTheDocument()
+
+      fireEvent.click(screen.getByRole('button', { name: turnCurtain.goButton(false) }))
+
+      expect(screen.getByText(copy.gameplay.turnIndicator(teamB.name))).toBeInTheDocument()
+      expect(screen.getByText('Apple')).toBeInTheDocument()
+    })
+
+    it('shows the round-end recap curtain for the round that just finished', () => {
+      renderWithSound(<GameplayScreen
+        config={buildConfig(30)}
+        source={buildSource(['Apple', 'Banana', 'Cherry'])}
+        onNewGame={vi.fn()}
+        initialState={buildSnapshot({
+          round: 2,
+          turn: 0,
+          turnEnded: true,
+          roundJustEnded: true,
+          currentWord: null,
+          bowl: ['Banana', 'Cherry'],
+        })}
+      />)
+
+      // roundJustEnded means round-1 just ended, so the curtain names round 1
+      // (GameplayScreen renders round - 1 for a non-final round recap).
+      expect(screen.getByRole('heading', { name: turnCurtain.roundOverLabel(1) })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: turnCurtain.goButton(true) })).toBeInTheDocument()
+    })
+
+    it('shows the round-intro curtain naming the team that goes first, and Begin deals a word', () => {
+      renderWithSound(<GameplayScreen
+        config={buildConfig(30)}
+        source={buildSource(['Apple', 'Banana', 'Cherry'])}
+        onNewGame={vi.fn()}
+        initialState={buildSnapshot({
+          round: 1,
+          turn: 0,
+          currentWord: null,
+          bowl: ['Apple', 'Banana', 'Cherry'],
+        })}
+      />)
+
+      expect(screen.getByText(roundCurtain.roundLabel(1))).toBeInTheDocument()
+      expect(screen.getByText(roundCurtain.readyPrompt(teamA.name))).toBeInTheDocument()
+
+      beginRound()
+
+      expect(screen.getByText(copy.gameplay.turnIndicator(teamA.name))).toBeInTheDocument()
+      // startRound draws from the source (not the snapshot bowl); with
+      // Math.random pinned to 0 that's the source's first word.
+      expect(screen.getByText('Apple')).toBeInTheDocument()
+    })
   })
 
   describe('sound effects', () => {
