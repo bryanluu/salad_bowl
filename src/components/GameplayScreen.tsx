@@ -9,6 +9,7 @@ import TurnScreen from "./TurnScreen"
 import TurnCurtain from "./TurnCurtain"
 import ScoreboardScreen from "./ScoreboardScreen"
 import { useSoundEffects } from "../hooks/useSoundEffects"
+import { SAVE_VERSION, saveGame, clearGame } from "../persistence/gameStorage"
 import type { GameplaySnapshot } from "../persistence/gameStorage"
 
 type Bowl = Word[]
@@ -126,6 +127,48 @@ function GameplayScreen({
     }
     prevTimeLeftRef.current = timeLeft
   }, [timeLeft, inPlay, play])
+
+  // Save a checkpoint exactly when a curtain for a *new* turn or round is on
+  // screen — the only moments we can safely resume from. The rule: a turn-
+  // recap or round-end curtain (`turnEnded`), or the round-intro curtain
+  // (`roundReadyToStart && !roundJustEnded`); never mid-turn, and never via
+  // a visibilitychange/pagehide listener, because a mid-turn state must never
+  // overwrite the pre-turn checkpoint. Tapping "Go" flips `turnEnded` false,
+  // which also fails the second clause (a word is then in play), so "Go"
+  // never rewrites the save; the same holds for wins mid-turn. Clearing runs
+  // when the final round ends so a finished game can't be resumed.
+  //
+  // Idempotent: the deps are the underlying state, so StrictMode's effect
+  // double-run and any re-render during a curtain write the identical bytes
+  // (saveGame is a plain setItem of the same object).
+  useEffect(function persistCheckpoint() {
+    // Local, not the component-scope `gameEnded`, so it isn't a (redundant)
+    // dependency — it's derived from `bowl`/`currentWord`, both already deps.
+    if (bowl.length === 0 && currentWord === undefined) {
+      clearGame()
+      return
+    }
+
+    const atCheckpoint =
+      turnEnded ||
+      (bowl.length > 0 && currentWord === undefined && !roundJustEnded)
+    if (!atCheckpoint) return
+
+    saveGame({
+      version: SAVE_VERSION,
+      config,
+      sourceWords: [...source.getWords()],
+      teams,
+      round,
+      turn,
+      bowl,
+      currentWord: currentWord ?? null,
+      wonWords,
+      scores,
+      turnEnded,
+      roundJustEnded,
+    })
+  }, [turnEnded, roundJustEnded, bowl, currentWord, round, turn, teams, wonWords, scores, config, source])
 
   function startTurn() {
     resetTimer()

@@ -5,6 +5,7 @@ import GameplayScreen from './GameplayScreen'
 import { copy } from '../copy/en'
 import type { GameConfig, Round, Team, Word, WordSource } from '../types'
 import type { GameplaySnapshot } from '../persistence/gameStorage'
+import { loadGame } from '../persistence/gameStorage'
 import { renderWithSound } from '../test/renderWithSound'
 import { sounds } from '../sounds.ts'
 
@@ -345,6 +346,86 @@ describe('GameplayScreen', () => {
     expect(screen.getByText(turnCurtain.readyPrompt(teamB.name))).toBeInTheDocument()
     expect(bySound('buzzer')?.playCalls ?? 0).toBe(0)
     expect(bySound('tick')?.playCalls ?? 0).toBe(0)
+  })
+
+  describe('save checkpoints', () => {
+    beforeEach(() => {
+      localStorage.clear()
+    })
+
+    function renderGame() {
+      renderWithSound(<GameplayScreen
+        config={buildConfig(3)}
+        source={buildSource(['Apple', 'Banana', 'Cherry'])}
+        onNewGame={vi.fn()}
+      />)
+    }
+
+    it('writes a save once round 1’s intro curtain shows', () => {
+      renderGame()
+
+      const saved = loadGame()
+      expect(saved).not.toBeNull()
+      expect(saved?.turn).toBe(0)
+      expect(saved?.currentWord).toBeNull()
+      expect(saved?.bowl).toEqual(['Apple', 'Banana', 'Cherry'])
+      expect(saved?.sourceWords).toEqual(['Apple', 'Banana', 'Cherry'])
+      expect(saved?.turnEnded).toBe(false)
+    })
+
+    it('after a turn expiry, the save reflects the next team and the words from before that turn', () => {
+      renderGame()
+      beginRound()
+      winCurrentWord() // team A wins Apple, then it's on Banana
+      act(() => { vi.advanceTimersByTime(3 * 1000) }) // expiry → curtain for team B
+
+      const saved = loadGame()
+      expect(saved?.turn).toBe(1) // team B is up next
+      expect(saved?.turnEnded).toBe(true)
+      expect(saved?.wonWords['team-a']).toContain('Apple')
+      expect(saved?.currentWord).not.toBeNull()
+    })
+
+    it('tapping Go does not change the save', () => {
+      renderGame()
+      beginRound()
+      act(() => { vi.advanceTimersByTime(3 * 1000) })
+      const before = JSON.stringify(loadGame())
+
+      fireEvent.click(screen.getByRole('button', { name: turnCurtain.goButton(false) }))
+
+      expect(JSON.stringify(loadGame())).toBe(before)
+    })
+
+    it('winning a word mid-turn does not change the save', () => {
+      renderGame()
+      beginRound()
+      act(() => { vi.advanceTimersByTime(3 * 1000) })
+      const before = JSON.stringify(loadGame())
+
+      // Dismiss the curtain, then win a word in the fresh turn.
+      fireEvent.click(screen.getByRole('button', { name: turnCurtain.goButton(false) }))
+      winCurrentWord()
+
+      expect(JSON.stringify(loadGame())).toBe(before)
+    })
+
+    it('clears the save after the final round', () => {
+      renderWithSound(<GameplayScreen
+        config={buildConfig(30)}
+        source={buildSource(['Apple'])}
+        onNewGame={vi.fn()}
+      />)
+
+      for (let round = 1; round <= 3; round++) {
+        beginRound()
+        winCurrentWord()
+        closeRoundEndCurtain()
+        if (round < 3) continueScoreboard()
+      }
+
+      expect(loadGame()).toBeNull()
+    })
   })
 
   describe('sound effects', () => {
