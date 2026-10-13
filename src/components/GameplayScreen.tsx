@@ -91,15 +91,21 @@ function GameplayScreen({
   // Deliberately keyed on the `inPlay` boolean rather than `currentWord` or
   // `timeLeft`, so swapping words within a turn (skip/win) or ticking down
   // doesn't restart the timer — only a true has-word/no-word transition does.
+  // The `!turnEnded` guard matters after a resume: a resumed game mounts with
+  // `currentWord` already set, so `inPlay` is true on the very first render
+  // while a curtain is up. Without it, the countdown would run *behind the
+  // curtain*, play ticks, and fire `handleTimerExpiry` — skipping the player
+  // the curtain is introducing. In the live flow this never triggers, because
+  // `inPlay` doesn't change when a turn expires; only the resume mount does.
   useEffect(function syncTimerToPlayState() {
-    if (inPlay) {
+    if (inPlay && !turnEnded) {
       startTimer()
     } else {
       stopTimer()
     }
 
     return () => stopTimer()
-  }, [inPlay, startTimer, stopTimer])
+  }, [inPlay, turnEnded, startTimer, stopTimer])
 
   // The urgency tick, driven by the same timeLeft the countdown displays —
   // exactly one tick per second. Guards against firing on timeLeft

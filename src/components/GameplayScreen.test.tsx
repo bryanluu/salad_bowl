@@ -324,6 +324,29 @@ describe('GameplayScreen', () => {
     })
   })
 
+  it('keeps the turn timer stopped while a resumed curtain is up (no skipped player)', async () => {
+    // The resume shape that used to start the countdown behind the curtain:
+    // a word already in play *and* the curtain up.
+    renderWithSound(<GameplayScreen
+      config={buildConfig(3)} // timerSeconds = 3
+      source={buildSource(['Apple', 'Banana', 'Cherry'])}
+      onNewGame={vi.fn()}
+      initialState={buildSnapshot({ turn: 1, turnEnded: true, currentWord: 'Apple' })}
+    />)
+
+    await unlockAudio()
+
+    // Several full turn periods. Without the !turnEnded guard this runs the
+    // clock to zero, fires the buzzer, and hands the turn to team A.
+    act(() => { vi.advanceTimersByTime(3 * 1000 * 5) })
+
+    // Still the same curtain, still naming team B, and nothing sounded.
+    expect(screen.getByRole('heading', { name: turnCurtain.turnOverLabel })).toBeInTheDocument()
+    expect(screen.getByText(turnCurtain.readyPrompt(teamB.name))).toBeInTheDocument()
+    expect(bySound('buzzer')?.playCalls ?? 0).toBe(0)
+    expect(bySound('tick')?.playCalls ?? 0).toBe(0)
+  })
+
   describe('sound effects', () => {
     it('ticks at the start of a turn (t=0), then once per second', async () => {
       const source = buildSource(['Apple', 'Banana'])
