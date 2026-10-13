@@ -1,7 +1,7 @@
 // src/copy/en.ts
 export const copy = {
   footer: {
-    quitConfirm: "Quit and return to the start screen? Your progress won't be saved.",
+    quitConfirm: 'Quit and return to the start screen? You can resume from the start of the current turn.',
     quitLabel: 'Quit',
     soundLabel: (on: boolean) => `SFX: ${on ? 'On' : 'Off'}`,
   },
@@ -71,6 +71,8 @@ export const copy = {
   },
   start: {
     button: 'Play',
+    resumeButton: 'Resume game',
+    replaceSaveConfirm: 'Start a new game? This will replace your saved game.',
     title: 'Salad Bowl'
   },
   wordEntry: {
