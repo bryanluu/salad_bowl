@@ -15,8 +15,11 @@ accounts and no backend. A game in progress is kept in `localStorage` (a
 single slot), saved at each turn boundary, so if the tab closes or the phone
 dies mid-turn you can resume from the start of the current player's turn — the
 interrupted turn itself replays from the beginning rather than restoring any
-words won during it. Your sound effects on/off preference is a separate
-setting, also kept in `localStorage`. Full installable/offline PWA support
+words won during it. When a save exists, the start screen offers **Resume
+game** alongside **New game**; starting a new game replaces the save once its
+first turn boundary is reached, and the save is cleared when a game finishes.
+Your sound effects on/off preference is a separate setting, also kept in
+`localStorage`. Full installable/offline PWA support
 (manifest and service worker) is still to come.
 
 **Play the live game:** <https://bryanluu.github.io/salad_bowl/>
@@ -62,6 +65,8 @@ salad_bowl/
 │   ├── copy/en.ts        # All UI strings in one place
 │   ├── hooks/            # useTimer, useWakeLock, useKeyPress, useWordSource,
 │   │                     #   useSoundEffects (SoundProvider + hook)
+│   ├── persistence/      # Single-slot localStorage game save/load + validation
+│   │                     #   (+ tests)
 │   ├── styles/           # reset.css, variables.css, global.css
 │   ├── teams/            # Roster math + team-order shuffling (+ tests)
 │   ├── validation/       # Roster, bowl, and word validators (+ tests)
@@ -100,6 +105,16 @@ salad_bowl/
   resumed) — the two are separate things: one is a setting, one is a game. A
   failed `play()` logs a console warning naming the cause rather than
   throwing.
+- **Save & resume is checkpoint-based.** `src/persistence/gameStorage.ts`
+  (`saveGame` / `loadGame` / `clearGame`) owns the single `salad-bowl:game`
+  slot. `GameplayScreen` writes a checkpoint when a curtain comes up for a new
+  turn or round (never mid-turn, so a quit replays the interrupted turn), and
+  clears it after the final round. Quitting keeps the save. `App` re-reads it
+  whenever it returns to the start screen and passes the snapshot to
+  `GameplayScreen` as `initialState` on Resume. `loadGame` never throws: a
+  corrupt, wrong-version, or internally inconsistent save (words not in the
+  source list, scores that don't match the teams) is discarded. Bump
+  `SAVE_VERSION` whenever the saved types change shape or meaning.
 - **Pure game logic, tested next to itself.** Bowl mechanics (`src/words/`),
   roster math and team shuffling (`src/teams/`), and validation
   (`src/validation/`) are framework-free modules, each paired with a
