@@ -101,12 +101,11 @@ function App() {
   }
 
   // Shared by every fresh game (start-screen Play, scoreboard "New game"):
-  // drop the in-progress save so a new game *replaces* it (rather than the
-  // first checkpoint of the new game overwriting it), and clear the resume
-  // snapshot so the fresh gameplay mount starts clean.
+  // clear the resume snapshot so the fresh gameplay mount starts clean. The
+  // old save is deliberately left alone: the new game's first checkpoint
+  // overwrites it, so backing out during setup doesn't lose the old game.
   function startNewGame() {
-    clearGame()
-    setSavedGame(null)
+    setSavedGame(loadGame())
     setResumeState(undefined)
     resetSource()
     switchScreen('game-setup')
@@ -186,10 +185,13 @@ function App() {
   }
 
   function handleQuit() {
-    // A save now survives a quit — that's the point of resume — so the confirm
-    // no longer warns that progress is lost, and quitting deliberately does
-    // NOT clear the save.
-    if (window.confirm(copy.footer.quitConfirm)) {
+    // A save now survives a quit — that's the point of resume — and quitting
+    // deliberately does NOT clear it. Only promise a resume when this game
+    // actually has a checkpoint (i.e. during gameplay); setup and word entry
+    // have nothing saved yet.
+    const canResume = activeScreen === 'gameplay' && loadGame() !== null
+    const message = canResume ? copy.footer.quitConfirm : copy.footer.quitConfirmNoSave
+    if (window.confirm(message)) {
       // A distinct, lower-key sound than the generic tap — leaving is a
       // different event from acting.
       play('quit')

@@ -113,14 +113,51 @@ describe('App save & resume', () => {
     expect(localStorage.getItem(STORAGE_KEY)).not.toBeNull()
   })
 
-  it('Play with a save, accepted, replaces the save and opens game setup', () => {
+  it('Play with a save, accepted, opens game setup and keeps the old save until the new game starts', () => {
     saveGame(buildSavedGame())
     renderWithSound(<App />)
 
     click(copy.start.button)
 
     expect(screen.getByRole('heading', { name: copy.gameSetup.title })).toBeInTheDocument()
-    expect(localStorage.getItem(STORAGE_KEY)).toBeNull()
+    expect(localStorage.getItem(STORAGE_KEY)).not.toBeNull()
+  })
+
+  it("a new game's first checkpoint replaces the old save", () => {
+    saveGame(buildSavedGame({ turn: 1 }))
+    renderWithSound(<App />)
+
+    click(copy.start.button)
+    fireEvent.click(screen.getByRole('checkbox', { name: copy.gameSetup.generateAllWordsLabel }))
+    click(copy.gameSetup.startButton)
+
+    // Round 1's intro curtain is up: the fresh game has checkpointed over
+    // the old one (which was on turn 1 with a word in play).
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)!)
+    expect(saved.turn).toBe(0)
+    expect(saved.round).toBe(1)
+    expect(saved.currentWord).toBeNull()
+  })
+
+  it('quitting during setup does not promise a resume, and an older save is still offered', () => {
+    saveGame(buildSavedGame())
+    renderWithSound(<App />)
+
+    click(copy.start.button) // confirm accepted → game setup
+    click(copy.footer.quitLabel)
+
+    expect(window.confirm).toHaveBeenLastCalledWith(copy.footer.quitConfirmNoSave)
+    expect(screen.getByRole('button', { name: copy.start.resumeButton })).toBeInTheDocument()
+  })
+
+  it('quitting during gameplay promises a resume', () => {
+    saveGame(buildSavedGame())
+    renderWithSound(<App />)
+
+    click(copy.start.resumeButton)
+    click(copy.footer.quitLabel)
+
+    expect(window.confirm).toHaveBeenLastCalledWith(copy.footer.quitConfirm)
   })
 
   it('a new game started after a resume begins fresh, not from the old snapshot', () => {
