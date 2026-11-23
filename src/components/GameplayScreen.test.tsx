@@ -4,6 +4,8 @@ import { screen, fireEvent, act } from '@testing-library/react'
 import GameplayScreen from './GameplayScreen'
 import { copy } from '../copy/en'
 import type { GameConfig, Round, Team, Word, WordSource } from '../types'
+import type { GameplaySnapshot } from '../persistence/gameStorage'
+import { loadGame } from '../persistence/gameStorage'
 import { renderWithSound } from '../test/renderWithSound'
 import { sounds } from '../sounds.ts'
 
@@ -36,6 +38,26 @@ function buildConfig(timerSeconds: number): GameConfig {
 }
 
 const { turnCurtain, roundCurtain, gotItButton } = copy.gameplay
+
+// A resumable mid-game state. Mirrors what GameplayScreen would hold at a
+// curtain — the tests below only override the few fields that differ.
+function buildSnapshot(overrides: Partial<GameplaySnapshot> = {}): GameplaySnapshot {
+  return {
+    teams: [teamA, teamB],
+    round: 1,
+    turn: 0,
+    bowl: ['Banana', 'Cherry'],
+    currentWord: 'Apple',
+    wonWords: {},
+    scores: [
+      { id: 'team-a', name: 'Red Team', rounds: [] },
+      { id: 'team-b', name: 'Blue Team', rounds: [] },
+    ],
+    turnEnded: false,
+    roundJustEnded: false,
+    ...overrides,
+  }
+}
 
 function beginRound() {
   fireEvent.click(screen.getByRole('button', { name: roundCurtain.beginButton }))
@@ -237,6 +259,173 @@ describe('GameplayScreen', () => {
       closeRoundEndCurtain()
       if (round < 3) continueScoreboard()
     }
+  })
+
+  describe('resume from a snapshot', () => {
+    it('shows the turn-recap curtain naming the next team, and Go starts that turn with the saved word', () => {
+      renderWithSound(<GameplayScreen
+        config={buildConfig(30)}
+        source={buildSource(['Apple', 'Banana', 'Cherry'])}
+        onNewGame={vi.fn()}
+        initialState={buildSnapshot({ turn: 1, turnEnded: true, currentWord: 'Apple' })}
+      />)
+
+      expect(screen.getByRole('heading', { name: turnCurtain.turnOverLabel })).toBeInTheDocument()
+      expect(screen.getByText(turnCurtain.readyPrompt(teamB.name))).toBeInTheDocument()
+
+      fireEvent.click(screen.getByRole('button', { name: turnCurtain.goButton(false) }))
+
+      expect(screen.getByText(copy.gameplay.turnIndicator(teamB.name))).toBeInTheDocument()
+      expect(screen.getByText('Apple')).toBeInTheDocument()
+    })
+
+    it('shows the round-end recap curtain for the round that just finished', () => {
+      renderWithSound(<GameplayScreen
+        config={buildConfig(30)}
+        source={buildSource(['Apple', 'Banana', 'Cherry'])}
+        onNewGame={vi.fn()}
+        initialState={buildSnapshot({
+          round: 2,
+          turn: 0,
+          turnEnded: true,
+          roundJustEnded: true,
+          currentWord: null,
+          bowl: ['Banana', 'Cherry'],
+        })}
+      />)
+
+      // roundJustEnded means round-1 just ended, so the curtain names round 1
+      // (GameplayScreen renders round - 1 for a non-final round recap).
+      expect(screen.getByRole('heading', { name: turnCurtain.roundOverLabel(1) })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: turnCurtain.goButton(true) })).toBeInTheDocument()
+    })
+
+    it('shows the round-intro curtain naming the team that goes first, and Begin deals a word', () => {
+      renderWithSound(<GameplayScreen
+        config={buildConfig(30)}
+        source={buildSource(['Apple', 'Banana', 'Cherry'])}
+        onNewGame={vi.fn()}
+        initialState={buildSnapshot({
+          round: 1,
+          turn: 0,
+          currentWord: null,
+          bowl: ['Apple', 'Banana', 'Cherry'],
+        })}
+      />)
+
+      expect(screen.getByText(roundCurtain.roundLabel(1))).toBeInTheDocument()
+      expect(screen.getByText(roundCurtain.readyPrompt(teamA.name))).toBeInTheDocument()
+
+      beginRound()
+
+      expect(screen.getByText(copy.gameplay.turnIndicator(teamA.name))).toBeInTheDocument()
+      // startRound draws from the source (not the snapshot bowl); with
+      // Math.random pinned to 0 that's the source's first word.
+      expect(screen.getByText('Apple')).toBeInTheDocument()
+    })
+  })
+
+  it('keeps the turn timer stopped while a resumed curtain is up (no skipped player)', async () => {
+    // The resume shape that used to start the countdown behind the curtain:
+    // a word already in play *and* the curtain up.
+    renderWithSound(<GameplayScreen
+      config={buildConfig(3)} // timerSeconds = 3
+      source={buildSource(['Apple', 'Banana', 'Cherry'])}
+      onNewGame={vi.fn()}
+      initialState={buildSnapshot({ turn: 1, turnEnded: true, currentWord: 'Apple' })}
+    />)
+
+    await unlockAudio()
+
+    // Several full turn periods. Without the !turnEnded guard this runs the
+    // clock to zero, fires the buzzer, and hands the turn to team A.
+    act(() => { vi.advanceTimersByTime(3 * 1000 * 5) })
+
+    // Still the same curtain, still naming team B, and nothing sounded.
+    expect(screen.getByRole('heading', { name: turnCurtain.turnOverLabel })).toBeInTheDocument()
+    expect(screen.getByText(turnCurtain.readyPrompt(teamB.name))).toBeInTheDocument()
+    expect(bySound('buzzer')?.playCalls ?? 0).toBe(0)
+    expect(bySound('tick')?.playCalls ?? 0).toBe(0)
+  })
+
+  describe('save checkpoints', () => {
+    beforeEach(() => {
+      localStorage.clear()
+    })
+
+    function renderGame() {
+      renderWithSound(<GameplayScreen
+        config={buildConfig(3)}
+        source={buildSource(['Apple', 'Banana', 'Cherry'])}
+        onNewGame={vi.fn()}
+      />)
+    }
+
+    it('writes a save once round 1’s intro curtain shows', () => {
+      renderGame()
+
+      const saved = loadGame()
+      expect(saved).not.toBeNull()
+      expect(saved?.turn).toBe(0)
+      expect(saved?.currentWord).toBeNull()
+      expect(saved?.bowl).toEqual(['Apple', 'Banana', 'Cherry'])
+      expect(saved?.sourceWords).toEqual(['Apple', 'Banana', 'Cherry'])
+      expect(saved?.turnEnded).toBe(false)
+    })
+
+    it('after a turn expiry, the save reflects the next team and the words from before that turn', () => {
+      renderGame()
+      beginRound()
+      winCurrentWord() // team A wins Apple, then it's on Banana
+      act(() => { vi.advanceTimersByTime(3 * 1000) }) // expiry → curtain for team B
+
+      const saved = loadGame()
+      expect(saved?.turn).toBe(1) // team B is up next
+      expect(saved?.turnEnded).toBe(true)
+      expect(saved?.wonWords['team-a']).toContain('Apple')
+      expect(saved?.currentWord).not.toBeNull()
+    })
+
+    it('tapping Go does not change the save', () => {
+      renderGame()
+      beginRound()
+      act(() => { vi.advanceTimersByTime(3 * 1000) })
+      const before = JSON.stringify(loadGame())
+
+      fireEvent.click(screen.getByRole('button', { name: turnCurtain.goButton(false) }))
+
+      expect(JSON.stringify(loadGame())).toBe(before)
+    })
+
+    it('winning a word mid-turn does not change the save', () => {
+      renderGame()
+      beginRound()
+      act(() => { vi.advanceTimersByTime(3 * 1000) })
+      const before = JSON.stringify(loadGame())
+
+      // Dismiss the curtain, then win a word in the fresh turn.
+      fireEvent.click(screen.getByRole('button', { name: turnCurtain.goButton(false) }))
+      winCurrentWord()
+
+      expect(JSON.stringify(loadGame())).toBe(before)
+    })
+
+    it('clears the save after the final round', () => {
+      renderWithSound(<GameplayScreen
+        config={buildConfig(30)}
+        source={buildSource(['Apple'])}
+        onNewGame={vi.fn()}
+      />)
+
+      for (let round = 1; round <= 3; round++) {
+        beginRound()
+        winCurrentWord()
+        closeRoundEndCurtain()
+        if (round < 3) continueScoreboard()
+      }
+
+      expect(loadGame()).toBeNull()
+    })
   })
 
   describe('sound effects', () => {

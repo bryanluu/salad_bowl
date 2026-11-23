@@ -1,7 +1,10 @@
 // src/copy/en.ts
 export const copy = {
   footer: {
-    quitConfirm: "Quit and return to the start screen? Your progress won't be saved.",
+    quitConfirm: 'Quit and return to the start screen? You can resume from the start of the current turn.',
+    // For quitting before a game has started (setup, word entry): there's no
+    // checkpoint for this game, so don't promise a resume.
+    quitConfirmNoSave: "Quit and return to the start screen? Your progress won't be saved.",
     quitLabel: 'Quit',
     soundLabel: (on: boolean) => `SFX: ${on ? 'On' : 'Off'}`,
   },
@@ -71,6 +74,10 @@ export const copy = {
   },
   start: {
     button: 'Play',
+    // Replaces Play when a save exists, so it can't be mistaken for resuming.
+    newGameButton: 'New game',
+    resumeButton: 'Resume game',
+    replaceSaveConfirm: 'Start a new game? This will replace your saved game.',
     title: 'Salad Bowl'
   },
   wordEntry: {

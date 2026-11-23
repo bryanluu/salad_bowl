@@ -11,10 +11,16 @@ crown a winner (or a tie) at the end.
 
 Built for phones that get passed hand to hand: it holds a Screen Wake Lock
 while a turn is in play so the display can't dim mid-game, and there are no
-accounts, no backend, and no game persistence — a game lives entirely in the
-current session. The one thing remembered between visits is your sound
-effects on/off preference, kept in `localStorage`. Full installable/offline
-PWA support (manifest and service worker) is still to come.
+accounts and no backend. A game in progress is kept in `localStorage` (a
+single slot), saved at each turn boundary, so if the tab closes or the phone
+dies mid-turn you can resume from the start of the current player's turn — the
+interrupted turn itself replays from the beginning rather than restoring any
+words won during it. When a save exists, the start screen offers **Resume
+game** alongside **New game**; starting a new game replaces the save once its
+first turn boundary is reached, and the save is cleared when a game finishes.
+Your sound effects on/off preference is a separate setting, also kept in
+`localStorage`. Full installable/offline PWA support
+(manifest and service worker) is still to come.
 
 **Play the live game:** <https://bryanluu.github.io/salad_bowl/>
 
@@ -59,6 +65,8 @@ salad_bowl/
 │   ├── copy/en.ts        # All UI strings in one place
 │   ├── hooks/            # useTimer, useWakeLock, useKeyPress, useWordSource,
 │   │                     #   useSoundEffects (SoundProvider + hook)
+│   ├── persistence/      # Single-slot localStorage game save/load + validation
+│   │                     #   (+ tests)
 │   ├── styles/           # reset.css, variables.css, global.css
 │   ├── teams/            # Roster math + team-order shuffling (+ tests)
 │   ├── validation/       # Roster, bowl, and word validators (+ tests)
@@ -86,16 +94,27 @@ salad_bowl/
 - **UI copy lives in one file.** Every string in the app is in
   `src/copy/en.ts`, so adding a language is a matter of adding a sibling
   file.
-- **Sound is a context, and its on/off setting is the one thing persisted.**
-  `SoundProvider` (`src/hooks/useSoundEffects.tsx`) wraps the app and exposes
-  `useSoundEffects()` → `{ soundOn, setSoundOn, play, stop }`; which file
-  plays for which cue is mapped in `src/sounds.ts`, with the files in
+- **Sound is a context, and its on/off setting is a user preference, not game
+  state.** `SoundProvider` (`src/hooks/useSoundEffects.tsx`) wraps the app and
+  exposes `useSoundEffects()` → `{ soundOn, setSoundOn, play, stop }`; which
+  file plays for which cue is mapped in `src/sounds.ts`, with the files in
   `public/sounds/`. Nothing plays until the first tap or keypress, which also
   primes every sound so iOS will allow later ones (like the timer buzzer). The
-  on/off preference lives in `localStorage` — a deliberate exception to the
-  no-persistence rule, because it's a user preference, not game state. A
+  on/off preference lives in `localStorage` under its own key, independent of
+  the single-slot game save (saved at turn boundaries so a game can be
+  resumed) — the two are separate things: one is a setting, one is a game. A
   failed `play()` logs a console warning naming the cause rather than
   throwing.
+- **Save & resume is checkpoint-based.** `src/persistence/gameStorage.ts`
+  (`saveGame` / `loadGame` / `clearGame`) owns the single `salad-bowl:game`
+  slot. `GameplayScreen` writes a checkpoint when a curtain comes up for a new
+  turn or round (never mid-turn, so a quit replays the interrupted turn), and
+  clears it after the final round. Quitting keeps the save. `App` re-reads it
+  whenever it returns to the start screen and passes the snapshot to
+  `GameplayScreen` as `initialState` on Resume. `loadGame` never throws: a
+  corrupt, wrong-version, or internally inconsistent save (words not in the
+  source list, scores that don't match the teams) is discarded. Bump
+  `SAVE_VERSION` whenever the saved types change shape or meaning.
 - **Pure game logic, tested next to itself.** Bowl mechanics (`src/words/`),
   roster math and team shuffling (`src/teams/`), and validation
   (`src/validation/`) are framework-free modules, each paired with a

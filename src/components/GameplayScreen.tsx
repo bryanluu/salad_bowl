@@ -9,6 +9,8 @@ import TurnScreen from "./TurnScreen"
 import TurnCurtain from "./TurnCurtain"
 import ScoreboardScreen from "./ScoreboardScreen"
 import { useSoundEffects } from "../hooks/useSoundEffects"
+import { SAVE_VERSION, saveGame, clearGame } from "../persistence/gameStorage"
+import type { GameplaySnapshot } from "../persistence/gameStorage"
 
 type Bowl = Word[]
 type Turn = number
@@ -27,22 +29,33 @@ function GameplayScreen({
   config,
   source,
   onNewGame,
+  // Optional starting state for a resumed game. Present only on the mount
+  // that follows a Resume tap; a fresh game omits it and the initializers
+  // below fall back to exactly today's behavior. This is also where the
+  // storage boundary's `currentWord: null` becomes the `undefined` this
+  // component uses for "no word in play".
+  initialState,
 }: {
   config: GameConfig,
   source: WordSource,
   onNewGame: () => void,
+  initialState?: GameplaySnapshot,
 }) {
   const { play } = useSoundEffects()
-  const [round, setRound] = useState<Round>(1)
+  const [round, setRound] = useState<Round>(initialState?.round ?? 1)
   const { timeLeft, resetTimer, startTimer, stopTimer } = useTimer(config.timerSeconds, handleTimerExpiry)
   const [teams] = useState<Team[]>(
     function initTeamOrder() {
+      if (initialState) return initialState.teams
       return config.shuffleTeamOrder ? shuffle(config.teams) : [...config.teams]
     })
-  const [turn, setTurn] = useState<Turn>(0)
-  const [wonWords, setWonWords] = useState<WonWords>({})
+  const [turn, setTurn] = useState<Turn>(initialState?.turn ?? 0)
+  const [wonWords, setWonWords] = useState<WonWords>(initialState?.wonWords ?? {})
   const [{ bowl, currentWord }, setBowlState] =
     useState<BowlState>(function initBowlState(): BowlState {
+      if (initialState) {
+        return { bowl: [...initialState.bowl], currentWord: initialState.currentWord ?? undefined }
+      }
       return { bowl: [...source.getWords()], currentWord: undefined }
     })
   // Whether the turn that just ended is waiting on TurnCurtain's "Go"
@@ -50,13 +63,14 @@ function GameplayScreen({
   // derived from `timeLeft === 0` — both endRound and startTurn call
   // resetTimer(), which would otherwise flip this back to "not done"
   // before the curtain ever rendered.
-  const [turnEnded, setTurnEnded] = useState(false)
+  const [turnEnded, setTurnEnded] = useState(initialState?.turnEnded ?? false)
   // Whether the pending TurnCurtain is closing out a whole round (true)
   // vs. an ordinary mid-round turn handoff (false). Determines what
   // handleTurnCurtainNext does once the player taps "Go".
-  const [roundJustEnded, setRoundJustEnded] = useState(false)
+  const [roundJustEnded, setRoundJustEnded] = useState(initialState?.roundJustEnded ?? false)
   const [scores, setScores] = useState<Scores>(
     function initScores() {
+      if (initialState) return initialState.scores
       return config.teams.map((t) => {
         return { ...t, rounds: [] }
       })
@@ -78,15 +92,21 @@ function GameplayScreen({
   // Deliberately keyed on the `inPlay` boolean rather than `currentWord` or
   // `timeLeft`, so swapping words within a turn (skip/win) or ticking down
   // doesn't restart the timer — only a true has-word/no-word transition does.
+  // The `!turnEnded` guard matters after a resume: a resumed game mounts with
+  // `currentWord` already set, so `inPlay` is true on the very first render
+  // while a curtain is up. Without it, the countdown would run *behind the
+  // curtain*, play ticks, and fire `handleTimerExpiry` — skipping the player
+  // the curtain is introducing. In the live flow this never triggers, because
+  // `inPlay` doesn't change when a turn expires; only the resume mount does.
   useEffect(function syncTimerToPlayState() {
-    if (inPlay) {
+    if (inPlay && !turnEnded) {
       startTimer()
     } else {
       stopTimer()
     }
 
     return () => stopTimer()
-  }, [inPlay, startTimer, stopTimer])
+  }, [inPlay, turnEnded, startTimer, stopTimer])
 
   // The urgency tick, driven by the same timeLeft the countdown displays —
   // exactly one tick per second. Guards against firing on timeLeft
@@ -107,6 +127,48 @@ function GameplayScreen({
     }
     prevTimeLeftRef.current = timeLeft
   }, [timeLeft, inPlay, play])
+
+  // Save a checkpoint exactly when a curtain for a *new* turn or round is on
+  // screen — the only moments we can safely resume from. The rule: a turn-
+  // recap or round-end curtain (`turnEnded`), or the round-intro curtain
+  // (`roundReadyToStart && !roundJustEnded`); never mid-turn, and never via
+  // a visibilitychange/pagehide listener, because a mid-turn state must never
+  // overwrite the pre-turn checkpoint. Tapping "Go" flips `turnEnded` false,
+  // which also fails the second clause (a word is then in play), so "Go"
+  // never rewrites the save; the same holds for wins mid-turn. Clearing runs
+  // when the final round ends so a finished game can't be resumed.
+  //
+  // Idempotent: the deps are the underlying state, so StrictMode's effect
+  // double-run and any re-render during a curtain write the identical bytes
+  // (saveGame is a plain setItem of the same object).
+  useEffect(function persistCheckpoint() {
+    // Local, not the component-scope `gameEnded`, so it isn't a (redundant)
+    // dependency — it's derived from `bowl`/`currentWord`, both already deps.
+    if (bowl.length === 0 && currentWord === undefined) {
+      clearGame()
+      return
+    }
+
+    const atCheckpoint =
+      turnEnded ||
+      (bowl.length > 0 && currentWord === undefined && !roundJustEnded)
+    if (!atCheckpoint) return
+
+    saveGame({
+      version: SAVE_VERSION,
+      config,
+      sourceWords: [...source.getWords()],
+      teams,
+      round,
+      turn,
+      bowl,
+      currentWord: currentWord ?? null,
+      wonWords,
+      scores,
+      turnEnded,
+      roundJustEnded,
+    })
+  }, [turnEnded, roundJustEnded, bowl, currentWord, round, turn, teams, wonWords, scores, config, source])
 
   function startTurn() {
     resetTimer()
