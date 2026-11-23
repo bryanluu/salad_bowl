@@ -74,6 +74,8 @@ export const copy = {
   },
   start: {
     button: 'Play',
+    // Replaces Play when a save exists, so it can't be mistaken for resuming.
+    newGameButton: 'New game',
     resumeButton: 'Resume game',
     replaceSaveConfirm: 'Start a new game? This will replace your saved game.',
     title: 'Salad Bowl'

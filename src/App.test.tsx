@@ -66,6 +66,7 @@ describe('App save & resume', () => {
 
     expect(screen.queryByRole('button', { name: copy.start.resumeButton })).toBeNull()
     expect(screen.getByRole('button', { name: copy.start.button })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: copy.start.newGameButton })).toBeNull()
   })
 
   it('offers Resume with a valid save, and resuming shows the right curtain for the right team', () => {
@@ -73,6 +74,9 @@ describe('App save & resume', () => {
     renderWithSound(<App />)
 
     expect(screen.getByRole('button', { name: copy.start.resumeButton })).toBeInTheDocument()
+    // Play is relabelled so it can't be mistaken for resuming.
+    expect(screen.getByRole('button', { name: copy.start.newGameButton })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: copy.start.button })).toBeNull()
     click(copy.start.resumeButton)
 
     expect(screen.getByRole('heading', { name: copy.gameplay.turnCurtain.turnOverLabel })).toBeInTheDocument()
@@ -106,10 +110,10 @@ describe('App save & resume', () => {
     vi.spyOn(window, 'confirm').mockReturnValue(false)
     renderWithSound(<App />)
 
-    click(copy.start.button)
+    click(copy.start.newGameButton)
 
     expect(screen.getByRole('button', { name: copy.start.resumeButton })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: copy.start.button })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: copy.start.newGameButton })).toBeInTheDocument()
     expect(localStorage.getItem(STORAGE_KEY)).not.toBeNull()
   })
 
@@ -117,7 +121,7 @@ describe('App save & resume', () => {
     saveGame(buildSavedGame())
     renderWithSound(<App />)
 
-    click(copy.start.button)
+    click(copy.start.newGameButton)
 
     expect(screen.getByRole('heading', { name: copy.gameSetup.title })).toBeInTheDocument()
     expect(localStorage.getItem(STORAGE_KEY)).not.toBeNull()
@@ -127,7 +131,7 @@ describe('App save & resume', () => {
     saveGame(buildSavedGame({ turn: 1 }))
     renderWithSound(<App />)
 
-    click(copy.start.button)
+    click(copy.start.newGameButton)
     fireEvent.click(screen.getByRole('checkbox', { name: copy.gameSetup.generateAllWordsLabel }))
     click(copy.gameSetup.startButton)
 
@@ -143,7 +147,7 @@ describe('App save & resume', () => {
     saveGame(buildSavedGame())
     renderWithSound(<App />)
 
-    click(copy.start.button) // confirm accepted → game setup
+    click(copy.start.newGameButton) // confirm accepted → game setup
     click(copy.footer.quitLabel)
 
     expect(window.confirm).toHaveBeenLastCalledWith(copy.footer.quitConfirmNoSave)
@@ -170,7 +174,7 @@ describe('App save & resume', () => {
 
     // Quit, then start a new game (accept the replace-save confirm).
     click(copy.footer.quitLabel)
-    click(copy.start.button)
+    click(copy.start.newGameButton)
 
     // Skip word entry by generating all words, then submit the setup form.
     fireEvent.click(screen.getByRole('checkbox', { name: copy.gameSetup.generateAllWordsLabel }))
