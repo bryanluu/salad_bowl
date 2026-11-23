@@ -12,6 +12,9 @@
 // loading returns `null` (and clears a bad entry).
 import type { GameConfig, Round, Scores, Team, Word } from '../types'
 
+// Bump whenever GameplaySnapshot, GameConfig, or the types they use change
+// shape or meaning: an old save is rejected (not migrated), so a bump costs
+// players one in-progress game, while a missed bump can crash on Resume.
 export const SAVE_VERSION = 1
 const STORAGE_KEY = 'salad-bowl:game'
 
@@ -87,6 +90,21 @@ function isConfig(value: unknown): value is GameConfig {
     && typeof config.generateAllWords === 'boolean'
 }
 
+// Cross-field checks the per-field guards can't see. Cheap on purpose: just
+// the invariants whose violation would crash a resumed game.
+function isConsistent(game: SavedGame): boolean {
+  // Every word still in play came from the full word list.
+  const source = new Set(game.sourceWords)
+  const inPlay = game.currentWord === null ? game.bowl : [...game.bowl, game.currentWord]
+  if (inPlay.length > game.sourceWords.length) return false
+  if (!inPlay.every((word) => source.has(word))) return false
+
+  // One score entry per team, keyed by the same ids.
+  if (game.scores.length !== game.teams.length) return false
+  const teamIds = new Set(game.teams.map((team) => team.id))
+  return game.scores.every((score) => teamIds.has(score.id))
+}
+
 // Hand-written guard: no schema library. Anything that fails a single check
 // is treated as foreign/corrupt and rejected wholesale.
 function isSavedGame(value: unknown): value is SavedGame {
@@ -114,7 +132,7 @@ function isSavedGame(value: unknown): value is SavedGame {
   if (typeof game.roundJustEnded !== 'boolean') return false
   if (game.currentWord !== null && typeof game.currentWord !== 'string') return false
 
-  return true
+  return isConsistent(game as SavedGame)
 }
 
 export function saveGame(game: SavedGame): void {

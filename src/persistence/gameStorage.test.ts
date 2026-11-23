@@ -155,6 +155,45 @@ describe('gameStorage', () => {
     })
   })
 
+  describe('inconsistent entries', () => {
+    function expectRejected(overrides: Partial<SavedGame>) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(buildSavedGame(overrides)))
+      expect(loadGame()).toBeNull()
+      expectClearedSlot()
+    }
+
+    it('rejects a bowl word that is not in sourceWords', () => {
+      expectRejected({ bowl: ['Banana', 'Durian'] })
+    })
+
+    it('rejects a currentWord that is not in sourceWords', () => {
+      expectRejected({ currentWord: 'Durian' })
+    })
+
+    it('rejects more words in play than the source holds', () => {
+      expectRejected({ bowl: ['Apple', 'Banana', 'Cherry'], currentWord: 'Apple' })
+    })
+
+    it('rejects scores for a different number of teams', () => {
+      expectRejected({ scores: [{ id: 'team-a', name: 'Red Team', rounds: [1] }] })
+    })
+
+    it('rejects a score entry whose id matches no team', () => {
+      expectRejected({
+        scores: [
+          { id: 'team-a', name: 'Red Team', rounds: [1] },
+          { id: 'team-z', name: 'Ghost Team', rounds: [0] },
+        ],
+      })
+    })
+
+    it('accepts an empty bowl with a null currentWord (end of a round)', () => {
+      const game = buildSavedGame({ bowl: [], currentWord: null })
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(game))
+      expect(loadGame()).toEqual(game)
+    })
+  })
+
   describe('storage that throws', () => {
     it('saveGame swallows a setItem throw', () => {
       vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
